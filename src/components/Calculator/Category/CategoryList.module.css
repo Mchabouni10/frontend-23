@@ -1,0 +1,316 @@
+/* CategoryList.module.css */
+
+/* Main container */
+.container {
+  padding: var(--spacing-lg);
+  background: var(--background);
+  border-radius: var(--radius-lg);
+  max-width: 1200px;
+  margin: 0 auto;
+  box-shadow: 0 6px 20px var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+    font-family: poppins, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.container:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--shadow);
+}
+
+/* Section container */
+.section {
+  margin-bottom: var(--spacing-xl);
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px var(--shadow);
+  overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+/* Section header */
+.sectionHeader {
+  font-family: poppins, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: linear-gradient(to right, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--surface);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.sectionHeader:hover {
+  background: linear-gradient(to right, var(--primary-dark) 0%, var(--primary) 100%);
+}
+
+/* Toggle button */
+.toggleButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  color: var(--surface);
+  padding: var(--spacing-sm);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.toggleButton:hover,
+.toggleButton:focus-visible {
+  color: var(--secondary);
+  transform: scale(1.1);
+}
+
+.toggleButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+/* Section title */
+.sectionTitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--surface);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-family: var(--font-family);
+}
+
+/* Categories container */
+.categories {
+  margin-top: var(--spacing-lg);
+  padding: 0 var(--spacing-md);
+}
+
+/* Category input wrapper */
+.categoryInputWrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Category select dropdown */
+.categorySelect {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  background: var(--surface);
+  min-width: 160px;
+  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.categorySelect:focus {
+  border-color: var(--secondary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Input wrapper for category and work inputs */
+.inputWrapper {
+  position: relative;
+  flex: 1;
+  min-width: 160px;
+}
+
+/* Category and work inputs */
+.categoryInput,
+.workInput {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2.25rem;
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.categoryInput:focus,
+.workInput:focus {
+  border-color: var(--secondary);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Input icon */
+.inputIcon {
+  position: absolute;
+  left: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: var(--font-size-base);
+}
+
+/* Add button */
+.addButton {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+  color: var(--surface);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.addButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.addButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.4);
+}
+
+.addButton:disabled {
+  background: var(--text-light);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Category container */
+.category {
+  background: var(--surface);
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  box-shadow: 0 3px 8px var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.category:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px var(--shadow);
+}
+
+/* Category header */
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(to right, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--surface);
+  border-radius: var(--radius-sm);
+}
+
+/* Category number badge */
+.categoryNumber {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: var(--secondary);
+  color: var(--surface);
+  border-radius: 50%;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+/* Remove button */
+.removeButton {
+  background: linear-gradient(135deg, var(--error) 0%, #c53030 100%);
+  color: var(--surface);
+  border: none;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.removeButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.removeButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.4);
+}
+
+/* Work items container */
+.workItems {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-sm);
+}
+
+/* Work controls for adding work items */
+.workControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-lg);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .container {
+    padding: var(--spacing-md);
+    margin: 0 var(--spacing-sm);
+  }
+
+  .section {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .categoryInputWrapper,
+  .workControls {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .categorySelect,
+  .inputWrapper {
+    min-width: 100%;
+  }
+
+  .addButton,
+  .removeButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionTitle {
+    font-size: var(--font-size-lg);
+  }
+
+  .categoryNumber {
+    width: 26px;
+    height: 26px;
+    font-size: var(--font-size-sm);
+  }
+
+  .categoryInput,
+  .workInput,
+  .categorySelect {
+    font-size: var(--font-size-sm);
+  }
+
+  .addButton,
+  .removeButton {
+    padding: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+  }
+}

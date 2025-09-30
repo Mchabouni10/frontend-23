@@ -1,0 +1,5 @@
+{
+    "iconBackground": "#ffffff",  
+    "iconForeground": "./src/assets/CompanyLogo.png",
+    "resize": true
+  }

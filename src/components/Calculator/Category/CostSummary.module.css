@@ -1,0 +1,521 @@
+/* CostSummary.module.css - Consistent with AdditionalCosts */
+
+/* ==========================================================================
+   Section Styles - Consistent with AdditionalCosts
+   ========================================================================== */
+.section {
+  margin: var(--spacing-lg) 0;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 8px var(--shadow);
+  overflow: hidden;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ==========================================================================
+   Section Header - Matching AdditionalCosts
+   ========================================================================== */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: linear-gradient(to right, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--surface);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  position: relative;
+}
+
+.sectionHeader:hover {
+  background: linear-gradient(to right, var(--primary-dark) 0%, var(--primary) 100%);
+}
+
+/* Toggle Button - Matching AdditionalCosts */
+.toggleButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  color: var(--surface);
+  padding: var(--spacing-sm);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.toggleButton:hover,
+.toggleButton:focus-visible {
+  color: var(--secondary);
+  transform: scale(1.1);
+}
+
+.toggleButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+/* Section Title - Matching AdditionalCosts */
+.sectionTitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--surface);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-family: var(--font-family);
+}
+
+/* ==========================================================================
+   Summary Content - Clean and Consistent
+   ========================================================================== */
+.summaryContent {
+  padding: var(--spacing-lg);
+  background: var(--background);
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+/* ==========================================================================
+   Empty State - Clean Design
+   ========================================================================== */
+.emptyState {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background: var(--surface);
+  border: 2px dashed var(--text-light);
+  border-radius: var(--radius-md);
+  margin: var(--spacing-lg) 0;
+}
+
+.helpMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.helpMessage i {
+  font-size: 3rem;
+  color: var(--primary);
+  opacity: 0.6;
+}
+
+.helpMessage h4 {
+  font-size: var(--font-size-lg);
+  color: var(--text);
+  margin: 0 0 var(--spacing-sm) 0;
+}
+
+.helpMessage p {
+  color: var(--text-light);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Error Section - Consistent Alert Design
+   ========================================================================== */
+.errorSection {
+  background: rgba(229, 62, 62, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--error);
+  border-left: 4px solid var(--error);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.errorSection h4 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-base);
+  color: var(--error);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.errorSection ul {
+  margin: 0;
+  padding-left: var(--spacing-lg);
+}
+
+.errorSection li {
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-xs);
+}
+
+/* ==========================================================================
+   Header Stats - Clean and Compact
+   ========================================================================== */
+.headerStats {
+  display: flex;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-left: auto;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: rgba(255, 255, 255, 0.1);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  color: var(--surface);
+  transition: background-color 0.2s ease;
+}
+
+.statItem:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   Summary Grid - Clean Two-Column Layout
+   ========================================================================== */
+.summaryGrid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--spacing-md) var(--spacing-lg);
+  max-width: 800px;
+  margin: 0 auto;
+  font-size: var(--font-size-base);
+  color: var(--text);
+}
+
+.stickyHeader {
+  display: contents;
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  font-size: var(--font-size-lg);
+  padding: var(--spacing-md) 0;
+}
+
+.summaryItem {
+  display: contents;
+}
+
+.summaryLabel {
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+  text-align: right;
+  padding: var(--spacing-sm) 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  transition: color 0.2s ease;
+}
+
+.summaryLabel:hover {
+  color: var(--primary);
+}
+
+.summaryValue {
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+  text-align: left;
+  padding: var(--spacing-sm) 0;
+  transition: color 0.2s ease;
+  font-size: var(--font-size-base);
+}
+
+.summaryValue:hover {
+  color: var(--primary);
+}
+
+/* ==========================================================================
+   Special Styles for Grand Total and Amount Due - Subtle Highlight
+   ========================================================================== */
+
+/* Grand Total - Subtle Gold Highlight */
+.total {
+  border-top: 2px solid var(--primary);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+}
+
+.total .summaryLabel {
+  color: var(--primary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, transparent 100%);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-bottom: 1px solid rgba(234, 179, 8, 0.2);
+}
+
+.total .summaryValue {
+  color: var(--primary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xl);
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, transparent 100%);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  border-top: 1px solid rgba(234, 179, 8, 0.2);
+  box-shadow: 0 2px 4px rgba(234, 179, 8, 0.1);
+}
+
+/* Amount Due/Balance - Subtle Green/Red Highlight */
+.balance {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 2px solid var(--secondary);
+}
+
+.balance .summaryLabel {
+  color: var(--secondary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, transparent 100%);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.balance .summaryValue {
+  color: var(--secondary);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xl);
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, transparent 100%);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  border-top: 1px solid rgba(52, 152, 219, 0.2);
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.1);
+}
+
+/* Overpayment specific styling */
+.balance:has(+ .overpaymentNotice) .summaryLabel,
+.balance:has(+ .overpaymentNotice) .summaryValue {
+  --secondary: var(--success);
+}
+
+/* ==========================================================================
+   Value Type Styles - Clean and Consistent
+   ========================================================================== */
+.discount {
+  color: var(--error);
+  font-weight: var(--font-weight-bold);
+  background: rgba(229, 62, 62, 0.1);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--error);
+}
+
+.paid {
+  color: var(--success);
+  font-weight: var(--font-weight-bold);
+  background: rgba(56, 161, 105, 0.1);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--success);
+}
+
+/* ==========================================================================
+   Notices - Clean and Professional
+   ========================================================================== */
+.overpaymentNotice,
+.dueAmountNotice {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-base);
+  background: var(--surface);
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.overpaymentNotice {
+  border-color: var(--success);
+  background: rgba(56, 161, 105, 0.05);
+  color: var(--success);
+}
+
+.dueAmountNotice {
+  border-color: var(--error);
+  background: rgba(229, 62, 62, 0.05);
+  color: var(--error);
+}
+
+.overpaymentNotice i,
+.dueAmountNotice i {
+  font-size: var(--font-size-xl);
+  flex-shrink: 0;
+}
+
+.overpaymentNotice strong,
+.dueAmountNotice strong {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  display: block;
+  margin-bottom: var(--spacing-xs);
+}
+
+.overpaymentNotice p,
+.dueAmountNotice p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Responsive Design - Mobile First
+   ========================================================================== */
+@media (max-width: 768px) {
+  .section {
+    margin: var(--spacing-md) 0;
+  }
+
+  .sectionHeader {
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+
+  .sectionTitle {
+    font-size: var(--font-size-lg);
+  }
+
+  .headerStats {
+    margin-left: 0;
+    margin-top: var(--spacing-sm);
+    width: 100%;
+    justify-content: center;
+  }
+
+  .summaryContent {
+    padding: var(--spacing-md);
+  }
+
+  .summaryGrid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+    max-width: none;
+  }
+
+  .summaryItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) 0;
+    border-bottom: 1px solid rgba(209, 213, 219, 0.2);
+  }
+
+  .summaryLabel {
+    text-align: left !important;
+    justify-content: flex-start !important;
+    flex: 1;
+    font-size: var(--font-size-sm);
+  }
+
+  .summaryValue {
+    text-align: right;
+    font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-base);
+  }
+
+  /* Mobile Hero Elements - Still highlighted but scaled */
+  .total .summaryLabel,
+  .balance .summaryLabel {
+    font-size: var(--font-size-base) !important;
+    padding: var(--spacing-sm) !important;
+    background: none;
+    border: none;
+  }
+
+  .total .summaryValue,
+  .balance .summaryValue {
+    font-size: var(--font-size-lg) !important;
+    padding: var(--spacing-sm) !important;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .overpaymentNotice,
+  .dueAmountNotice {
+    flex-direction: column;
+    text-align: center;
+    padding: var(--spacing-md);
+  }
+
+  .overpaymentNotice i,
+  .dueAmountNotice i {
+    font-size: var(--font-size-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionHeader {
+    padding: var(--spacing-sm);
+  }
+
+  .sectionTitle {
+    font-size: var(--font-size-base);
+  }
+
+  .toggleButton {
+    font-size: var(--font-size-base);
+  }
+
+  .summaryContent {
+    padding: var(--spacing-sm);
+  }
+
+  .summaryGrid {
+    font-size: var(--font-size-sm);
+  }
+
+  .total .summaryValue,
+  .balance .summaryValue {
+    font-size: var(--font-size-base) !important;
+  }
+
+  .headerStats {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+
+  .statItem {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs);
+  }
+}
+
+/* ==========================================================================
+   Dark Mode Support - Consistent with Global
+   ========================================================================== */
+.dark .section {
+  background: var(--surface);
+  box-shadow: 0 4px 8px var(--shadow);
+}
+
+.dark .summaryContent {
+  background: var(--background);
+  border-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .summaryGrid {
+  background: var(--surface);
+}
+
+.dark .emptyState {
+  background: var(--surface);
+  border-color: var(--text-light);
+}
+
+.dark .helpMessage i {
+  color: var(--secondary);
+}
+
+.dark .overpaymentNotice,
+.dark .dueAmountNotice {
+  background: var(--surface);
+}

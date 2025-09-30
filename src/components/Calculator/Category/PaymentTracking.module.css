@@ -1,0 +1,795 @@
+/* PaymentTracking.module.css - Complete implementation with add payment */
+
+/* ==========================================================================
+   Section Styles - Consistent with CostSummary
+   ========================================================================== */
+.section {
+  margin: var(--spacing-lg) 0;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 8px var(--shadow);
+  overflow: hidden;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ==========================================================================
+   Section Header - Matching CostSummary
+   ========================================================================== */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: linear-gradient(to right, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--surface);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  position: relative;
+}
+
+.sectionHeader:hover {
+  background: linear-gradient(to right, var(--primary-dark) 0%, var(--primary) 100%);
+}
+
+/* Toggle Button - Matching CostSummary */
+.toggleButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  color: var(--surface);
+  padding: var(--spacing-sm);
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.toggleButton:hover,
+.toggleButton:focus-visible {
+  color: var(--secondary);
+  transform: scale(1.1);
+}
+
+.toggleButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+  border-radius: var(--radius-sm);
+}
+
+/* Section Title - Matching CostSummary */
+.sectionTitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--surface);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-family: var(--font-family);
+}
+
+.paymentCount {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0 var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ==========================================================================
+   Content Area - Compact Layout
+   ========================================================================== */
+.content {
+  padding: var(--spacing-md);
+  background: var(--background);
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* ==========================================================================
+   Compact Summary - Essential Info Only
+   ========================================================================== */
+.summary {
+  background: var(--surface);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(209, 213, 219, 0.2);
+  box-shadow: 0 2px 4px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-xs) 0;
+  border-bottom: 1px solid rgba(209, 213, 219, 0.1);
+}
+
+.summaryRow:last-child {
+  border-bottom: none;
+}
+
+.summaryLabel {
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+}
+
+.summaryValue {
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  font-size: var(--font-size-base);
+  text-align: right;
+  min-width: 120px;
+}
+
+/* Special styling for key amounts */
+.summaryRow.grandTotal {
+  border-top: 2px solid var(--primary);
+  padding-top: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.grandTotal .summaryValue {
+  color: var(--primary);
+  font-size: var(--font-size-lg);
+}
+
+.deposit {
+  color: var(--success) !important;
+}
+
+.balance {
+  border-top: 2px solid var(--secondary);
+  padding-top: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.balance .summaryLabel {
+  color: var(--secondary);
+  font-weight: var(--font-weight-bold);
+}
+
+.balance .summaryValue {
+  color: var(--secondary);
+  font-size: var(--font-size-lg);
+}
+
+.overpaidIcon {
+  color: var(--success);
+}
+
+.overdueWarning {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: rgba(229, 62, 62, 0.05);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+/* ==========================================================================
+   Deposit Section - Compact
+   ========================================================================== */
+.depositSection {
+  background: rgba(56, 161, 105, 0.02);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(56, 161, 105, 0.2);
+}
+
+.sectionSubtitle {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  margin: 0 0 var(--spacing-sm) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.depositFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-md);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.field label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+}
+
+.field input,
+.field select {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field input:focus,
+.field select:focus {
+  outline: none;
+  border-color: var(--secondary);
+  box-shadow: 0 0 4px var(--shadow);
+}
+
+.field input:disabled,
+.field select:disabled {
+  background: rgba(233, 236, 239, 0.15);
+  cursor: not-allowed;
+}
+
+/* Checkbox styling */
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: auto;
+  accent-color: var(--secondary);
+  margin: 0;
+}
+
+/* ==========================================================================
+   Quick Actions - Clear Balance and Add Payment Toggle
+   ========================================================================== */
+.quickActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(209, 213, 219, 0.2);
+  box-shadow: 0 1px 3px var(--shadow);
+}
+
+.quickButton,
+.addPaymentToggle {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  transition: all 0.2s ease;
+  min-height: 40px;
+}
+
+.quickButton {
+  background: linear-gradient(135deg, var(--success) 0%, #28a745 100%);
+  color: var(--surface);
+}
+
+.quickButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #28a745 0%, var(--success) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.quickButton:disabled {
+  background: var(--text-light);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.addPaymentToggle {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+  color: var(--surface);
+}
+
+.addPaymentToggle:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.addPaymentToggle:disabled {
+  background: var(--text-light);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.addPaymentActive {
+  background: linear-gradient(135deg, var(--error) 0%, #dc3545 100%) !important;
+}
+
+.addPaymentActive:hover {
+  background: linear-gradient(135deg, #dc3545 0%, var(--error) 100%) !important;
+}
+
+.quickButton:focus-visible,
+.addPaymentToggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--secondary);
+}
+
+/* ==========================================================================
+   Add Payment Section - Compact Form
+   ========================================================================== */
+.addPaymentSection {
+  background: rgba(0, 123, 255, 0.02);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(0, 123, 255, 0.2);
+  box-shadow: 0 1px 3px var(--shadow);
+}
+
+.addPaymentFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.addPaymentActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.addButton {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: linear-gradient(135deg, var(--success) 0%, var(--primary) 100%);
+  color: var(--surface);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all 0.2s ease;
+  min-width: 180px;
+  justify-content: center;
+}
+
+.addButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--success) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.addButton:disabled {
+  background: var(--text-light);
+  cursor: not-allowed;
+  transform: none;
+  opacity: 0.6;
+}
+
+.addButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--secondary);
+}
+
+/* ==========================================================================
+   Payment Entries - Compact Table
+   ========================================================================== */
+.paymentEntries {
+  margin-top: var(--spacing-md);
+}
+
+.tableContainer {
+  overflow-x: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(209, 213, 219, 0.2);
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.paymentTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  background: var(--surface);
+  min-width: 500px;
+}
+
+.paymentTable th,
+.paymentTable td {
+  padding: var(--spacing-sm);
+  text-align: left;
+  border-bottom: 1px solid rgba(209, 213, 219, 0.1);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.paymentTable th {
+  background: var(--primary);
+  color: var(--surface);
+  font-weight: var(--font-weight-medium);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.paymentTable td {
+  background: var(--background);
+}
+
+.paymentTable tr:nth-child(even) td {
+  background: rgba(226, 232, 240, 0.03);
+}
+
+.paymentTable tr:hover td {
+  background: rgba(0, 123, 255, 0.05);
+}
+
+/* Row styling */
+.paidRow td {
+  background: rgba(56, 161, 105, 0.03) !important;
+}
+
+.paidRow .statusText {
+  color: var(--success);
+}
+
+.overdueRow td {
+  background: rgba(229, 62, 62, 0.03) !important;
+  border-left: 3px solid var(--error);
+}
+
+.overdueRow .statusText {
+  color: var(--error);
+}
+
+/* Table specific cell styling */
+.amountCell {
+  font-weight: var(--font-weight-bold);
+  text-align: right;
+  min-width: 80px;
+}
+
+.noteCell {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.statusText {
+  margin-left: var(--spacing-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.paymentTable input[type="checkbox"] {
+  margin-right: var(--spacing-xs);
+  accent-color: var(--secondary);
+  width: auto;
+}
+
+.paymentTable input,
+.paymentTable select {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+  border-radius: var(--radius-xs);
+  background: var(--surface);
+  color: var(--text);
+  box-sizing: border-box;
+}
+
+.paymentTable input:focus,
+.paymentTable select:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 2px var(--shadow);
+  outline: none;
+}
+
+/* Actions */
+.actionsCell {
+  display: flex;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+  width: 80px;
+}
+
+.editButton,
+.saveButton,
+.cancelButton,
+.removeButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.editButton { 
+  color: var(--secondary); 
+}
+
+.saveButton { 
+  color: var(--success); 
+}
+
+.cancelButton { 
+  color: var(--text-light); 
+}
+
+.removeButton { 
+  color: var(--error); 
+}
+
+.editButton:hover,
+.saveButton:hover,
+.cancelButton:hover,
+.removeButton:hover {
+  transform: scale(1.1);
+  background: rgba(0, 0, 0, 0.1);
+  color: inherit;
+}
+
+.editButton:focus-visible,
+.saveButton:focus-visible,
+.cancelButton:focus-visible,
+.removeButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--secondary);
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+.emptyState {
+  text-align: center;
+  padding: var(--spacing-lg);
+  background: var(--surface);
+  border: 2px dashed var(--text-light);
+  border-radius: var(--radius-md);
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.emptyState i {
+  color: var(--secondary);
+  margin-bottom: 0;
+}
+
+.emptyState h4 {
+  color: var(--text);
+  margin: 0;
+  font-size: var(--font-size-base);
+}
+
+.emptyState p {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  max-width: 300px;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (max-width: 768px) {
+  .section {
+    margin: var(--spacing-md) 0;
+  }
+
+  .sectionHeader {
+    padding: var(--spacing-sm);
+  }
+
+  .sectionTitle {
+    font-size: var(--font-size-lg);
+  }
+
+  .content {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .summaryRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) 0;
+  }
+
+  .summaryValue {
+    align-self: flex-end;
+    font-size: var(--font-size-sm);
+  }
+
+  .grandTotal .summaryValue,
+  .balance .summaryValue {
+    font-size: var(--font-size-base);
+  }
+
+  .depositFields,
+  .addPaymentFields {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .quickActions {
+    flex-direction: column;
+  }
+
+  .quickButton,
+  .addPaymentToggle {
+    width: 100%;
+  }
+
+  .addPaymentActions {
+    justify-content: center;
+    flex-direction: column;
+  }
+
+  .addButton {
+    width: 100%;
+    max-width: 250px;
+  }
+
+  .paymentTable {
+    min-width: 100%;
+    font-size: var(--font-size-xs);
+  }
+
+  .paymentTable th,
+  .paymentTable td {
+    padding: var(--spacing-xs);
+  }
+
+  .actionsCell {
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  .noteCell {
+    max-width: 100px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionTitle {
+    font-size: var(--font-size-base);
+  }
+
+  .summaryValue {
+    font-size: var(--font-size-xs);
+  }
+
+  .grandTotal .summaryValue,
+  .balance .summaryValue {
+    font-size: var(--font-size-sm);
+  }
+
+  .quickButton,
+  .addPaymentToggle {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+  }
+
+  .addButton {
+    font-size: var(--font-size-xs);
+    padding: var(--spacing-sm);
+  }
+
+  .paymentTable th,
+  .paymentTable td {
+    padding: var(--spacing-xs);
+    font-size: calc(var(--font-size-sm) * 0.9);
+  }
+
+  .actionsCell {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    width: auto;
+  }
+
+  .editButton,
+  .saveButton,
+  .cancelButton,
+  .removeButton {
+    width: 28px;
+    height: 28px;
+    font-size: var(--font-size-base);
+  }
+}
+
+/* ==========================================================================
+   Dark Mode Support
+   ========================================================================== */
+.dark .section {
+  background: var(--surface);
+  box-shadow: 0 4px 8px var(--shadow);
+}
+
+.dark .content {
+  background: var(--background);
+  border-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .summary {
+  background: var(--surface);
+  border-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .paymentTable {
+  background: var(--surface);
+  border-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .paymentTable td {
+  background: var(--background);
+}
+
+.dark .depositSection {
+  background: rgba(56, 161, 105, 0.05);
+  border-color: rgba(56, 161, 105, 0.3);
+}
+
+.dark .addPaymentSection {
+  background: rgba(0, 123, 255, 0.05);
+  border-color: rgba(0, 123, 255, 0.3);
+}
+
+.dark .quickActions {
+  background: var(--surface);
+  border-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .emptyState {
+  background: var(--surface);
+  border-color: var(--text-light);
+}
+
+.dark .quickButton:hover,
+.dark .addPaymentToggle:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.dark .editButton:hover,
+.dark .saveButton:hover,
+.dark .cancelButton:hover,
+.dark .removeButton:hover {
+  background: rgba(255, 255, 255, 0.1);
+}

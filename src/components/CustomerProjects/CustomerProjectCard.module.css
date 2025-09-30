@@ -1,0 +1,183 @@
+.projectCard {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(249, 250, 251, 0.95) 100%);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(var(--primary), 0.2);
+  margin-bottom: var(--spacing-md);
+}
+
+.projectCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(var(--primary), 0.4);
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary);
+  font-size: var(--font-size-md);
+}
+
+.projectName {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  flex-grow: 1;
+}
+
+.statusBadge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-transform: capitalize;
+  color: var(--surface);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.completed { background: linear-gradient(135deg, var(--success) 0%, #2e8b57 100%); }
+.overdue { background: linear-gradient(135deg, var(--error) 0%, #c53030 100%); }
+.pending { background: linear-gradient(135deg, #95a5a6 0%, #d1d5db 100%); }
+.inprogress { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); }
+
+.cardContent {
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+
+.progressBar {
+  margin: var(--spacing-sm) 0;
+  position: relative;
+  background: #e2e8f0;
+  border-radius: var(--radius-sm);
+  height: 8px;
+  overflow: hidden;
+}
+
+.progressBar span {
+  position: absolute;
+  top: -20px;
+  left: 0;
+  font-size: var(--font-size-xs);
+  color: var(--primary-dark);
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(135deg, var(--success) 0%, var(--primary) 100%);
+  transition: width 0.3s ease;
+}
+
+.moneyDetails {
+  font-weight: var(--font-weight-medium);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.amountDisplay {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+  padding: 2px 6px;
+  background: linear-gradient(135deg, rgba(var(--primary), 0.1) 0%, rgba(var(--primary-dark), 0.05) 100%);
+  border-radius: var(--radius-sm);
+  min-width: 60px;
+  text-align: center;
+}
+
+.cardActions {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: var(--spacing-md);
+  justify-content: flex-end;
+}
+
+.actionButton {
+  padding: 0.6rem;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--surface);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.actionButton:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(var(--primary), 0.5);
+}
+
+.editButton { background: linear-gradient(135deg, var(--success) 0%, #2e8b57 100%); }
+.deleteButton { background: linear-gradient(135deg, var(--error) 0%, #c53030 100%); }
+.downloadButton { background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%); }
+
+.detailsSection {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: rgba(var(--surface), 0.9);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.detailsSection h4 {
+  font-size: var(--font-size-md);
+  color: var(--primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.detailContent {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+}
+
+.detailContent p {
+  margin: 0.5rem 0;
+}
+
+.detailContent strong {
+  color: var(--text);
+}
+
+@media (max-width: 768px) {
+  .projectCard {
+    padding: var(--spacing-md);
+  }
+  .actionButton {
+    width: 36px;
+    height: 36px;
+  }
+  .projectName {
+    font-size: var(--font-size-md);
+  }
+  .progressBar {
+    height: 6px;
+  }
+  .amountDisplay {
+    font-size: 0.7rem;
+    min-width: 50px;
+    padding: 2px 4px;
+  }
+}

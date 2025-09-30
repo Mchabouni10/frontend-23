@@ -1,0 +1,463 @@
+/* src/components/Calculator/CostBreakdown/CostBreakdown.module.css */
+
+/* Main Container */
+.costBreakdown {
+    font-family: poppins, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--background) 100%);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px var(--shadow);
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+  transition: background-color 0.3s ease;
+}
+
+/* Section Titles */
+.sectionTitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--primary);
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--primary);
+}
+
+.subSectionTitle {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  margin-bottom: var(--spacing-sm);
+  padding-left: var(--spacing-sm);
+  border-left: 2px solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Sections */
+.categorySection,
+.totalSection,
+.paymentSection {
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 1px 4px var(--shadow);
+  transition: transform 0.1s ease, background-color 0.3s ease;
+}
+
+.categorySection:hover,
+.totalSection:hover,
+.paymentSection:hover {
+  transform: translateY(-0.5px);
+}
+
+/* Tables */
+.breakdownTable {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  margin-top: var(--spacing-sm);
+}
+
+.breakdownTable th,
+.breakdownTable td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 0.5px solid rgba(226, 232, 240, 0.2);
+  text-align: left;
+}
+
+.breakdownTable th {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--surface);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  font-size: var(--font-size-sm);
+}
+
+.breakdownTable td {
+  background: var(--surface);
+  transition: background-color 0.3s ease;
+}
+
+/* Table Row Styles */
+.categoryRow:hover td {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.totalRow {
+  border-top: 2px solid var(--primary);
+}
+
+.totalRow td {
+  font-weight: var(--font-weight-bold);
+  background: var(--background);
+  color: var(--primary);
+  font-size: var(--font-size-base);
+}
+
+.subtotalRow {
+  border-top: 1px solid var(--primary);
+}
+
+.subtotalRow td {
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  background: rgba(230, 240, 250, 0.1);
+  border-top: 1px solid var(--primary);
+}
+
+.discountRow td {
+  font-weight: var(--font-weight-medium);
+  color: var(--error);
+  background: rgba(255, 0, 0, 0.05);
+  transition: background-color 0.3s ease;
+}
+
+.discountRow:hover td {
+  background: rgba(255, 0, 0, 0.1);
+}
+
+.grandTotalRow {
+  border-top: 2px solid var(--primary);
+}
+
+.grandTotalRow td {
+  font-weight: var(--font-weight-extrabold);
+  font-size: var(--font-size-base);
+  color: var(--primary-dark);
+  background: linear-gradient(135deg, var(--background) 0%, rgba(219, 226, 234, 0.2) 100%);
+  border-top: 2px solid var(--primary);
+  padding: var(--spacing-md);
+}
+
+.overdueRow td {
+  font-weight: var(--font-weight-medium);
+  color: var(--error);
+  background: rgba(255, 0, 0, 0.05);
+}
+
+.overpaymentRow td {
+  font-weight: var(--font-weight-medium);
+  color: #d69e2e;
+  background: rgba(254, 252, 191, 0.2);
+}
+
+.depositRow td {
+  background: rgba(0, 255, 255, 0.1);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Status Indicators */
+.remaining {
+  color: var(--error);
+  font-weight: var(--font-weight-bold);
+}
+
+.paid {
+  color: var(--success);
+  font-weight: var(--font-weight-bold);
+}
+
+.paidStatus {
+  color: var(--success);
+  font-weight: var(--font-weight-medium);
+  background: rgba(34, 197, 94, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+.dueStatus {
+  color: var(--error);
+  font-weight: var(--font-weight-medium);
+  background: rgba(239, 68, 68, 0.1);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+}
+
+/* Detail Breakdown Styles */
+.detailRow td {
+  vertical-align: top;
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.totalValue {
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  display: block;
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-base);
+}
+
+.detailBreakdown {
+  background: var(--background);
+  border: 1px solid rgba(226, 232, 240, 0.2);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.02);
+  transition: background-color 0.3s ease;
+  margin-top: var(--spacing-sm);
+}
+
+.innerTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.innerTable th,
+.innerTable td {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 0.5px solid rgba(226, 232, 240, 0.2);
+  text-align: left;
+}
+
+.innerTable th {
+  background: var(--primary-dark);
+  color: var(--surface);
+  font-weight: var(--font-weight-bold);
+  text-align: left;
+  font-size: var(--font-size-sm);
+}
+
+.innerTable td {
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+}
+
+.innerTable tr:hover td {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.innerTable tr:last-child td {
+  border-bottom: none;
+}
+
+/* Toggle Button */
+.toggleButton {
+  margin-left: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-sm);
+  background: var(--primary);
+  color: var(--surface);
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: var(--font-weight-medium);
+}
+
+.toggleButton:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.toggleButton:active {
+  transform: translateY(0);
+}
+
+/* Error and Message Styles */
+.errorSection {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.errorSection h4 {
+  color: var(--error);
+  margin-bottom: var(--spacing-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.errorSection ul {
+  margin: 0;
+  padding-left: var(--spacing-md);
+}
+
+.errorSection li {
+  color: var(--error);
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+}
+
+.noDataMessage {
+  text-align: center;
+  padding: var(--spacing-lg);
+  color: var(--text-light);
+  background: var(--background);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--primary);
+}
+
+.noDataMessage p {
+  margin: 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Payment Section Specific Styles */
+.paymentSection h5 {
+  font-size: var(--font-size-md);
+  color: var(--primary);
+  margin: var(--spacing-sm) 0;
+  font-weight: var(--font-weight-bold);
+}
+
+/* Utility Classes */
+.subtotal {
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+}
+
+/* Enhanced Visual Hierarchy */
+.breakdownTable tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.breakdownTable tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Better spacing for nested content */
+.detailBreakdown > p {
+  margin: var(--spacing-sm) 0;
+  color: var(--text-light);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Improved button styling consistency */
+.subSectionTitle .toggleButton {
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin-left: auto;
+}
+
+/* Enhanced table alternating rows */
+.innerTable tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Better visual separation for major sections */
+.categorySection {
+  border-left: 3px solid var(--primary);
+}
+
+.totalSection {
+  border-left: 3px solid var(--success);
+}
+
+.paymentSection {
+  border-left: 3px solid var(--warning);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .costBreakdown {
+    padding: var(--spacing-sm);
+    margin-top: 0;
+  }
+
+  .sectionTitle {
+    font-size: var(--font-size-base);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .subSectionTitle {
+    font-size: var(--font-size-sm);
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .subSectionTitle .toggleButton {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+
+  .breakdownTable,
+  .innerTable {
+    font-size: 0.7rem;
+  }
+
+  .breakdownTable th,
+  .breakdownTable td,
+  .innerTable th,
+  .innerTable td {
+    padding: var(--spacing-sm);
+  }
+
+  .detailBreakdown {
+    padding: var(--spacing-sm);
+  }
+
+  .grandTotalRow td {
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .toggleButton {
+    font-size: 0.65rem;
+    padding: var(--spacing-sm);
+  }
+
+  .totalValue {
+    font-size: var(--font-size-sm);
+  }
+
+  /* Stack table content on mobile if needed */
+  .breakdownTable thead {
+    display: none;
+  }
+
+  .breakdownTable tbody tr {
+    display: block;
+    border: 1px solid var(--primary);
+    margin-bottom: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm);
+  }
+
+  .breakdownTable td {
+    display: block;
+    text-align: right;
+    border: none;
+    padding: var(--spacing-sm) 0;
+  }
+
+  .breakdownTable td:before {
+    content: attr(data-label) ": ";
+    float: left;
+    font-weight: var(--font-weight-bold);
+    color: var(--primary);
+  }
+}
+
+@media (max-width: 480px) {
+  .detailBreakdown {
+    padding: var(--spacing-sm);
+  }
+
+  .innerTable {
+    font-size: 0.6rem;
+  }
+
+  .errorSection {
+    padding: var(--spacing-sm);
+  }
+}

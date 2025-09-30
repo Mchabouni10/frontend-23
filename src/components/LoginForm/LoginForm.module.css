@@ -1,0 +1,122 @@
+/* src/components/LoginForm/LoginForm.module.css */
+.formContainer {
+  width: 100%;
+  padding: var(--spacing-xl); /* 2rem */
+  background: var(--surface); /* #ffffff in light mode, #2d3748 in dark mode */
+  border-radius: var(--radius-lg); /* 12px */
+  transition: background-color 0.3s ease;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg); /* 1.5rem */
+}
+
+.title {
+  text-align: center;
+  color: var(--text); /* #2d3748 in light mode, #e2e8f0 in dark mode */
+  font-size: 1.8rem;
+  font-weight: var(--font-weight-bold); /* 600 */
+  margin-bottom: var(--spacing-md); /* 1rem */
+  text-transform: uppercase;
+}
+
+.inputGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-light); /* #6b7280 in light mode, #94a3b8 in dark mode */
+  font-size: 1.1rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.9rem 1rem 0.9rem 2.5rem; /* Extra padding for icon */
+  border: 1px solid rgba(209, 213, 219, 0.3); /* Subtle border */
+  border-radius: var(--radius-sm); /* 6px */
+  font-size: var(--font-size-base); /* 1rem */
+  color: var(--text); /* #2d3748 in light mode, #e2e8f0 in dark mode */
+  background: var(--surface); /* Matches container */
+  transition: all 0.3s ease;
+}
+
+:global(.dark) .input {
+  border: 1px solid rgba(148, 163, 184, 0.3); /* Dark mode border based on --text-light */
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--primary); /* #2c3e50 in light mode, #4a6fa5 in dark mode */
+  box-shadow: 0 0 0 2px var(--shadow); /* Uses --shadow */
+}
+
+.passwordToggleIcon {
+  position: absolute;
+  right: 12px;
+  color: var(--text-light); /* #6b7280 in light mode, #94a3b8 in dark mode */
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 0.9rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); /* Uses --primary and --primary-dark */
+  color: var(--surface); /* #ffffff in light mode, #ffffff in dark mode */
+  border: none;
+  border-radius: var(--radius-sm); /* 6px */
+  font-size: var(--font-size-base); /* 1rem */
+  font-weight: var(--font-weight-bold); /* 600 */
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%); /* Reversed gradient */
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px var(--shadow); /* Uses --shadow */
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.loader {
+  width: 20px;
+  height: 20px;
+  border: 3px solid var(--surface); /* Matches button text color */
+  border-top: 3px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+.errorMessage {
+  color: var(--error); /* #e53e3e in light mode, #f87171 in dark mode */
+  text-align: center;
+  font-size: var(--font-size-sm); /* 0.875rem */
+  margin-top: var(--spacing-sm); /* 0.5rem */
+  animation: shake 0.3s ease;
+}
+
+/* Animations */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  50% { transform: translateX(5px); }
+  75% { transform: translateX(-5px); }
+  100% { transform: translateX(0); }
+}

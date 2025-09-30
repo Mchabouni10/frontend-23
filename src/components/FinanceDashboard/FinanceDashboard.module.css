@@ -1,0 +1,534 @@
+/* FinanceDashboard.module.css - Enhanced with global consistency */
+
+.dashboard {
+  padding: var(--spacing-lg);
+  animation: fadeIn 0.5s ease-in-out;
+  min-height: calc(100vh - 2 * var(--spacing-lg));
+}
+
+/* Controls */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+/* Key Metrics Grid */
+.metricsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--spacing-lg);
+  margin: var(--spacing-xl) 0;
+}
+
+.metricCard {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: 0 4px 12px var(--shadow);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.metricCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--shadow);
+  border-color: var(--primary);
+}
+
+.metricIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--surface);
+  font-size: var(--font-size-xl);
+  flex-shrink: 0;
+}
+
+.metricContent h3 {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-light);
+  margin: 0 0 var(--spacing-sm) 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metricValue {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.positive {
+  color: var(--success) !important;
+}
+
+.negative {
+  color: var(--error) !important;
+}
+
+/* Charts Grid */
+.chartGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: var(--spacing-lg);
+  margin: var(--spacing-xl) 0;
+}
+
+.chartCard {
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.chartCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px var(--shadow);
+}
+
+.chartHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid rgba(52, 152, 219, 0.1);
+}
+
+.chartHeader h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin: 0;
+}
+
+.chartHeader h3 svg {
+  color: var(--secondary);
+  font-size: var(--font-size-base);
+}
+
+.toggleButton {
+  background: none;
+  border: 1px solid var(--text-light);
+  border-radius: var(--radius-sm);
+  color: var(--text-light);
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.toggleButton:hover {
+  background: var(--error);
+  color: var(--surface);
+  border-color: var(--error);
+}
+
+.chartWrapper {
+  position: relative;
+  width: 100%;
+  height: 300px;
+}
+
+/* Loading States */
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+  min-height: 400px;
+  text-align: center;
+}
+
+.loadingIcon {
+  font-size: var(--font-size-2xl);
+  color: var(--secondary);
+}
+
+.noData {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  min-height: 400px;
+  text-align: center;
+  color: var(--text-light);
+}
+
+.noDataIcon {
+  font-size: 4rem;
+  color: var(--text-light);
+  opacity: 0.5;
+  margin-bottom: var(--spacing-md);
+}
+
+.noData h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  margin: 0;
+}
+
+.noData p {
+  font-size: var(--font-size-base);
+  margin: 0;
+  max-width: 400px;
+}
+
+/* Hidden Charts Section */
+.hiddenCharts {
+  margin: var(--spacing-xl) 0;
+  padding: var(--spacing-lg);
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px var(--shadow);
+  border: 2px dashed var(--text-light);
+}
+
+.hiddenCharts h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  margin: 0 0 var(--spacing-md) 0;
+  text-align: center;
+}
+
+.hiddenChartsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  justify-content: center;
+}
+
+.hiddenChartsList button {
+  text-transform: capitalize;
+}
+
+/* Modal Styles - Following global patterns */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: var(--spacing-md);
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--shadow);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 2px solid var(--shadow);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: var(--surface);
+}
+
+.modalHeader h3 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+}
+
+.modalClose {
+  background: none;
+  border: 2px solid var(--surface);
+  color: var(--surface);
+  border-radius: var(--radius-sm);
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: var(--font-size-base);
+}
+
+.modalClose:hover {
+  background: var(--surface);
+  color: var(--primary);
+  transform: scale(1.1);
+}
+
+.modalBody {
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.projectInfo {
+  margin-bottom: var(--spacing-xl);
+}
+
+.projectInfo h4 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  margin: 0 0 var(--spacing-md) 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--shadow);
+}
+
+.financialSummary {
+  background: rgba(52, 152, 219, 0.05);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  border-left: 4px solid var(--secondary);
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+}
+
+.summaryItem:not(:last-child) {
+  border-bottom: 1px solid var(--shadow);
+}
+
+.profitItem {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  background: var(--surface);
+  margin: var(--spacing-sm) -var(--spacing-lg) -var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.paymentsSection {
+  margin-bottom: var(--spacing-xl);
+}
+
+.paymentsSection h5 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  margin: 0 0 var(--spacing-md) 0;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--shadow);
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--shadow);
+}
+
+.modalTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  background: var(--surface);
+}
+
+.modalTable th {
+  background: var(--primary);
+  color: var(--surface);
+  padding: var(--spacing-md);
+  text-align: left;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modalTable td {
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--shadow);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.modalTable tbody tr:hover {
+  background: rgba(52, 152, 219, 0.05);
+}
+
+.depositRow {
+  background: rgba(46, 204, 113, 0.1) !important;
+  font-weight: var(--font-weight-medium);
+}
+
+.statusPaid {
+  background: var(--success);
+  color: var(--surface);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusPending {
+  background: var(--error);
+  color: var(--surface);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-top: 2px solid var(--shadow);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .chartGrid {
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  }
+  
+  .metricsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard {
+    padding: var(--spacing-md);
+  }
+  
+  .chartGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metricsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--spacing-md);
+  }
+  
+  .metricCard {
+    padding: var(--spacing-md);
+    gap: var(--spacing-sm);
+  }
+  
+  .metricIcon {
+    width: 50px;
+    height: 50px;
+    font-size: var(--font-size-lg);
+  }
+  
+  .metricValue {
+    font-size: var(--font-size-xl);
+  }
+  
+  .chartWrapper {
+    height: 250px;
+  }
+  
+  .chartHeader {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+  
+  .modal {
+    margin: var(--spacing-md);
+    max-height: calc(100vh - 2 * var(--spacing-md));
+  }
+  
+  .modalHeader {
+    padding: var(--spacing-md);
+  }
+  
+  .modalBody {
+    padding: var(--spacing-md);
+  }
+  
+  .modalFooter {
+    padding: var(--spacing-md);
+  }
+  
+  .hiddenChartsList {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .hiddenChartsList button {
+    width: 100%;
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metricsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chartCard {
+    padding: var(--spacing-md);
+  }
+  
+  .chartWrapper {
+    height: 200px;
+  }
+  
+  .modalTable {
+    font-size: var(--font-size-sm);
+  }
+  
+  .modalTable th,
+  .modalTable td {
+    padding: var(--spacing-sm);
+  }
+  
+  .controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+}

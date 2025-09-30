@@ -1,0 +1,1 @@
+export const COST_OPTIONS = Array.from({ length: 21 }, (_, i) => i.toString());
