@@ -17,17 +17,28 @@ function sanitizeCategory(category) {
     workItems: rawItems.map((item) => {
       let fixedType = item.measurementType;
 
-      // If missing or invalid â†’ fix to square-foot
+      // If missing or invalid → fix to square-foot
       if (!MEASUREMENT_TYPE_UNITS[fixedType]) {
         console.warn(
-          `âš ï¸ Fixed invalid measurementType "${fixedType}" â†’ "${MEASUREMENT_TYPES.SQUARE_FOOT}"`
+          `⚠️ Fixed invalid measurementType "${fixedType}" → "${MEASUREMENT_TYPES.SQUARE_FOOT}"`
         );
         fixedType = MEASUREMENT_TYPES.SQUARE_FOOT;
       }
 
+      // CRITICAL FIX: Ensure costs are numbers, not undefined
+      const materialCost = item.materialCost !== undefined && item.materialCost !== null 
+        ? Number(item.materialCost) 
+        : 0;
+      const laborCost = item.laborCost !== undefined && item.laborCost !== null 
+        ? Number(item.laborCost) 
+        : 0;
+
+      // Preserve ALL item properties with explicit cost handling
       return {
         ...item,
         measurementType: fixedType,
+        materialCost: isNaN(materialCost) ? 0 : materialCost,
+        laborCost: isNaN(laborCost) ? 0 : laborCost,
       };
     }),
   };
@@ -72,9 +83,9 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
     setCategories((prev) => [...prev, sanitizeCategory(category)]);
   }, [setCategories]);
 
-  // Update a category by index
+  // CRITICAL FIX: Update category with robust cost preservation
   const updateCategory = useCallback((index, updates) => {
-    setCategories((prev) => {
+    setCategoriesState((prev) => {
       if (index < 0 || index >= prev.length) {
         console.warn(`Invalid category index: ${index}`);
         return prev;
@@ -85,11 +96,44 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
         return prev;
       }
 
-      return prev.map((category, i) =>
-        i === index ? sanitizeCategory({ ...category, ...updates }) : category
-      );
+      // Create new array with updated category
+      const newCategories = prev.map((category, i) => {
+        if (i !== index) return category;
+        
+        // Merge updates with existing category
+        const updatedCategory = { ...category, ...updates };
+        
+        // If workItems are being updated, sanitize them properly
+        if (updates.workItems) {
+          updatedCategory.workItems = updates.workItems.map(item => {
+            // Ensure measurement type is valid
+            const measurementType = MEASUREMENT_TYPE_UNITS[item.measurementType] 
+              ? item.measurementType 
+              : MEASUREMENT_TYPES.SQUARE_FOOT;
+            
+            // CRITICAL: Convert costs to numbers and handle all edge cases
+            const materialCost = item.materialCost !== undefined && item.materialCost !== null
+              ? Number(item.materialCost)
+              : 0;
+            const laborCost = item.laborCost !== undefined && item.laborCost !== null
+              ? Number(item.laborCost)
+              : 0;
+
+            return {
+              ...item,
+              measurementType,
+              materialCost: isNaN(materialCost) ? 0 : Math.max(0, materialCost),
+              laborCost: isNaN(laborCost) ? 0 : Math.max(0, laborCost),
+            };
+          });
+        }
+        
+        return updatedCategory;
+      });
+
+      return newCategories;
     });
-  }, [setCategories]);
+  }, []);
 
   // Clear all categories
   const clearCategories = useCallback(() => {
@@ -142,6 +186,5 @@ export const useCategories = () => {
   }
   return context;
 };
-
 
 

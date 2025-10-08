@@ -9,6 +9,7 @@ import CategoryList from './Category/CategoryList';
 import LaborPricingSheet from './LaborPricingSheet/LaborPricingSheet';
 import CostSummary from './Category/CostSummary';
 import PaymentTracking from './Category/PaymentTracking';
+import AdditionalCosts from './Category/AdditionalCosts';
 import styles from './Calculator.module.css';
 
 export default function Calculator({ disabled = false }) {
@@ -173,6 +174,7 @@ export default function Calculator({ disabled = false }) {
         {activeView === 'calculator' && (
           <div className={styles.contentPanel}>
             <CategoryList disabled={disabled} />
+            <AdditionalCosts disabled={disabled} />
             <CostSummary />
             <PaymentTracking disabled={disabled} />
           </div>

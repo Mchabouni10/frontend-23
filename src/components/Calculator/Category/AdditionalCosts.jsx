@@ -16,11 +16,44 @@ export default function AdditionalCosts({ disabled = false }) {
   const [useManualLaborDiscount, setUseManualLaborDiscount] = useState(false);
   const [expandedSections, setExpandedSections] = useState({ additionalCosts: true });
 
-  // Initialize CalculatorEngine with categories from context
-  const calculator = useMemo(() => new CalculatorEngine(categories, settings), [categories, settings]);
+  // FIX 1: Stabilize dependencies using JSON serialization
+  // This prevents calculator from recreating on every render
+  const categoriesKey = useMemo(() => JSON.stringify(categories), [categories]);
+  const settingsKey = useMemo(() => JSON.stringify(settings), [settings]);
+
+  // Initialize CalculatorEngine with stable dependencies
+  const calculator = useMemo(() => {
+    return new CalculatorEngine(categories, settings);
+  }, [categoriesKey, settingsKey]);
 
   // Calculate totals to derive monetary values
-  const totals = useMemo(() => calculator.calculateTotals(), [calculator]);
+  const totals = useMemo(() => {
+    try {
+      return calculator.calculateTotals();
+    } catch (error) {
+      console.error('Error calculating totals:', error);
+      return {
+        wasteCost: '0.00',
+        taxAmount: '0.00',
+        markupAmount: '0.00',
+        laborDiscount: '0.00',
+        total: '0.00'
+      };
+    }
+  }, [calculator]);
+
+  // NEW: Calculate additional costs summary for innovative breakdown
+  const additionalCostsSummary = useMemo(() => {
+    const waste = parseFloat(totals.wasteCost) || 0;
+    const tax = parseFloat(totals.taxAmount) || 0;
+    const markup = parseFloat(totals.markupAmount) || 0;
+    const laborDiscount = parseFloat(totals.laborDiscount) || 0;
+    const transportation = parseFloat(settings.transportationFee) || 0;
+    const misc = parseFloat(totals.miscFeesTotal) || 0;
+    const totalAdditional = waste + tax + markup + transportation + misc;
+    const percentage = totals.total ? (totalAdditional / parseFloat(totals.total) * 100).toFixed(1) : 0;
+    return { totalAdditional: totalAdditional.toFixed(2), percentage: `${percentage}%` };
+  }, [totals, settings.transportationFee]);
 
   // Find deposit payment for display
   const depositPayment = useMemo(() => {
@@ -121,6 +154,14 @@ export default function AdditionalCosts({ disabled = false }) {
     }));
   };
 
+  // NEW: Innovative tooltip helper for modern UX
+  const renderTooltip = (text, children) => (
+    <div className={styles.tooltipWrapper}>
+      {children}
+      <span className={styles.tooltip}>{text}</span>
+    </div>
+  );
+
   // Safe settings with proper defaults
   const safeSettings = {
     wasteFactor: 0,
@@ -147,14 +188,20 @@ export default function AdditionalCosts({ disabled = false }) {
         <h3 className={styles.sectionTitle}>
           <i className="fas fa-cogs" /> Additional Costs
         </h3>
+        {/* UPDATED: Compact one-line header with Grand Total + Additional (percentage) */}
+        <div className={styles.totalCost}>
+          <span className={styles.additionalInline}> +${additionalCostsSummary.totalAdditional} ({additionalCostsSummary.percentage})</span>
+        </div>
       </div>
       {expandedSections.additionalCosts && (
         <div className={styles.settingsContent}>
           {/* Waste Factor */}
           <div className={styles.field}>
-            <label>
-              <i className="fas fa-recycle" /> Waste Factor (%):
-            </label>
+            {renderTooltip('Percentage of material cost added for waste/scrap', 
+              <label>
+                <i className="fas fa-recycle" /> Waste Factor (%):
+              </label>
+            )}
             <input
               type="number"
               value={(safeSettings.wasteFactor * 100).toFixed(1)}
@@ -171,9 +218,11 @@ export default function AdditionalCosts({ disabled = false }) {
 
           {/* Transportation Fee */}
           <div className={styles.field}>
-            <label>
-              <i className="fas fa-truck" /> Transportation Fee ($):
-            </label>
+            {renderTooltip('Flat fee for transportation and delivery', 
+              <label>
+                <i className="fas fa-truck" /> Transportation Fee ($):
+              </label>
+            )}
             <input
               type="number"
               value={safeSettings.transportationFee}
@@ -186,9 +235,11 @@ export default function AdditionalCosts({ disabled = false }) {
 
           {/* Tax Rate */}
           <div className={styles.field}>
-            <label>
-              <i className="fas fa-percentage" /> Tax Rate (%):
-            </label>
+            {renderTooltip('Sales tax rate applied to subtotal', 
+              <label>
+                <i className="fas fa-percentage" /> Tax Rate (%):
+              </label>
+            )}
             <input
               type="number"
               value={(safeSettings.taxRate * 100).toFixed(1)}
@@ -205,9 +256,11 @@ export default function AdditionalCosts({ disabled = false }) {
 
           {/* Markup */}
           <div className={styles.field}>
-            <label>
-              <i className="fas fa-chart-line" /> Markup (%):
-            </label>
+            {renderTooltip('Profit margin percentage applied to subtotal', 
+              <label>
+                <i className="fas fa-chart-line" /> Markup (%):
+              </label>
+            )}
             {useManualMarkup ? (
               <input
                 type="number"
@@ -247,9 +300,11 @@ export default function AdditionalCosts({ disabled = false }) {
 
           {/* Labor Discount */}
           <div className={styles.field}>
-            <label>
-              <i className="fas fa-cut" /> Labor Discount (%):
-            </label>
+            {renderTooltip('Discount applied to total labor costs', 
+              <label>
+                <i className="fas fa-cut" /> Labor Discount (%):
+              </label>
+            )}
             {useManualLaborDiscount ? (
               <input
                 type="number"
@@ -289,9 +344,11 @@ export default function AdditionalCosts({ disabled = false }) {
 
           {/* Misc Fees */}
           <div className={styles.miscFees}>
-            <label>
-              <i className="fas fa-money-bill-wave" /> Miscellaneous Fees:
-            </label>
+            {renderTooltip('Additional one-time fees (e.g., permits, inspections)', 
+              <label>
+                <i className="fas fa-money-bill-wave" /> Miscellaneous Fees:
+              </label>
+            )}
             {(safeSettings.miscFees || []).map((fee, index) => (
               <div key={index} className={styles.miscFeeRow}>
                 <div className={styles.inputWrapper}>
@@ -336,6 +393,17 @@ export default function AdditionalCosts({ disabled = false }) {
               </button>
             )}
           </div>
+
+          {/* NEW: Deposit info if available, for modern payment preview */}
+          {depositPayment && (
+            <div className={styles.depositInfo}>
+              <i className="fas fa-hand-holding-usd" />
+              <span>Deposit Due: ${depositPayment.amount.toFixed(2)}</span>
+              <span className={styles.depositStatus}>
+                {depositPayment.isPaid ? 'Paid' : 'Pending'}
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -345,4 +413,3 @@ export default function AdditionalCosts({ disabled = false }) {
 AdditionalCosts.propTypes = {
   disabled: PropTypes.bool,
 };
-

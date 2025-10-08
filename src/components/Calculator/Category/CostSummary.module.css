@@ -1,5 +1,4 @@
-/* CostSummary.module.css - Consistent with AdditionalCosts */
-
+/* src/components/Calculator/Category/CostSummary.module.css */
 /* ==========================================================================
    Section Styles - Consistent with AdditionalCosts
    ========================================================================== */
@@ -13,7 +12,7 @@
 }
 
 /* ==========================================================================
-   Section Header - Matching AdditionalCosts
+   Section Header - Enhanced with Simplified Icon-based Overview
    ========================================================================== */
 .sectionHeader {
   display: flex;
@@ -30,6 +29,35 @@
 
 .sectionHeader:hover {
   background: linear-gradient(to right, var(--primary-dark) 0%, var(--primary) 100%);
+}
+
+/* SIMPLIFIED ONE-LINE: Header Inline with Total and Stats */
+.headerInline {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-sm);
+}
+
+.headerTotal {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--surface);
+  white-space: nowrap;
+}
+
+.headerStats {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--surface);
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.headerStats i {
+  font-size: var(--font-size-sm);
 }
 
 /* Toggle Button - Matching AdditionalCosts */
@@ -81,6 +109,50 @@
   gap: var(--spacing-lg);
 }
 
+/* SIMPLIFIED: Icon-based Metrics Row */
+.metricsRow {
+  display: flex;
+  justify-content: space-around;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-xs);
+  padding: var(--spacing-am);
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(209, 213, 219, 0.2);
+}
+
+.metricItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+  padding: var(--spacing-sm);
+  transition: all 0.2s ease;
+}
+
+.metricItem:hover {
+  transform: translateY(-2px);
+}
+
+.metricItem i {
+  font-size: 2rem;
+  color: var(--primary);
+  opacity: 0.8;
+}
+
+.metricValue {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+}
+
+.metricItem small {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  text-align: center;
+}
+
 /* ==========================================================================
    Empty State - Clean Design
    ========================================================================== */
@@ -104,6 +176,12 @@
   font-size: 3rem;
   color: var(--primary);
   opacity: 0.6;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .helpMessage h4 {
@@ -127,7 +205,13 @@
   margin-bottom: var(--spacing-lg);
   border: 1px solid var(--error);
   border-left: 4px solid var(--error);
-  animation: fadeIn 0.3s ease-out;
+  animation: shake 0.5s ease-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 .errorSection h4 {
@@ -150,45 +234,30 @@
   font-size: var(--font-size-sm);
   line-height: 1.6;
   margin-bottom: var(--spacing-xs);
+  position: relative;
+}
+
+.errorSection li::before {
+  content: '⚠';
+  margin-right: var(--spacing-sm);
 }
 
 /* ==========================================================================
-   Header Stats - Clean and Compact
-   ========================================================================== */
-.headerStats {
-  display: flex;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  margin-left: auto;
-}
-
-.statItem {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  background: rgba(255, 255, 255, 0.1);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  color: var(--surface);
-  transition: background-color 0.2s ease;
-}
-
-.statItem:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* ==========================================================================
-   Summary Grid - Clean Two-Column Layout
+   Summary Grid - WIDER Two-Column with Hover Effects
    ========================================================================== */
 .summaryGrid {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--spacing-md) var(--spacing-lg);
-  max-width: 800px;
+  grid-template-columns: 2fr auto;
+  gap: var(--spacing-sm) var(--spacing-xl);
+  max-width: 1000px;
+  min-width: auto;
   margin: 0 auto;
   font-size: var(--font-size-base);
   color: var(--text);
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .stickyHeader {
@@ -197,22 +266,46 @@
   color: var(--primary);
   font-size: var(--font-size-lg);
   padding: var(--spacing-md) 0;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--surface);
 }
 
 .summaryItem {
   display: contents;
+  transition: all 0.2s ease;
+}
+
+.summaryItem:hover {
+  background: rgba(52, 152, 219, 0.05);
 }
 
 .summaryLabel {
   font-weight: var(--font-weight-medium);
   color: var(--text);
   text-align: right;
-  padding: var(--spacing-sm) 0;
+  padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) var(--spacing-xl);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--spacing-sm);
+  justify-content: flex-start;
+  gap: var(--spacing-xl);
   transition: color 0.2s ease;
+  position: relative;
+}
+
+.summaryLabel::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: var(--primary);
+  transition: height 0.3s ease;
+}
+
+.summaryItem:hover .summaryLabel::after {
+  height: 100%;
 }
 
 .summaryLabel:hover {
@@ -223,110 +316,37 @@
   font-weight: var(--font-weight-medium);
   color: var(--text);
   text-align: left;
-  padding: var(--spacing-sm) 0;
+  padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) 0;
   transition: color 0.2s ease;
-  font-size: var(--font-size-base);
+  border-left: 1px solid rgba(209, 213, 219, 0.2);
 }
 
-.summaryValue:hover {
-  color: var(--primary);
-}
-
-/* ==========================================================================
-   Special Styles for Grand Total and Amount Due - Subtle Highlight
-   ========================================================================== */
-
-/* Grand Total - Subtle Gold Highlight */
-.total {
-  border-top: 2px solid var(--primary);
-  margin-top: var(--spacing-md);
-  padding-top: var(--spacing-md);
-}
-
-.total .summaryLabel {
+.summaryItem:hover .summaryValue {
   color: var(--primary);
   font-weight: var(--font-weight-bold);
+}
+
+/* Highlighted Rows */
+.total, .balance {
+  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(44, 62, 80, 0.1) 100%);
   font-size: var(--font-size-lg);
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, transparent 100%);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  border-bottom: 1px solid rgba(234, 179, 8, 0.2);
 }
 
-.total .summaryValue {
-  color: var(--primary);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-xl);
-  background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, transparent 100%);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  border-top: 1px solid rgba(234, 179, 8, 0.2);
-  box-shadow: 0 2px 4px rgba(234, 179, 8, 0.1);
-}
-
-/* Amount Due/Balance - Subtle Green/Red Highlight */
-.balance {
-  margin-top: var(--spacing-md);
-  padding-top: var(--spacing-md);
-  border-top: 2px solid var(--secondary);
-}
-
+.total .summaryLabel,
 .balance .summaryLabel {
-  color: var(--secondary);
+  color: var(--primary);
   font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-lg);
-  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, transparent 100%);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  border-bottom: 1px solid rgba(52, 152, 219, 0.2);
-}
-
-.balance .summaryValue {
-  color: var(--secondary);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-xl);
-  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, transparent 100%);
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
-  border-top: 1px solid rgba(52, 152, 219, 0.2);
-  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.1);
-}
-
-/* Overpayment specific styling */
-.balance:has(+ .overpaymentNotice) .summaryLabel,
-.balance:has(+ .overpaymentNotice) .summaryValue {
-  --secondary: var(--success);
-}
-
-/* ==========================================================================
-   Value Type Styles - Clean and Consistent
-   ========================================================================== */
-.discount {
-  color: var(--error);
-  font-weight: var(--font-weight-bold);
-  background: rgba(229, 62, 62, 0.1);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--error);
 }
 
 .paid {
   color: var(--success);
-  font-weight: var(--font-weight-bold);
-  background: rgba(56, 161, 105, 0.1);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--success);
 }
 
 /* ==========================================================================
-   Notices - Clean and Professional
+   Notices - Enhanced with Icons and Animations
    ========================================================================== */
 .overpaymentNotice,
 .dueAmountNotice {
-  margin-top: var(--spacing-lg);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
@@ -334,24 +354,35 @@
   background: var(--surface);
   border: 1px solid transparent;
   transition: all 0.3s ease;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-md);
 }
 
 .overpaymentNotice {
   border-color: var(--success);
   background: rgba(56, 161, 105, 0.05);
   color: var(--success);
+  animation: pulse 2s ease-in-out infinite;
 }
 
 .dueAmountNotice {
   border-color: var(--error);
   background: rgba(229, 62, 62, 0.05);
   color: var(--error);
+  animation: shake 0.5s ease-out;
 }
 
 .overpaymentNotice i,
 .dueAmountNotice i {
   font-size: var(--font-size-xl);
   flex-shrink: 0;
+  animation: bounce 1s ease-in-out infinite alternate;
+}
+
+@keyframes bounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-5px); }
 }
 
 .overpaymentNotice strong,
@@ -369,6 +400,30 @@
   line-height: 1.5;
 }
 
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.progressLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+}
+
+.progressLabel {
+  color: var(--success);
+  font-weight: var(--font-weight-medium);
+}
+
+.overdueLabel {
+  color: var(--error);
+  font-weight: var(--font-weight-bold);
+}
+
+
 /* ==========================================================================
    Responsive Design - Mobile First
    ========================================================================== */
@@ -379,17 +434,22 @@
 
   .sectionHeader {
     padding: var(--spacing-md) var(--spacing-sm);
+    flex-wrap: wrap;
   }
 
   .sectionTitle {
     font-size: var(--font-size-lg);
   }
 
+  .headerInline {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--spacing-xs);
+  }
+
   .headerStats {
-    margin-left: 0;
-    margin-top: var(--spacing-sm);
+    justify-content: flex-end;
     width: 100%;
-    justify-content: center;
   }
 
   .summaryContent {
@@ -415,12 +475,14 @@
     justify-content: flex-start !important;
     flex: 1;
     font-size: var(--font-size-sm);
+    padding-left: var(--spacing-sm);
   }
 
   .summaryValue {
     text-align: right;
     font-weight: var(--font-weight-bold);
     font-size: var(--font-size-base);
+    padding-right: var(--spacing-sm);
   }
 
   /* Mobile Hero Elements - Still highlighted but scaled */
@@ -450,6 +512,26 @@
   .dueAmountNotice i {
     font-size: var(--font-size-lg);
   }
+
+  .metricsRow {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .metricItem {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .quickActions {
+    flex-direction: column;
+  }
+
+  .actionButton {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -478,14 +560,17 @@
     font-size: var(--font-size-base) !important;
   }
 
-  .headerStats {
-    flex-wrap: wrap;
+  .headerInline {
     gap: var(--spacing-xs);
   }
 
-  .statItem {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-xs);
+  .headerTotal {
+    font-size: var(--font-size-sm);
+  }
+
+  .headerStats {
+    font-size: var(--font-size-xxs);
+    gap: var(--spacing-xs);
   }
 }
 
@@ -518,4 +603,17 @@
 .dark .overpaymentNotice,
 .dark .dueAmountNotice {
   background: var(--surface);
+}
+
+.dark .progressBar {
+  background: var(--text-light);
+}
+
+.dark .metricsRow {
+  background: var(--surface);
+  border-color: rgba(75, 85, 99, 0.3);
+}
+
+.dark .headerInline {
+  color: var(--surface);
 }

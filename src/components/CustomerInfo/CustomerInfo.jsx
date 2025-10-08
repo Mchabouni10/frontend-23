@@ -1,3 +1,4 @@
+
 // src/components/CustomerInfo/CustomerInfo.jsx
 import React, { useState, useEffect } from 'react';
 import PhoneInput from 'react-phone-input-2';
@@ -667,6 +668,7 @@ export default function CustomerInfo({ customer, setCustomer, disabled = false }
               onFocus={(e) => e.target.blur()}
               showPopperArrow={false}
               popperClassName={styles.calendarPopper}
+              popperPlacement="auto"
             />
           </div>
           <div className={styles.field}>
@@ -688,6 +690,7 @@ export default function CustomerInfo({ customer, setCustomer, disabled = false }
               onFocus={(e) => e.target.blur()}
               showPopperArrow={false}
               popperClassName={styles.calendarPopper}
+              popperPlacement="auto"
             />
           </div>
           <div className={styles.field}>
@@ -745,3 +748,4 @@ export default function CustomerInfo({ customer, setCustomer, disabled = false }
     </div>
   );
 }
+

@@ -1,5 +1,6 @@
 // src/components/Calculator/engine/CalculatorEngine.js
 import Decimal from 'decimal.js';
+import { MEASUREMENT_TYPES, normalizeMeasurementType } from '../../../constants/measurementTypes';
 
 export const PRECISION_CONFIG = {
   CURRENCY: 2,
@@ -22,12 +23,8 @@ export const CALCULATION_LIMITS = {
   MAX_WASTE_FACTOR: 0.50,
 };
 
-export const MEASUREMENT_TYPES = {
-  SQUARE_FOOT: 'square-foot',
-  SINGLE_SURFACE: 'single-surface',
-  LINEAR_FOOT: 'linear-foot',
-  BY_UNIT: 'by-unit'
-};
+// Re-export for backwards compatibility
+export { MEASUREMENT_TYPES };
 
 export class CalculatorEngine {
   constructor(categories = [], settings = {}, workTypeFunctions = {}, options = {}) {
@@ -79,7 +76,8 @@ export class CalculatorEngine {
         wasteFactor: 0,
         markup: 0,
         transportationFee: 0,
-        miscFees: []
+        miscFees: [],
+        payments: []
       };
     }
     return {
@@ -89,6 +87,7 @@ export class CalculatorEngine {
       markup: 0,
       transportationFee: 0,
       miscFees: [],
+      payments: [],
       ...settings
     };
   }
@@ -146,11 +145,12 @@ export class CalculatorEngine {
       return { units: 0, label: 'units', errors: this.getErrors() };
     }
 
-    const measurementType = item.measurementType;
+    // FIXED: Normalize measurement type to handle legacy formats
+    const measurementType = normalizeMeasurementType(item.measurementType);
     const surfaces = Array.isArray(item.surfaces) ? item.surfaces : [];
     
     if (surfaces.length === 0) {
-      return this._calculateDirectUnits(item);
+      return this._calculateDirectUnits(item, measurementType);
     }
 
     let totalUnits = 0;
@@ -166,9 +166,9 @@ export class CalculatorEngine {
 
         let surfaceUnits = 0;
 
+        // FIXED: Using normalized measurement type constants
         switch (measurementType) {
           case MEASUREMENT_TYPES.SQUARE_FOOT:
-          case MEASUREMENT_TYPES.SINGLE_SURFACE:
             if (surface.sqft && surface.sqft > 0) {
               surfaceUnits = parseFloat(surface.sqft) || 0;
             } else if (surface.width && surface.height) {
@@ -227,15 +227,15 @@ export class CalculatorEngine {
     };
   }
 
-  _calculateDirectUnits(item) {
-    const measurementType = item.measurementType;
+  _calculateDirectUnits(item, measurementType = null) {
+    // FIXED: Use normalized measurement type
+    const normalizedType = measurementType || normalizeMeasurementType(item.measurementType);
     let totalUnits = 0;
-    let label = this._getUnitLabel(measurementType);
+    let label = this._getUnitLabel(normalizedType);
 
     try {
-      switch (measurementType) {
+      switch (normalizedType) {
         case MEASUREMENT_TYPES.SQUARE_FOOT:
-        case MEASUREMENT_TYPES.SINGLE_SURFACE:
           if (item.sqft && item.sqft > 0) {
             totalUnits = parseFloat(item.sqft) || 0;
           } else if (item.width && item.height) {
@@ -254,6 +254,7 @@ export class CalculatorEngine {
           break;
           
         default:
+          // Fallback logic for unknown types
           if (item.sqft > 0 || (item.width > 0 && item.height > 0)) {
             totalUnits = item.sqft || (parseFloat(item.width || 0) * parseFloat(item.height || 0));
             label = 'sqft';
@@ -280,9 +281,9 @@ export class CalculatorEngine {
   }
 
   _getUnitLabel(measurementType) {
+    // FIXED: Using normalized constants
     switch (measurementType) {
       case MEASUREMENT_TYPES.SQUARE_FOOT:
-      case MEASUREMENT_TYPES.SINGLE_SURFACE:
         return 'sqft';
       case MEASUREMENT_TYPES.LINEAR_FOOT:
         return 'linear ft';
@@ -323,7 +324,7 @@ export class CalculatorEngine {
           units: 0,
           materialCostPerUnit: materialCost.toFixed(PRECISION_CONFIG.RATES),
           laborCostPerUnit: laborCost.toFixed(PRECISION_CONFIG.RATES),
-          measurementType: item.measurementType,
+          measurementType: normalizeMeasurementType(item.measurementType),
           calculatedAt: new Date().toISOString()
         }
       };
@@ -350,7 +351,7 @@ export class CalculatorEngine {
           units,
           materialCostPerUnit: materialCostDecimal.toFixed(PRECISION_CONFIG.RATES),
           laborCostPerUnit: laborCostDecimal.toFixed(PRECISION_CONFIG.RATES),
-          measurementType: item.measurementType,
+          measurementType: normalizeMeasurementType(item.measurementType),
           calculatedAt: new Date().toISOString()
         }
       };
@@ -617,33 +618,36 @@ export class CalculatorEngine {
       const { total: grandTotalStr } = this.calculateTotals();
       const grandTotal = new Decimal(grandTotalStr || '0');
       
-      // Get payments from settings (deposit is now a payment with method: 'Deposit')
       const payments = Array.isArray(this.settings.payments) ? this.settings.payments : [];
       let totalPaid = new Decimal(0);
       let overduePayments = new Decimal(0);
-      let depositAmount = new Decimal(0);
+      let depositTotal = new Decimal(0);
       
       const currentDate = new Date();
       
       payments.forEach((payment, index) => {
         try {
+          if (!payment || typeof payment !== 'object') {
+            this.addWarning(`Invalid payment at index ${index}`, 'INVALID_PAYMENT', { payment, index });
+            return;
+          }
+
           const amount = parseFloat(payment.amount) || 0;
           const paymentDate = new Date(payment.date);
           const isPaid = Boolean(payment.isPaid);
           
-          if (isPaid) {
+          if (isPaid && amount > 0) {
             totalPaid = totalPaid.plus(new Decimal(amount));
-            // Track deposit separately for display
             if (payment.method === 'Deposit') {
-              depositAmount = depositAmount.plus(new Decimal(amount));
+              depositTotal = depositTotal.plus(new Decimal(amount));
             }
-          } else {
+          } else if (!isPaid && amount > 0) {
             if (paymentDate < currentDate) {
               overduePayments = overduePayments.plus(new Decimal(amount));
             }
           }
         } catch (error) {
-          this.addWarning(`Error processing payment ${index + 1}: ${error.message}`, 'PAYMENT_PROCESSING_ERROR', { payment, index });
+          this.addWarning(`Error processing payment ${index + 1}: ${error.message}`, 'PAYMENT_PROCESSING_ERROR', { payment, index, error: error.message });
         }
       });
       
@@ -655,13 +659,13 @@ export class CalculatorEngine {
         totalDue: finalTotalDue.toFixed(PRECISION_CONFIG.CURRENCY),
         overduePayments: overduePayments.toFixed(PRECISION_CONFIG.CURRENCY),
         grandTotal: grandTotal.toFixed(PRECISION_CONFIG.CURRENCY),
-        deposit: depositAmount.toFixed(PRECISION_CONFIG.CURRENCY), // Return actual deposit amount
+        deposit: depositTotal.toFixed(PRECISION_CONFIG.CURRENCY),
         errors: this.getErrors(),
         warnings: this.getWarnings(),
         summary: {
           totalPayments: payments.length,
-          paidPayments: payments.filter(p => p.isPaid).length,
-          overduePayments: payments.filter(p => !p.isPaid && new Date(p.date) < currentDate).length,
+          paidPayments: payments.filter(p => p && p.isPaid).length,
+          overduePayments: payments.filter(p => p && !p.isPaid && new Date(p.date) < currentDate).length,
           calculatedAt: new Date().toISOString()
         }
       };

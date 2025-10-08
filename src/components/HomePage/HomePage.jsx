@@ -378,7 +378,7 @@ function HomePageContent() {
               </div>
             </section>
             <section className={`${styles.calculatorSection} ${!isCustomerInfoVisible ? styles.calculatorExpanded : ''}`}>
-              <Calculator disabled={isDetailsMode} />
+             <Calculator disabled={Boolean(isDetailsMode)} />
             </section>
           </div>
           <section className={styles.costBreakdownSection}>

@@ -1,70 +1,109 @@
-/* SurfaceManager.module.css */
+/* SurfaceManager.module.css - Enhanced with global style alignment and modern effects */
+
 .surfaceManager {
-  margin-bottom: var(--spacing-lg);
-  border: 1px solid rgba(209, 213, 219, 0.3);
+  margin-bottom: var(--spacing-sm);
+  border: 2px solid rgba(var(--primary), 0.15);
   border-radius: var(--radius-lg);
   font-size: var(--font-size-base);
   color: var(--text);
   background: var(--surface);
-  box-shadow: 0 6px 20px var(--shadow);
-  transition: all 0.3s ease;
+  box-shadow: 0 8px 32px var(--shadow);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
   overflow: hidden;
-  animation: fadeIn 0.3s ease;
+}
+
+.surfaceManager::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }
 
 .surfaceManager:hover {
-  box-shadow: 0 8px 24px var(--shadow);
+  box-shadow: 0 12px 40px var(--shadow);
+  border-color: rgba(var(--primary), 0.3);
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
-  background: linear-gradient(135deg, var(--background) 0%, rgba(241, 245, 249, 0.8) 100%);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   border-bottom: 1px solid rgba(226, 232, 240, 0.2);
+  color: var(--surface);
+  position: relative;
+}
+
+.header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.header:hover::before {
+  left: 100%;
 }
 
 .title {
   margin: 0;
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  color: var(--primary);
+  color: var(--surface);
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xl);
 }
 
 .title i {
-  color: var(--secondary);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-lg);
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .totalUnits {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-light);
-  margin-left: var(--spacing-sm);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--surface);
+  margin-left: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
 }
 
 .clearAllButton {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   cursor: pointer;
-  transition: all 0.3s ease;
-  background: var(--secondary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--error);
   color: var(--surface);
+  backdrop-filter: blur(10px);
 }
 
 .clearAllButton:hover:not(:disabled) {
-  background: #2980b9;
-  transform: translateY(-2px);
+  background: #c53030;
+  transform: scale(1.05);
   box-shadow: 0 5px 15px var(--shadow);
 }
 
@@ -79,12 +118,13 @@
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid rgba(209, 213, 219, 0.3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   color: var(--text);
-  background-color: var(--surface);
-  transition: all 0.3s ease;
+  background: var(--surface);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: var(--font-family);
+  backdrop-filter: blur(5px);
 }
 
 .dimensionInput:focus,
@@ -92,8 +132,7 @@
 .unitInput:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--shadow);
-  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
 }
 
 .dimensionInput:disabled,
@@ -108,40 +147,40 @@
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--text-light);
-  padding: 0 var(--spacing-sm);
+  padding: 0 var(--spacing-md);
   user-select: none;
 }
 
 .result {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--background);
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, rgba(var(--primary), 0.1) 0%, rgba(var(--primary-dark), 0.1) 100%);
   border: 1px solid rgba(226, 232, 240, 0.2);
-  border-radius: var(--radius-sm);
-  margin-top: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-md);
+  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .resultLabel {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
-  color: var(--text-light);
+  color: var(--text);
 }
 
 .resultValue {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   color: var(--success);
 }
 
 .addButtons {
   display: flex;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md) var(--spacing-lg);
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
   background: var(--background);
   border-top: 1px solid rgba(226, 232, 240, 0.2);
-  flex-wrap: wrap;
   justify-content: center;
 }
 
@@ -151,18 +190,19 @@
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: var(--surface);
+  backdrop-filter: blur(10px);
 }
 
 .addButton:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-  transform: translateY(-2px);
+  transform: scale(1.05);
   box-shadow: 0 5px 15px var(--shadow);
 }
 
@@ -177,32 +217,47 @@
   align-items: center;
   justify-content: center;
   padding: var(--spacing-xl);
+  background: linear-gradient(135deg, rgba(var(--primary), 0.05) 0%, rgba(var(--secondary), 0.05) 100%);
+  border: 3px dashed rgba(var(--primary), 0.3);
+  border-radius: var(--radius-lg);
   color: var(--text-light);
-  font-size: var(--font-size-base);
+  transition: all 0.4s ease;
+}
+
+.emptyState:hover {
+  border-color: var(--secondary);
+  background: linear-gradient(135deg, rgba(var(--primary), 0.1) 0%, rgba(var(--secondary), 0.1) 100%);
+  transform: scale(1.02);
 }
 
 .emptyState i {
   font-size: var(--font-size-xl);
   margin-bottom: var(--spacing-md);
-  color: var(--secondary);
+  color: var(--primary);
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .helpText {
   margin-top: var(--spacing-sm);
   font-size: var(--font-size-sm);
   color: var(--text-light);
-  opacity: 0.8;
+  font-style: italic;
 }
 
 .surfaceList {
   max-height: 60vh;
   overflow-y: auto;
+  padding: var(--spacing-md);
 }
 
 .surfaceItem {
   border-bottom: 1px solid rgba(226, 232, 240, 0.2);
-  transition: background-color 0.3s ease;
-  animation: fadeIn 0.3s ease-out;
+  transition: all 0.3s ease;
 }
 
 .surfaceItem:last-child {
@@ -210,31 +265,34 @@
 }
 
 .surfaceItem:hover {
-  background-color: rgba(241, 245, 249, 0.2);
+  background: rgba(var(--primary), 0.05);
 }
 
 .surfaceHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  gap: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-xl);
+  gap: var(--spacing-sm);
+  background: rgba(var(--primary), 0.05);
+  border-radius: var(--radius-md);
 }
 
 .surfaceName {
   flex: 1;
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-lg);
   border: 1px solid rgba(209, 213, 219, 0.3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-bold);
   color: var(--text);
   background: var(--surface);
-  transition: all 0.3s ease;
-  font-family: var(--font-family);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(5px);
 }
 
-.surfaceName[readonly] {
+.surfaceName[readonly],
+.surfaceName:disabled {
   background: rgba(233, 236, 239, 0.1);
   opacity: 0.7;
   cursor: not-allowed;
@@ -243,29 +301,22 @@
 .surfaceName:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--shadow);
-  border-radius: var(--radius-md);
-}
-
-.surfaceName:disabled {
-  background: rgba(233, 236, 239, 0.1);
-  opacity: 0.7;
-  cursor: not-allowed;
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
 }
 
 .removeButton {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background: var(--error);
   color: var(--surface);
+  backdrop-filter: blur(10px);
 }
 
 .removeButton:hover:not(:disabled) {
@@ -280,13 +331,13 @@
 }
 
 .surfaceContent {
-  padding: 0 var(--spacing-lg) var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
 }
 
 .fields {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
 }
 
 .dimensionGroup {
@@ -296,8 +347,42 @@
   flex-wrap: wrap;
 }
 
+.validationWarning {
+  background: linear-gradient(135deg, rgba(var(--error), 0.15) 0%, rgba(var(--error-dark), 0.15) 100%);
+  border: 2px solid var(--error);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  color: var(--error);
+  font-size: var(--font-size-base);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  animation: shake 0.5s ease-in-out;
+}
+
+.validationWarning i {
+  font-size: var(--font-size-xl);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+  20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
+  .surfaceManager {
+    margin-bottom: var(--spacing-lg);
+  }
+
   .header {
     flex-direction: column;
     align-items: flex-start;
@@ -306,60 +391,34 @@
   }
 
   .title {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-lg);
   }
 
   .totalUnits {
-    font-size: var(--font-size-sm);
     margin-left: 0;
     margin-top: var(--spacing-sm);
-  }
-
-  .clearAllButton {
-    align-self: flex-end;
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
   }
 
   .surfaceHeader {
     flex-direction: column;
     align-items: stretch;
     gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
   }
 
   .removeButton {
     align-self: flex-end;
-    width: 1.75rem;
-    height: 1.75rem;
-  }
-
-  .surfaceContent {
-    padding: 0 var(--spacing-md) var(--spacing-sm);
+    width: 36px;
+    height: 36px;
   }
 
   .dimensionGroup {
     flex-direction: column;
-    align-items: stretch;
     gap: var(--spacing-sm);
-  }
-
-  .dimensionInput,
-  .linearInput,
-  .unitInput,
-  .surfaceName {
-    min-width: auto;
-  }
-
-  .multiply {
-    align-self: center;
-    font-size: var(--font-size-base);
   }
 
   .addButtons {
     flex-direction: column;
-    padding: var(--spacing-sm) var(--spacing-md);
-    justify-content: center;
+    padding: var(--spacing-md);
   }
 
   .addButton {
@@ -381,11 +440,7 @@
   }
 
   .surfaceContent {
-    padding: 0 var(--spacing-sm) var(--spacing-sm);
-  }
-
-  .addButtons {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 
   .emptyState {
@@ -397,53 +452,68 @@
   }
 }
 
+/* Dark Mode */
+.dark .surfaceManager {
+  border-color: rgba(var(--primary), 0.3);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(0, 0, 0, 0.3) 100%);
+}
+
+.dark .header {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+}
+
+.dark .surfaceItem:hover {
+  background: rgba(var(--primary), 0.1);
+}
+
+.dark .emptyState {
+  background: linear-gradient(135deg, rgba(var(--primary), 0.1) 0%, rgba(var(--secondary), 0.1) 100%);
+  border-color: rgba(var(--primary), 0.3);
+}
+
+/* High Contrast */
 @media (prefers-contrast: high) {
-  .surfaceManager {
+  .surfaceManager,
+  .result,
+  .surfaceName,
+  .dimensionInput,
+  .linearInput,
+  .unitInput {
     border-color: #000000;
-    background: var(--surface);
   }
 
   .header {
-    background: var(--surface);
     border-bottom-color: #000000;
   }
 
   .surfaceItem {
     border-bottom-color: #000000;
   }
-
-  .dimensionInput,
-  .linearInput,
-  .unitInput,
-  .surfaceName {
-    border-color: #000000;
-  }
-
-  .result {
-    border-color: #000000;
-  }
 }
 
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   .surfaceManager,
   .addButton,
   .removeButton,
-  .clearAllButton {
+  .clearAllButton,
+  .surfaceItem,
+  .validationWarning {
     transition: none;
+    animation: none;
   }
 }
 
-/* Dark Mode */
-.dark .surfaceManager {
-  border-color: rgba(209, 213, 219, 0.3);
-  background: var(--surface);
-}
+/* Print Styles */
+@media print {
+  .surfaceManager {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
 
-.dark .header {
-  background: linear-gradient(135deg, var(--background) 0%, rgba(31, 42, 68, 0.8) 100%);
-  border-bottom-color: rgba(226, 232, 240, 0.2);
-}
-
-.dark .surfaceItem:hover {
-  background-color: rgba(46, 55, 72, 0.2);
+  .addButton,
+  .removeButton,
+  .clearAllButton {
+    display: none;
+  }
 }

@@ -1,15 +1,41 @@
-/* SquareFootageInput.module.css */
+/* SquareFootageInput.module.css - Enhanced with global style alignment and modern effects */
+
 .squareFootageInput {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  transition: all 0.3s ease;
-  border: 1px solid rgba(209, 213, 219, 0.3);
-  animation: fadeIn 0.3s ease;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-xs);
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border: 2px solid rgba(var(--primary), 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px var(--shadow);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.squareFootageInput::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.squareFootageInput:hover {
+  border-color: rgba(var(--primary), 0.3);
+  box-shadow: 0 12px 40px var(--shadow);
+  transform: translateY(-2px);
 }
 
 .dimensions {
@@ -17,74 +43,67 @@
   align-items: center;
   gap: var(--spacing-sm);
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .field {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
-  min-width: 120px;
+  gap: var(--spacing-xs);
+  min-width: 150px;
 }
 
 .label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
   color: var(--text);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  letter-spacing: 0.5px;
 }
 
 .required {
   color: var(--error);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-extrabold);
 }
 
 .inputWrapper {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-md);
   position: relative;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+  padding: var(--spacing-sm);
+  backdrop-filter: blur(5px);
 }
 
 .inputWrapper input {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) calc(var(--spacing-md) + 1.5rem);
-  border: 1px solid rgba(209, 213, 219, 0.3);
-  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) calc(var(--spacing-md) + 1.75rem);
+  border: none;
+  border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   color: var(--text);
-  background-color: var(--surface);
-  transition: all 0.3s ease;
-  font-family: var(--font-family);
-}
-
-.inputWrapper .inputIcon {
-  position: absolute;
-  left: var(--spacing-sm);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-light);
-  font-size: var(--font-size-sm);
+  background: transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .inputWrapper input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--shadow);
-  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
 }
 
-.inputWrapper input:disabled {
-  background: rgba(233, 236, 239, 0.1);
+.inputWrapper input:disabled,
+.inputWrapper input[readOnly] {
+  background: transparent;
+  color: var(--text-light);
   opacity: 0.7;
   cursor: not-allowed;
-}
-
-.inputWrapper input[readOnly] {
-  background: rgba(233, 236, 239, 0.1);
 }
 
 .inputWrapper.errorInput {
@@ -92,44 +111,57 @@
 }
 
 .inputWrapper.errorInput input {
-  border-color: var(--error);
-  box-shadow: 0 0 0 2px rgba(var(--error), 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--error), 0.2);
 }
 
 .inputError {
   border-color: var(--error) !important;
-  box-shadow: 0 0 0 2px rgba(var(--error), 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(var(--error), 0.2) !important;
 }
 
 .unit {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--text-light);
-  padding: 0 var(--spacing-sm);
+  padding: 0 var(--spacing-md);
 }
 
 .multiply {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--text-light);
-  padding: 0 var(--spacing-sm);
+  padding: 0 var(--spacing-md);
   user-select: none;
+}
+
+.inputWrapper .inputIcon {
+  position: absolute;
+  left: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: var(--font-size-base);
 }
 
 .errorMessage {
   color: var(--error);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  animation: fadeIn 0.3s ease;
+  padding: var(--spacing-sm);
+  background: rgba(var(--error), 0.15);
+  border-radius: var(--radius-md);
+  animation: pulse 2s ease-in-out infinite;
 }
 
-/* Professional Toggle Switch */
 .toggleContainer {
   display: flex;
   justify-content: flex-start;
-  margin: var(--spacing-sm) 0;
+  margin: var(--spacing-md) 0;
+  background: rgba(var(--primary), 0.05);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
 }
 
 .toggleSwitch {
@@ -151,20 +183,20 @@
   align-items: center;
   gap: var(--spacing-md);
   cursor: pointer;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
   color: var(--text);
-  transition: color 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .toggleSlider {
   position: relative;
-  width: 50px;
-  height: 24px;
-  background-color: #cbd5e0;
-  border-radius: 24px;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
+  width: 56px;
+  height: 28px;
+  background: rgba(203, 213, 224, 0.5);
+  border-radius: 28px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(5px);
 }
 
 .toggleSlider::before {
@@ -172,20 +204,20 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 20px;
-  height: 20px;
-  background-color: white;
+  width: 24px;
+  height: 24px;
+  background: var(--surface);
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .toggleInput:checked + .toggleLabel .toggleSlider {
-  background-color: var(--primary, #3b82f6);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
 }
 
 .toggleInput:checked + .toggleLabel .toggleSlider::before {
-  transform: translateX(26px);
+  transform: translateX(28px);
 }
 
 .toggleInput:disabled + .toggleLabel {
@@ -194,86 +226,83 @@
 }
 
 .toggleInput:disabled + .toggleLabel .toggleSlider {
-  background-color: #e2e8f0;
+  background: rgba(226, 232, 240, 0.3);
 }
 
 .toggleText {
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-bold);
   transition: color 0.3s ease;
 }
 
 .toggleInput:checked + .toggleLabel .toggleText {
-  color: var(--primary, #3b82f6);
+  color: var(--primary);
 }
 
-/* Focus styles for accessibility */
 .toggleInput:focus + .toggleLabel .toggleSlider {
-  outline: 2px solid var(--primary, #3b82f6);
-  outline-offset: 2px;
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
 }
 
 .toggleInput:focus:not(:focus-visible) + .toggleLabel .toggleSlider {
-  outline: none;
+  box-shadow: none;
 }
 
-/* Select dropdown styling */
 .select {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid rgba(209, 213, 219, 0.3);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   color: var(--text);
-  background-color: var(--surface);
-  transition: all 0.3s ease;
+  background: var(--surface);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: var(--font-family);
   appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right var(--spacing-sm) center;
+  background-position: right var(--spacing-md) center;
   background-repeat: no-repeat;
   background-size: 1.5em 1.5em;
   padding-right: calc(var(--spacing-md) + 1.5em);
+  backdrop-filter: blur(5px);
 }
 
 .select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--shadow);
-  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
 }
 
 .select:disabled {
-  background-color: rgba(233, 236, 239, 0.1);
+  background: rgba(233, 236, 239, 0.1);
+  color: var(--text-light);
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-/* Animation for error messages */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+  20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .squareFootageInput {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-md);
   }
 
   .dimensions {
-    flex-direction: row;
-    align-items: center;
+    flex-direction: column;
+    align-items: stretch;
     gap: var(--spacing-sm);
   }
 
   .field {
-    min-width: 100px;
+    min-width: 100%;
   }
 
   .toggleContainer {
@@ -282,42 +311,63 @@
 }
 
 @media (max-width: 480px) {
-  .dimensions {
-    flex-direction: column;
-    align-items: stretch;
+  .squareFootageInput {
+    margin-bottom: var(--spacing-md);
   }
 
-  .field {
-    min-width: auto;
-  }
-
-  .multiply {
-    align-self: center;
-    font-size: var(--font-size-base);
+  .label,
+  .select {
+    font-size: var(--font-size-sm);
   }
 
   .toggleSlider {
-    width: 44px;
-    height: 22px;
+    width: 48px;
+    height: 24px;
   }
 
   .toggleSlider::before {
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
   }
 
   .toggleInput:checked + .toggleLabel .toggleSlider::before {
-    transform: translateX(22px);
+    transform: translateX(24px);
   }
 }
 
-/* High contrast mode support */
+/* Dark Mode */
+.dark .squareFootageInput {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(0, 0, 0, 0.3) 100%);
+  border-color: rgba(var(--primary), 0.2);
+}
+
+.dark .inputWrapper,
+.dark .select {
+  background: var(--surface);
+  border-color: rgba(209, 213, 219, 0.2);
+}
+
+.dark .inputWrapper input {
+  color: var(--text);
+}
+
+.dark .toggleSlider {
+  background: rgba(74, 85, 104, 0.5);
+}
+
+.dark .toggleInput:checked + .toggleLabel .toggleSlider {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+}
+
+/* High Contrast */
 @media (prefers-contrast: high) {
-  .squareFootageInput {
+  .squareFootageInput,
+  .inputWrapper,
+  .select {
     border-color: #000000;
   }
 
-  .inputWrapper input {
+  .inputWrapper.errorInput {
     border-color: #000000;
   }
 
@@ -330,33 +380,27 @@
   }
 }
 
-/* Reduced motion support */
+/* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
+  .squareFootageInput,
+  .inputWrapper input,
+  .select,
   .toggleSlider,
   .toggleSlider::before,
-  .toggleText,
-  .inputWrapper input,
-  .select {
+  .errorMessage {
     transition: none;
+    animation: none;
   }
 }
 
-/* Dark Mode */
-.dark .squareFootageInput {
-  background: var(--surface);
-  border-color: rgba(209, 213, 219, 0.3);
-}
+/* Print Styles */
+@media print {
+  .squareFootageInput {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
 
-.dark .inputWrapper input,
-.dark .select {
-  background-color: var(--surface);
-  border-color: rgba(209, 213, 219, 0.3);
-}
-
-.dark .toggleSlider {
-  background-color: #4a5568;
-}
-
-.dark .toggleInput:checked + .toggleLabel .toggleSlider {
-  background-color: var(--primary);
+  .toggleContainer {
+    display: none;
+  }
 }

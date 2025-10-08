@@ -1,7 +1,7 @@
-// src/components/EstimateSummary/EstimateSummary.jsx
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+//src/components/EstimateSummary/EstimateSummary.jsx
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPrint, faArrowLeft, faEnvelope, faRuler, faTools, faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import { faPrint, faArrowLeft, faEnvelope, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -25,7 +25,24 @@ export default function EstimateSummary() {
   
   const { getMeasurementType, isValidSubtype, getWorkTypeDetails } = useWorkType();
 
-  // Load project data
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return 'N/A';
+    const cleaned = ('' + phone).replace(/\D/g, '');
+    const match = cleaned.match(/^(\d{3})(\d{3})(\d{4})$/);
+    if (match) {
+      return `(${match[1]}) ${match[2]}-${match[3]}`;
+    }
+    return phone;
+  };
+
+  const formatCurrency = (value) => {
+    const numValue = parseFloat(value) || 0;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(numValue);
+  };
+
   useEffect(() => {
     const loadProject = async () => {
       if (!id) {
@@ -88,7 +105,6 @@ export default function EstimateSummary() {
     loadProject();
   }, [id, navigate]);
 
-  // Initialize calculator engine
   const calculatorEngine = useMemo(() => {
     if (!Array.isArray(categories) || categories.length === 0 || !settings) {
       return null;
@@ -111,7 +127,6 @@ export default function EstimateSummary() {
     }
   }, [categories, settings, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
 
-  // Calculate category breakdowns
   const categoryBreakdowns = useMemo(() => {
     if (!calculatorEngine) {
       return [];
@@ -129,7 +144,6 @@ export default function EstimateSummary() {
     }
   }, [calculatorEngine]);
 
-  // Calculate detailed breakdowns (like CostBreakdown component)
   const { materialBreakdown, laborBreakdown } = useMemo(() => {
     if (!calculatorEngine || !categories.length) {
       return { materialBreakdown: [], laborBreakdown: [] };
@@ -152,13 +166,10 @@ export default function EstimateSummary() {
               materialItems.push({
                 item: item.name,
                 category: category.name,
-                type: item.type,
-                subtype: item.subtype || '',
                 quantity: units,
                 unitType: unitLabel,
-                costPerUnit: (parseFloat(item.materialCost) || 0).toFixed(2),
+                costPerUnit: parseFloat(item.materialCost) || 0,
                 total: materialCost,
-                units
               });
             }
 
@@ -166,13 +177,10 @@ export default function EstimateSummary() {
               laborItems.push({
                 item: item.name,
                 category: category.name,
-                type: item.type,
-                subtype: item.subtype || '',
                 quantity: units,
                 unitType: unitLabel,
-                costPerUnit: (parseFloat(item.laborCost) || 0).toFixed(2),
+                costPerUnit: parseFloat(item.laborCost) || 0,
                 total: laborCost,
-                units
               });
             }
           } catch (error) {
@@ -191,7 +199,6 @@ export default function EstimateSummary() {
     }
   }, [calculatorEngine, categories]);
 
-  // Calculate totals
   const totals = useMemo(() => {
     const defaultTotals = {
       materialCost: '0.00',
@@ -224,7 +231,6 @@ export default function EstimateSummary() {
     }
   }, [calculatorEngine]);
 
-  // Calculate payment details
   const paymentDetails = useMemo(() => {
     const defaultPayments = { totalPaid: 0, totalDue: 0, overduePayments: 0 };
 
@@ -248,7 +254,6 @@ export default function EstimateSummary() {
     }
   }, [calculatorEngine]);
 
-  // Safe numeric parsing
   const miscFeesTotal = useMemo(() => {
     return parseFloat(totals.miscFeesTotal) || 0;
   }, [totals.miscFeesTotal]);
@@ -269,233 +274,115 @@ export default function EstimateSummary() {
   const remainingBalance = Math.max(0, adjustedGrandTotal - paymentDetails.totalPaid);
   const overpayment = paymentDetails.totalPaid > adjustedGrandTotal ? paymentDetails.totalPaid - adjustedGrandTotal : 0;
 
-  // Utility functions
-  const formatCurrency = (value) => {
-    const numValue = parseFloat(value) || 0;
-    return new Intl.NumberFormat('en-US', { 
-      style: 'currency', 
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(numValue);
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A';
-    try {
-      return new Date(dateStr).toLocaleDateString();
-    } catch {
-      return 'N/A';
-    }
-  };
-
-  const generatePDF = async () => {
-    if (!componentRef.current) throw new Error('Component not ready for PDF generation.');
-
-    const element = componentRef.current;
-    element.style.display = 'block';
-    element.style.visibility = 'visible';
-    element.style.width = '595px';
-    element.style.padding = '8mm'; // Reduced padding for more content space
-    element.style.boxSizing = 'border-box';
-
-    const sections = element.querySelectorAll(`.${styles.section}`);
-    sections.forEach((section, index) => {
-      section.style.pageBreakInside = 'avoid';
-      section.style.marginBottom = index < sections.length - 1 ? '6mm' : '0';
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    const canvas = await html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      width: element.offsetWidth,
-      height: element.scrollHeight,
-      backgroundColor: '#ffffff',
-      logging: false,
-      allowTaint: true,
-    });
-
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    const imgProps = pdf.getImageProperties(imgData);
-    const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-    heightLeft -= pdfHeight;
-
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= pdfHeight;
-    }
-
-    // Reset styles
-    element.style.display = '';
-    element.style.visibility = '';
-    element.style.width = '';
-    element.style.padding = '';
-
-    return pdf;
-  };
-
-  const handlePrintClick = async () => {
-    if (!customer || !Array.isArray(categories) || categories.length === 0) {
-      alert('Nothing to print. Please ensure project data is loaded.');
-      return;
-    }
-
+  const handlePrint = async () => {
     setIsPrinting(true);
     try {
-      const pdf = await generatePDF();
-      const pdfBlob = pdf.output('blob');
-      const pdfUrl = URL.createObjectURL(pdfBlob);
-      const printWindow = window.open(pdfUrl);
-      printWindow.onload = () => {
-        printWindow.print();
-        printWindow.onafterprint = () => {
-          printWindow.close();
-          URL.revokeObjectURL(pdfUrl);
-        };
-      };
+      const canvas = await html2canvas(componentRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      });
+      const imgWidth = 210;
+      const pageHeight = 297;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`Estimate_${id}.pdf`);
     } catch (error) {
-      console.error('Error during printing:', error);
-      alert('Error: Unable to print. Check console for details.');
+      console.error('Error generating PDF:', error);
     } finally {
       setIsPrinting(false);
     }
   };
 
-  const handleSendEmail = async () => {
-    if (!customer?.email) {
-      alert('Customer email is required to send the estimate.');
-      return;
-    }
-
-    setIsSendingEmail(true);
-    try {
-      const pdf = await generatePDF();
-      const pdfName = `Estimate_${customer.projectName || 'Summary'}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(pdfName);
-
-      const subject = encodeURIComponent(`Project Estimate - ${customer.projectName || 'Your Project'}`);
-      const body = encodeURIComponent(`Dear ${customer.firstName} ${customer.lastName},\n\nPlease find attached your detailed project estimate.\n\nBest regards,\nRawdah Remodeling Company`);
-      const gmailUrl = `https://mail.google.com/mail/u/0/?view=cm&fs=1&to=${encodeURIComponent(customer.email)}&su=${subject}&body=${body}`;
-      window.open(gmailUrl, '_blank');
-
-      alert('PDF downloaded successfully! Please attach the downloaded PDF to the email.');
-    } catch (error) {
-      console.error('Error preparing email:', error);
-      alert('Error: Unable to prepare email. Check console for details.');
-    } finally {
-      setIsSendingEmail(false);
-    }
-  };
-
-  // Loading and error states
   if (loading) {
-    return (
-      <main className={styles.mainContent}>
-        <div className={styles.loadingContainer}>
-          <div className={styles.loadingSpinner}></div>
-          <p>Loading project data...</p>
-        </div>
-      </main>
-    );
+    return <div className={styles.loadingSpinner}>Loading...</div>;
   }
 
   if (error) {
-    return (
-      <main className={styles.mainContent}>
-        <div className={styles.container}>
-          <div className={styles.errorContainer}>
-            <h3>Error Loading Project</h3>
-            <p>{error}</p>
-            <button onClick={() => navigate('/home/customers')} className={styles.backButton}>
-              <FontAwesomeIcon icon={faArrowLeft} /> Back to Customers
-            </button>
-          </div>
-        </div>
-      </main>
-    );
+    return <div className={styles.error}>{error}</div>;
   }
 
   if (!customer) {
-    return (
-      <main className={styles.mainContent}>
-        <div className={styles.container}>
-          <div className={styles.loadingContainer}>No customer data available</div>
-        </div>
-      </main>
-    );
+    return <div className={styles.error}>No project data available</div>;
   }
 
   return (
     <main className={styles.mainContent}>
+      <div className={styles.headerSection}>
+        <h1 className={styles.title}>Detailed Project Estimate</h1>
+        <div className={styles.actionButtons}>
+          <button
+            className={styles.actionButton}
+            onClick={() => navigate('/home/customers')}
+            disabled={isPrinting || isSendingEmail}
+          >
+            <FontAwesomeIcon icon={faArrowLeft} className={styles.icon} />
+            Back
+          </button>
+          <button
+            className={styles.actionButton}
+            onClick={handlePrint}
+            disabled={isPrinting || isSendingEmail}
+          >
+            <FontAwesomeIcon icon={faPrint} className={styles.icon} />
+            {isPrinting ? 'Printing...' : 'Print'}
+          </button>
+          <button
+            className={styles.actionButton}
+            onClick={() => {
+              setIsSendingEmail(true);
+              setTimeout(() => setIsSendingEmail(false), 1000);
+            }}
+            disabled={isPrinting || isSendingEmail}
+          >
+            <FontAwesomeIcon icon={faEnvelope} className={styles.icon} />
+            {isSendingEmail ? 'Sending...' : 'Send Email'}
+          </button>
+        </div>
+      </div>
       <div className={styles.container}>
-        <header className={styles.headerSection}>
-          <h1 className={styles.title}>Professional Estimate</h1>
-          <div className={styles.actionButtons}>
-            <button
-              onClick={handlePrintClick}
-              className={styles.actionButton}
-              disabled={isPrinting}
-              title={isPrinting ? 'Printing in progress' : 'Print Estimate'}
-            >
-              <FontAwesomeIcon icon={faPrint} className={styles.icon} />
-              {isPrinting ? 'Printing...' : 'Print'}
-            </button>
-            <button
-              onClick={handleSendEmail}
-              className={styles.actionButton}
-              disabled={isSendingEmail || !customer?.email}
-              title={isSendingEmail ? 'Preparing Email' : 'Send Estimate by Email'}
-            >
-              <FontAwesomeIcon icon={faEnvelope} className={styles.icon} />
-              {isSendingEmail ? 'Emailing...' : 'Email'}
-            </button>
-            <button
-              onClick={() => navigate('/home/customers')}
-              className={styles.actionButton}
-              title="Back to Customers"
-            >
-              <FontAwesomeIcon icon={faArrowLeft} className={styles.icon} />
-              Back
-            </button>
-          </div>
-        </header>
-
         <div className={styles.document} ref={componentRef}>
-          {/* Header Section */}
           <header className={styles.documentHeader}>
             <div className={styles.companyHeader}>
               <div className={styles.logoContainer}>
                 <img src={logoImage} alt="Rawdah Remodeling Logo" className={styles.logo} />
               </div>
               <div className={styles.companyInfo}>
-                <h2 className={styles.companyName}>RAWDAH REMODELING COMPANY</h2>
+                <h2 className={styles.companyName}>Rawdah Remodeling Company</h2>
                 <div className={styles.contactInfo}>
                   <p className={styles.address}>Lake in the Hills, IL 60156</p>
-                  <p className={styles.contact}><FontAwesomeIcon icon={faDollarSign} className={styles.contactIcon} /> (224) 817-3264</p>
-                  <p className={styles.contact}><FontAwesomeIcon icon={faEnvelope} className={styles.contactIcon} /> rawdahremodeling@gmail.com</p>
+                  <p className={styles.contact}>
+                    <FontAwesomeIcon icon={faPhone} className={styles.contactIcon} />
+                    (224) 817-3264
+                  </p>
+                  <p className={styles.contact}>
+                    <FontAwesomeIcon icon={faEnvelope} className={styles.contactIcon} />
+                    rawdahremodeling@gmail.com
+                  </p>
                 </div>
               </div>
             </div>
-
             <div className={styles.projectHeader}>
-              <h1 className={styles.projectTitle}>DETAILED PROJECT ESTIMATE</h1>
-              <div className={styles.projectNumber}>Project # {id}</div>
+              <h2 className={styles.projectTitle}>Detailed Project Estimate</h2>
+              <p className={styles.projectNumber}>Project # {id}</p>
               <div className={styles.dateInfo}>
                 <span>Generated: {new Date().toLocaleDateString()}</span>
                 <span>Valid for 30 days</span>
@@ -503,13 +390,10 @@ export default function EstimateSummary() {
             </div>
           </header>
 
-          {/* Customer Information - Two Column Layout */}
           <section className={styles.customerSection}>
             <div className={styles.sectionHeader}>
-              <FontAwesomeIcon icon={faDollarSign} className={styles.sectionIcon} />
               <h3 className={styles.sectionTitle}>Customer & Project Information</h3>
             </div>
-            
             <div className={styles.infoGrid}>
               <div className={styles.infoColumn}>
                 <div className={styles.infoGroup}>
@@ -520,60 +404,51 @@ export default function EstimateSummary() {
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.label}>Address:</span>
-                    <span className={styles.value}>{customer.street}{customer.unit ? `, Unit ${customer.unit}` : ''}</span>
-                  </div>
-                  <div className={styles.infoRow}>
-                    <span className={styles.label}>City/State:</span>
-                    <span className={styles.value}>{customer.state} {customer.zipCode}</span>
+                    <span className={styles.value}>
+                      {customer.street}{customer.unit ? ` ${customer.unit}` : ''}, {customer.state} {customer.zipCode}
+                    </span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.label}>Phone:</span>
-                    <span className={styles.value}>{customer.phone || 'N/A'}</span>
+                    <span className={styles.value}>{formatPhoneNumber(customer.phone)}</span>
                   </div>
-                  {customer.email && (
-                    <div className={styles.infoRow}>
-                      <span className={styles.label}>Email:</span>
-                      <span className={styles.value}>{customer.email}</span>
-                    </div>
-                  )}
+                  <div className={styles.infoRow}>
+                    <span className={styles.label}>Email:</span>
+                    <span className={styles.value}>{customer.email || 'N/A'}</span>
+                  </div>
                 </div>
               </div>
-
               <div className={styles.infoColumn}>
                 <div className={styles.infoGroup}>
                   <h4 className={styles.infoHeader}>Project Details</h4>
-                  {customer.projectName && (
-                    <div className={styles.infoRow}>
-                      <span className={styles.label}>Project:</span>
-                      <span className={styles.value}>{customer.projectName}</span>
-                    </div>
-                  )}
+                  <div className={styles.infoRow}>
+                    <span className={styles.label}>Project:</span>
+                    <span className={styles.value}>{customer.projectName || 'N/A'}</span>
+                  </div>
                   <div className={styles.infoRow}>
                     <span className={styles.label}>Type:</span>
-                    <span className={styles.value}>{customer.type}</span>
+                    <span className={styles.value}>{customer.type || 'N/A'}</span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.label}>Payment:</span>
-                    <span className={styles.value}>{customer.paymentType}</span>
+                    <span className={styles.value}>{customer.paymentType || 'N/A'}</span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.label}>Start Date:</span>
-                    <span className={styles.value}>{formatDate(customer.startDate)}</span>
+                    <span className={styles.value}>{customer.startDate || 'N/A'}</span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.label}>Est. Finish:</span>
-                    <span className={styles.value}>{formatDate(customer.finishDate)}</span>
+                    <span className={styles.value}>{customer.finishDate || 'N/A'}</span>
                   </div>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Category Breakdown */}
-          {Array.isArray(categoryBreakdowns) && categoryBreakdowns.length > 0 && (
+          {categoryBreakdowns.length > 0 && (
             <section className={styles.categorySection}>
               <div className={styles.sectionHeader}>
-                <FontAwesomeIcon icon={faDollarSign} className={styles.sectionIcon} />
                 <h3 className={styles.sectionTitle}>Category Cost Summary</h3>
               </div>
               <div className={styles.tableContainer}>
@@ -588,20 +463,22 @@ export default function EstimateSummary() {
                     </tr>
                   </thead>
                   <tbody>
-                    {categoryBreakdowns.map((cat, index) => (
+                    {categoryBreakdowns.map((category, index) => (
                       <tr key={index} className={styles.tableRow}>
-                        <td className={styles.tableCell}>{cat.name || 'Unnamed Category'}</td>
-                        <td className={styles.tableCell}>{cat.itemCount || 0}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(parseFloat(cat.materialCost) || 0)}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(parseFloat(cat.laborCost) || 0)}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(parseFloat(cat.subtotal) || 0)}</td>
+                        <td className={styles.tableCell}>{category.name || 'N/A'}</td>
+                        <td className={styles.tableCellRight}>{category.itemCount || 0}</td>
+                        <td className={styles.tableCellRight}>{formatCurrency(category.materialCost)}</td>
+                        <td className={styles.tableCellRight}>{formatCurrency(category.laborCost)}</td>
+                        <td className={styles.tableCellRight}>{formatCurrency(category.subtotal)}</td>
                       </tr>
                     ))}
                     <tr className={styles.tableTotalRow}>
                       <td className={styles.tableCell}><strong>TOTAL</strong></td>
-                      <td className={styles.tableCell}><strong>{categoryBreakdowns.reduce((sum, cat) => sum + (cat.itemCount || 0), 0)}</strong></td>
+                      <td className={styles.tableCellRight}>
+                        <strong>{categoryBreakdowns.reduce((sum, cat) => sum + (cat.itemCount || 0), 0)}</strong>
+                      </td>
                       <td className={styles.tableCellRight}><strong>{formatCurrency(baseMaterialCost)}</strong></td>
-                      <td className={styles.tableCellRight}><strong>{formatCurrency(preDiscountLaborCost)}</strong></td>
+                      <td className={styles.tableCellRight}><strong>{formatCurrency(baseLaborCost)}</strong></td>
                       <td className={styles.tableCellRight}><strong>{formatCurrency(baseSubtotal)}</strong></td>
                     </tr>
                   </tbody>
@@ -610,11 +487,9 @@ export default function EstimateSummary() {
             </section>
           )}
 
-          {/* Detailed Material Breakdown */}
-          {Array.isArray(materialBreakdown) && materialBreakdown.length > 0 && (
+          {materialBreakdown.length > 0 && (
             <section className={styles.detailSection}>
               <div className={styles.sectionHeader}>
-                <FontAwesomeIcon icon={faRuler} className={styles.sectionIcon} />
                 <h3 className={styles.sectionTitle}>Material Cost Details</h3>
               </div>
               <div className={styles.tableContainer}>
@@ -622,7 +497,7 @@ export default function EstimateSummary() {
                   <thead>
                     <tr>
                       <th scope="col" className={styles.tableHeader}>Category</th>
-                      <th scope="col" className={styles.tableHeader}>Item Description</th>
+                      <th scope="col" className={styles.tableHeader}>Item</th>
                       <th scope="col" className={styles.tableHeader}>Qty</th>
                       <th scope="col" className={styles.tableHeader}>Unit</th>
                       <th scope="col" className={styles.tableHeader}>Unit Cost</th>
@@ -633,19 +508,11 @@ export default function EstimateSummary() {
                     {materialBreakdown.map((item, index) => (
                       <tr key={index} className={styles.tableRow}>
                         <td className={styles.tableCell}>{item.category || 'N/A'}</td>
-                        <td className={styles.tableCell}>
-                          <div className={styles.itemDescription}>
-                            <div className={styles.itemName}>{item.item || 'Unnamed Item'}</div>
-                            <div className={styles.itemType}>
-                              {item.type && <span>{item.type}</span>}
-                              {item.subtype && <span className={styles.subtype}>- {item.subtype}</span>}
-                            </div>
-                          </div>
-                        </td>
+                        <td className={styles.tableCell}>{item.item || 'Unnamed Item'}</td>
                         <td className={styles.tableCellRight}>{(item.quantity || 0).toFixed(2)}</td>
                         <td className={styles.tableCell}>{item.unitType || 'units'}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(item.costPerUnit || 0)}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(item.total || 0)}</td>
+                        <td className={styles.tableCellRight}>{formatCurrency(item.costPerUnit)}</td>
+                        <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
                       </tr>
                     ))}
                     <tr className={styles.tableTotalRow}>
@@ -658,11 +525,9 @@ export default function EstimateSummary() {
             </section>
           )}
 
-          {/* Detailed Labor Breakdown */}
-          {Array.isArray(laborBreakdown) && laborBreakdown.length > 0 && (
+          {laborBreakdown.length > 0 && (
             <section className={styles.detailSection}>
               <div className={styles.sectionHeader}>
-                <FontAwesomeIcon icon={faTools} className={styles.sectionIcon} />
                 <h3 className={styles.sectionTitle}>Labor Cost Details</h3>
               </div>
               <div className={styles.tableContainer}>
@@ -670,7 +535,7 @@ export default function EstimateSummary() {
                   <thead>
                     <tr>
                       <th scope="col" className={styles.tableHeader}>Category</th>
-                      <th scope="col" className={styles.tableHeader}>Item Description</th>
+                      <th scope="col" className={styles.tableHeader}>Item</th>
                       <th scope="col" className={styles.tableHeader}>Qty</th>
                       <th scope="col" className={styles.tableHeader}>Unit</th>
                       <th scope="col" className={styles.tableHeader}>Unit Cost</th>
@@ -681,19 +546,11 @@ export default function EstimateSummary() {
                     {laborBreakdown.map((item, index) => (
                       <tr key={index} className={styles.tableRow}>
                         <td className={styles.tableCell}>{item.category || 'N/A'}</td>
-                        <td className={styles.tableCell}>
-                          <div className={styles.itemDescription}>
-                            <div className={styles.itemName}>{item.item || 'Unnamed Item'}</div>
-                            <div className={styles.itemType}>
-                              {item.type && <span>{item.type}</span>}
-                              {item.subtype && <span className={styles.subtype}>- {item.subtype}</span>}
-                            </div>
-                          </div>
-                        </td>
+                        <td className={styles.tableCell}>{item.item || 'Unnamed Item'}</td>
                         <td className={styles.tableCellRight}>{(item.quantity || 0).toFixed(2)}</td>
                         <td className={styles.tableCell}>{item.unitType || 'units'}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(item.costPerUnit || 0)}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(item.total || 0)}</td>
+                        <td className={styles.tableCellRight}>{formatCurrency(item.costPerUnit)}</td>
+                        <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
                       </tr>
                     ))}
                     <tr className={styles.tableTotalRow}>
@@ -706,10 +563,8 @@ export default function EstimateSummary() {
             </section>
           )}
 
-          {/* Cost Calculation Summary */}
           <section className={styles.calculationSection}>
             <div className={styles.sectionHeader}>
-              <FontAwesomeIcon icon={faDollarSign} className={styles.sectionIcon} />
               <h3 className={styles.sectionTitle}>Cost Calculation Summary</h3>
             </div>
             <div className={styles.tableContainer}>
@@ -721,13 +576,11 @@ export default function EstimateSummary() {
                   </tr>
                   <tr className={styles.calculationRow}>
                     <td className={styles.calculationLabel}>Base Labor Cost</td>
-                    <td className={styles.calculationValue}>{formatCurrency(preDiscountLaborCost)}</td>
+                    <td className={styles.calculationValue}>{formatCurrency(baseLaborCost)}</td>
                   </tr>
                   {laborDiscount > 0 && (
-                    <tr className={styles.discountRow}>
-                      <td className={styles.calculationLabel}>
-                        Labor Discount ({((settings?.laborDiscount || 0) * 100).toFixed(1)}%)
-                      </td>
+                    <tr className={styles.calculationRow}>
+                      <td className={styles.calculationLabel}>Less: Labor Discount</td>
                       <td className={styles.calculationValueNegative}>-{formatCurrency(laborDiscount)}</td>
                     </tr>
                   )}
@@ -780,10 +633,8 @@ export default function EstimateSummary() {
             </div>
           </section>
 
-          {/* Payment Summary */}
           <section className={styles.paymentSection}>
             <div className={styles.sectionHeader}>
-              <FontAwesomeIcon icon={faDollarSign} className={styles.sectionIcon} />
               <h3 className={styles.sectionTitle}>Payment Summary</h3>
             </div>
             <div className={styles.tableContainer}>
@@ -828,15 +679,16 @@ export default function EstimateSummary() {
             </div>
           </section>
 
-          {/* Terms and Conditions */}
           <section className={styles.termsSection}>
             <div className={styles.sectionHeader}>
-              <FontAwesomeIcon icon={faDollarSign} className={styles.sectionIcon} />
               <h3 className={styles.sectionTitle}>Terms & Conditions</h3>
             </div>
             <div className={styles.termsContent}>
               <div className={styles.termsItem}>
-                <strong>Payment Schedule:</strong> 50% deposit due upon contract signing, 30% upon material delivery, 20% upon project completion.
+                <strong>Payment Schedule:</strong> A 50% deposit is required upon contract signing to initiate the project. An additional 30% is due upon delivery of materials to the project site, as confirmed by the project manager. The remaining 20% is payable upon satisfactory completion of the project, subject to final inspection and client approval. Payments align with the agreed project schedule, and material delivery will be coordinated to minimize delays, subject to supplier availability.
+              </div>
+              <div className={styles.termsItem}>
+                <strong>Payment Policy:</strong> We accept payments via checks, QuickPay, Zelle, and all major credit and debit cards. A 4% processing fee will be applied to all credit and debit card transactions. Materials will not be released or delivered to the project site until the corresponding payment has been fully cleared, without exception. All payments must be made in accordance with the agreed payment schedule to ensure timely project progression.
               </div>
               <div className={styles.termsItem}>
                 <strong>Materials:</strong> All materials subject to availability and price changes. Substitutions may be made with customer approval.
@@ -853,11 +705,9 @@ export default function EstimateSummary() {
             </div>
           </section>
 
-          {/* Project Notes */}
           {customer.notes && (
             <section className={styles.notesSection}>
               <div className={styles.sectionHeader}>
-                <FontAwesomeIcon icon={faDollarSign} className={styles.sectionIcon} />
                 <h3 className={styles.sectionTitle}>Special Instructions</h3>
               </div>
               <div className={styles.notesContent}>
@@ -866,10 +716,8 @@ export default function EstimateSummary() {
             </section>
           )}
 
-          {/* Authorization */}
           <section className={styles.authorizationSection}>
             <div className={styles.sectionHeader}>
-              <FontAwesomeIcon icon={faDollarSign} className={styles.sectionIcon} />
               <h3 className={styles.sectionTitle}>Authorization & Acceptance</h3>
             </div>
             <div className={styles.authorizationContent}>
@@ -878,37 +726,33 @@ export default function EstimateSummary() {
                 I/We authorize Rawdah Remodeling Company to proceed with the work described at the total contract price of{' '}
                 <strong className={styles.contractAmount}>{formatCurrency(grandTotal)}</strong>.
               </p>
-              
               <div className={styles.signatureContainer}>
-                <div className={styles.signatureLine}>
-                  <span className={styles.signatureLabel}>Customer Signature:</span>
-                  <div className={styles.signatureBox}>_______________________________</div>
-                  <span className={styles.signatureDate}>Date: _______________</span>
+                <div className={styles.signatureBlock}>
+                  <div className={styles.signatureLabel}>Customer Signature:</div>
+                  <div className={styles.signatureLine}></div>
+                  <div className={styles.signatureInfo}>
+                    <span>Printed Name: _______________________________</span>
+                    <span>Date: _______________</span>
+                  </div>
                 </div>
-                <div className={styles.signatureLine}>
-                  <span className={styles.signatureLabel}>Printed Name:</span>
-                  <div className={styles.signatureBox}>_______________________________</div>
+                <div className={styles.signatureBlock}>
+                  <div className={styles.signatureLabel}>Contractor Signature:</div>
+                  <div className={styles.signatureLine}></div>
+                  <div className={styles.signatureInfo}>
+                    <span>Printed Name & Sign: _______________________________</span>
+                    <span>Date: _______________</span>
+                  </div>
                 </div>
               </div>
-              
-              <div className={styles.contractorSignature}>
-                <div className={styles.signatureLine}>
-                  <span className={styles.signatureLabel}>Contractor Signature:</span>
-                  <div className={styles.signatureBox}>_______________________________</div>
-                  <span className={styles.signatureDate}>Date: _______________</span>
-                </div>
-                <p className={styles.contractorName}>Rawdah Remodeling Company Representative</p>
-              </div>
+              <p className={styles.contractorName}>Rawdah Remodeling Company Representative</p>
             </div>
           </section>
 
-          {/* Footer */}
           <footer className={styles.documentFooter}>
             <div className={styles.footerContent}>
               <p className={styles.footerText}>Thank you for choosing Rawdah Remodeling Company</p>
               <p className={styles.footerTextSmall}>
-                This document was generated electronically and serves as your official estimate. 
-                For questions, please contact us at (224) 817-3264.
+                This document serves as your official estimate. For questions, contact us at (224) 817-3264.
               </p>
             </div>
           </footer>

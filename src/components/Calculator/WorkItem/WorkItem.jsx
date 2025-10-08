@@ -1,14 +1,23 @@
 // src/components/Calculator/WorkItem/WorkItem.jsx
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState, useMemo, useRef } from 'react';
 import { useWorkType } from '../../../context/WorkTypeContext';
 import { useSettings } from '../../../context/SettingsContext';
 import { CalculatorEngine } from '../engine/CalculatorEngine';
 import SurfaceManager from './SurfaceManager';
 import CostInput from './CostInput';
 import styles from './WorkItem.module.css';
-import ErrorBoundary from '../../ErrorBoundary'; // Add error boundary
+import ErrorBoundary from '../../ErrorBoundary';
 
-const DEFAULT_COST_OPTIONS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '15', '20'];
+// ENHANCED: Expanded cost options up to $5,000 with better coverage
+const DEFAULT_COST_OPTIONS = [
+  '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+  '15', '20', '25', '30', '35', '40', '45', '50',
+  '60', '70', '80', '90', '100',
+  '150', '200', '250', '300', '400', '500',
+  '750', '1000', '1500', '2000',
+  '2500', '3000', '4000', '5000',
+  'Custom'
+];
 
 const ensureNumber = (value, defaultValue = 0) => {
   if (value === null || value === undefined || value === '') return defaultValue;
@@ -27,7 +36,14 @@ export default function WorkItem({
   onItemChange,
   onItemRemove,
 }) {
-  // Wrap with error boundary
+  if (!workItem || typeof workItem !== 'object') {
+    return (
+      <div className={styles.workItem}>
+        <div className={styles.errorMessage}>Invalid work item data</div>
+      </div>
+    );
+  }
+
   return (
     <ErrorBoundary boundaryName={`WorkItem-${catIndex}-${workIndex}`}>
       <WorkItemContent 
@@ -65,7 +81,7 @@ function WorkItemContent({
     getMeasurementTypeUnit,
     getMeasurementTypeIcon,
     isCategoryValid,
-    getMeasurementType, // This is now properly available
+    getMeasurementType,
     isValidSubtype,
     getWorkTypeDetails,
   } = useWorkType();
@@ -73,15 +89,18 @@ function WorkItemContent({
   const { settings } = useSettings();
   const [isExpanded, setIsExpanded] = useState(true);
   const [validationErrors, setValidationErrors] = useState({});
+  
+  const prevWorkItemRef = useRef(workItem);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
 
-  // CalculatorEngine instance - ensure it's created properly
   const calculatorEngine = useMemo(() => {
     try {
       if (!getMeasurementType || !isValidSubtype || !getWorkTypeDetails) {
         console.warn('Calculator engine dependencies not ready');
         return null;
       }
-      return new CalculatorEngine([], settings || {}, {
+      return new CalculatorEngine([], settingsRef.current || {}, {
         getMeasurementType,
         isValidSubtype,
         getWorkTypeDetails,
@@ -90,16 +109,14 @@ function WorkItemContent({
       console.warn('Calculator engine init error:', err.message);
       return null;
     }
-  }, [settings, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
+  }, [getMeasurementType, isValidSubtype, getWorkTypeDetails]);
 
-  // Normalize category key
   const normalizedCategoryKey = useMemo(() => {
     if (!categoryKey) return '';
     if (categoryKey.startsWith('custom_')) return categoryKey;
     return categoryKey.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '');
   }, [categoryKey]);
 
-  // Valid work types for this category
   const availableWorkTypes = useMemo(() => {
     try {
       if (!normalizedCategoryKey || !isCategoryValid(normalizedCategoryKey)) return [];
@@ -133,7 +150,6 @@ function WorkItemContent({
     }
   }, [workItem.type, getSubtypeOptions]);
 
-  // Display name
   const derivedName = useMemo(() => {
     const workTypeLabel = workTypeOptions.find(opt => opt.value === workItem.type)?.label;
     const subtypeLabel = subtypeOptions.find(opt => opt.value === workItem.subtype)?.label;
@@ -141,7 +157,70 @@ function WorkItemContent({
     return subtypeLabel ? `${workTypeLabel} (${subtypeLabel})` : workTypeLabel;
   }, [workItem.type, workItem.subtype, workTypeOptions, subtypeOptions]);
 
-  // Normalize work item before calculations
+  const updateWorkItem = useCallback((field, value) => {
+    if (disabled) return;
+    
+    const updatedItem = {
+      ...workItem,
+      categoryKey: normalizedCategoryKey,
+      // CRITICAL FIX: Don't default to 0 for materialCost and laborCost
+      // Keep the original values unless they're being updated
+      type: workItem.type || '',
+      subtype: workItem.subtype || '',
+      measurementType: workItem.measurementType || '',
+      surfaces: Array.isArray(workItem.surfaces) ? workItem.surfaces : [],
+    };
+
+    if (field === 'type') {
+      updatedItem.type = value;
+      updatedItem.subtype = getDefaultSubtype(value) || '';
+      updatedItem.measurementType = getMeasurementType(normalizedCategoryKey, value);
+      updatedItem.surfaces = [];
+      setValidationErrors({});
+    } else if (field === 'measurementType') {
+      updatedItem.measurementType = value;
+      updatedItem.surfaces = [];
+    } else if (field === 'subtype') {
+      updatedItem.subtype = value;
+    } else if (field === 'surfaces') {
+      updatedItem.surfaces = value;
+    } else if (field === 'materialCost' || field === 'laborCost') {
+      // Ensure costs are stored as numbers
+      updatedItem[field] = typeof value === 'number' ? value : parseFloat(value) || 0;
+    } else {
+      updatedItem[field] = value;
+    }
+
+    if (field === 'type' || field === 'subtype') {
+      const wtLabel = workTypeOptions.find(opt => opt.value === updatedItem.type)?.label;
+      const stLabel = subtypeOptions.find(opt => opt.value === updatedItem.subtype)?.label;
+      updatedItem.name = wtLabel ? (stLabel ? `${wtLabel} (${stLabel})` : wtLabel) : updatedItem.name;
+    }
+
+    prevWorkItemRef.current = updatedItem;
+    onItemChange?.(catIndex, workIndex, updatedItem);
+  }, [
+    disabled, 
+    catIndex, 
+    workIndex, 
+    workItem, 
+    normalizedCategoryKey,
+    getDefaultSubtype, 
+    getMeasurementType, 
+    onItemChange, 
+    workTypeOptions, 
+    subtypeOptions
+  ]);
+
+  const handleRemoveWorkItem = useCallback(() => {
+    if (disabled) return;
+    onItemRemove?.(catIndex, workIndex, workItem);
+  }, [disabled, catIndex, workIndex, workItem, onItemRemove]);
+
+  const handleSurfaceUpdate = useCallback(updated => {
+    updateWorkItem('surfaces', updated.surfaces);
+  }, [updateWorkItem]);
+
   const sanitizedWorkItem = useMemo(() => ({
     ...workItem,
     categoryKey: normalizedCategoryKey,
@@ -154,51 +233,6 @@ function WorkItemContent({
     surfaces: Array.isArray(workItem.surfaces) ? workItem.surfaces : [],
   }), [workItem, normalizedCategoryKey, derivedName]);
 
-  // CRITICAL FIX: Auto-detect measurement type when work type changes
-  const updateWorkItem = useCallback((field, value) => {
-    if (disabled) return;
-    const updatedItem = { ...sanitizedWorkItem };
-
-    if (field === 'type') {
-      updatedItem.type = value;
-      updatedItem.subtype = getDefaultSubtype(value) || '';
-      // AUTO-SET MEASUREMENT TYPE BASED ON WORK TYPE
-      updatedItem.measurementType = getMeasurementType(normalizedCategoryKey, value);
-      updatedItem.surfaces = [];
-      setValidationErrors({});
-    } else if (field === 'measurementType') {
-      updatedItem.measurementType = value;
-      updatedItem.surfaces = [];
-    } else if (field === 'subtype') {
-      updatedItem.subtype = value;
-    } else if (field === 'surfaces') {
-      updatedItem.surfaces = value;
-    } else {
-      updatedItem[field] = value;
-    }
-
-    // Update name when type or subtype changes
-    if (field === 'type' || field === 'subtype') {
-      const wtLabel = workTypeOptions.find(opt => opt.value === updatedItem.type)?.label;
-      const stLabel = subtypeOptions.find(opt => opt.value === updatedItem.subtype)?.label;
-      updatedItem.name = wtLabel ? (stLabel ? `${wtLabel} (${stLabel})` : wtLabel) : updatedItem.name;
-    }
-
-    onItemChange?.(catIndex, workIndex, updatedItem);
-  }, [disabled, catIndex, workIndex, sanitizedWorkItem, getDefaultSubtype, getMeasurementType, normalizedCategoryKey, onItemChange, workTypeOptions, subtypeOptions]);
-
-  // Remove handler
-  const handleRemoveWorkItem = useCallback(() => {
-    if (disabled) return;
-    onItemRemove?.(catIndex, workIndex, sanitizedWorkItem);
-  }, [disabled, catIndex, workIndex, onItemRemove, sanitizedWorkItem]);
-
-  // Surface update
-  const handleSurfaceUpdate = useCallback(updated => {
-    updateWorkItem('surfaces', updated.surfaces);
-  }, [updateWorkItem]);
-
-  // CalculatorEngine calculations
   const calculationResults = useMemo(() => {
     if (!calculatorEngine) {
       return { 
@@ -212,6 +246,7 @@ function WorkItemContent({
         warnings: [] 
       };
     }
+    
     try {
       const units = calculatorEngine.calculateWorkUnits(sanitizedWorkItem);
       const costs = calculatorEngine.calculateWorkCost(sanitizedWorkItem);
@@ -270,7 +305,6 @@ function WorkItemContent({
     return Object.entries(validationErrors).filter(([_, e]) => e).map(([field, msg]) => ({ field, message: msg }));
   }, [validationErrors]);
 
-  // Check if context is ready
   const isContextReady = useMemo(() => {
     return getMeasurementType && isValidSubtype && getWorkTypeDetails && getAllMeasurementTypes;
   }, [getMeasurementType, isValidSubtype, getWorkTypeDetails, getAllMeasurementTypes]);
@@ -311,7 +345,6 @@ function WorkItemContent({
 
       {isExpanded && (
         <div className={styles.content}>
-          {/* Type + Subtype */}
           <div className={styles.row}>
             <div className={styles.field}>
               <label htmlFor={`type-${catIndex}-${workIndex}`}>
@@ -352,7 +385,6 @@ function WorkItemContent({
             )}
           </div>
 
-          {/* Measurement */}
           {sanitizedWorkItem.type && (
             <div className={styles.field}>
               <label htmlFor={`measurement-${catIndex}-${workIndex}`}>
@@ -379,7 +411,6 @@ function WorkItemContent({
             </div>
           )}
 
-          {/* Surfaces */}
           {sanitizedWorkItem.type && sanitizedWorkItem.measurementType && (
             <SurfaceManager 
               workItem={sanitizedWorkItem} 
@@ -392,14 +423,13 @@ function WorkItemContent({
             />
           )}
 
-          {/* Costs */}
           {sanitizedWorkItem.type && sanitizedWorkItem.measurementType && (
             <div className={styles.costInputsContainer}>
               <h4><i className="fas fa-dollar-sign" /> Cost Per Unit</h4>
               <div className={styles.costInputs}>
                 <CostInput 
                   label="Material Cost" 
-                  value={sanitizedWorkItem.materialCost} 
+                  value={workItem.materialCost}
                   onChange={v => updateWorkItem('materialCost', v)} 
                   disabled={disabled} 
                   options={costOptions} 
@@ -408,7 +438,7 @@ function WorkItemContent({
                 />
                 <CostInput 
                   label="Labor Cost" 
-                  value={sanitizedWorkItem.laborCost} 
+                  value={workItem.laborCost}
                   onChange={v => updateWorkItem('laborCost', v)} 
                   disabled={disabled} 
                   options={costOptions} 
@@ -419,28 +449,26 @@ function WorkItemContent({
             </div>
           )}
 
-          {/* Summary */}
-          {calculationResults.canCalculate && showCostBreakdown && (
-            <div className={styles.costDisplay}>
-              <h4><i className="fas fa-calculator" /> Summary</h4>
-              <div className={styles.costSummary}>
-                <span className={styles.costItem}>
-                  <i className="fas fa-cube" /> {calculationResults.totalUnits.toFixed(2)} {calculationResults.unitLabel}
-                </span>
-                <span className={styles.costItem}>
-                  <i className="fas fa-box" /> ${calculationResults.totalMaterialCost.toFixed(2)}
-                </span>
-                <span className={styles.costItem}>
-                  <i className="fas fa-hammer" /> ${calculationResults.totalLaborCost.toFixed(2)}
-                </span>
-                <span className={`${styles.costItem} ${styles.totalCost}`}>
-                  <i className="fas fa-dollar-sign" /> ${calculationResults.totalCost.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          )}
+         {calculationResults.canCalculate && showCostBreakdown && (
+  <div className={styles.costDisplay}>
+    <h4><i className="fas fa-calculator" /> Summary</h4>
+    <div className={styles.costSummary}>
+      <span className={styles.costItem}>
+        <i className="fas fa-cube" /> {calculationResults.totalUnits.toFixed(2)} {calculationResults.unitLabel}
+      </span>
+      <span className={styles.costItem}>
+        <i className="fas fa-box" /> ${calculationResults.totalMaterialCost.toFixed(2)}
+      </span>
+      <span className={styles.costItem}>
+        <i className="fas fa-hammer" /> ${calculationResults.totalLaborCost.toFixed(2)}
+      </span>
+      <span className={`${styles.costItem} ${styles.totalCost}`}>
+        <i className="fas fa-dollar-sign" /> ${calculationResults.totalCost.toFixed(2)}
+      </span>
+    </div>
+  </div>
+)}
 
-          {/* Warnings */}
           {calculationResults.warnings.length > 0 && (
             <div className={styles.warningSection} role="alert">
               <h4><i className="fas fa-exclamation-triangle" /> Calculation Warnings:</h4>
@@ -452,7 +480,6 @@ function WorkItemContent({
             </div>
           )}
 
-          {/* Validation errors */}
           {validationErrorList.length > 0 && (
             <div className={styles.validationErrors} role="alert">
               <h4><i className="fas fa-exclamation-triangle" /> Please fix these issues:</h4>

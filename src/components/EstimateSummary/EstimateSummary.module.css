@@ -1,116 +1,126 @@
+/* EstimateSummary.module.css - Optimized for A4 Printing */
 
-body {
-  font-family: var(--font-family-sans);
-}
+/* ============================================================================ */
+/* SCREEN STYLES */
+/* ============================================================================ */
 
 .mainContent {
-  background: var(--surface);
+  background: #f5f5f5;
   min-height: 100vh;
-  padding: 0;
+  padding: 20px;
 }
 
 .container {
-  max-width: 210mm; /* A4 width */
+  max-width: 210mm;
   margin: 0 auto;
-  padding: var(--spacing-lg);
-  box-sizing: border-box;
+  padding: 20px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
 }
 
 .document {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  font-family: var(--font-family-base);
-  font-size: var(--font-size-sm);
+  background: white;
+  font-family: 'Arial', 'Helvetica', sans-serif;
+  font-size: 11px;
   line-height: 1.4;
-  color: var(--text);
-  max-width: 100%;
-  overflow: hidden;
+  color: #333;
 }
 
-/* Header Section - Screen */
+/* Header Section */
 .headerSection {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: 20px;
   text-align: center;
+  padding: 15px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .title {
-  font-size: var(--font-size-xxxl);
-  font-weight: var(--font-weight-bold);
-  margin: 0 0 var(--spacing-md) 0;
-  color: var(--primary);
-  letter-spacing: 1px;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+  color: #005f73;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .actionButtons {
   display: flex;
   justify-content: center;
-  gap: var(--spacing-md);
+  gap: 12px;
   flex-wrap: wrap;
-  margin-top: var(--spacing-lg);
+  margin-bottom: 10px;
 }
 
 .actionButton {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--primary);
-  color: var(--surface);
+  gap: 8px;
+  padding: 10px 20px;
+  background: #005f73;
+  color: white;
   border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  text-decoration: none;
-  min-width: 100px;
-  justify-content: center;
 }
 
 .actionButton:hover:not(:disabled) {
-  background: var(--primary-dark);
+  background: #003d4c;
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .actionButton:disabled {
-  background: var(--text-muted);
+  background: #ccc;
   cursor: not-allowed;
   transform: none;
 }
 
-.actionButton .icon {
-  font-size: var(--font-size-base);
-  width: 16px;
+.icon {
+  width: 14px;
+  height: 14px;
 }
 
-/* Document Header - Screen */
+.printInstructions {
+  font-size: 12px;
+  color: #666;
+  margin: 10px 0 0 0;
+  font-style: italic;
+}
+
+/* Document Header */
 .documentHeader {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
-  padding: var(--spacing-lg) var(--spacing-xl);
+  background: linear-gradient(135deg, #005f73 0%, #003d4c 100%);
+  color: white;
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 4px;
 }
 
 .companyHeader {
   display: grid;
-  grid-template-columns: 80px 1fr;
-  gap: var(--spacing-lg);
-  align-items: start;
-  margin-bottom: var(--spacing-lg);
+  grid-template-columns: 60px 1fr;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 15px;
 }
 
 .logoContainer {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .logo {
-  width: 70px;
-  height: 70px;
+  width: 50px;
+  height: 50px;
   object-fit: contain;
   filter: brightness(0) invert(1);
-  border-radius: var(--radius-sm);
 }
 
 .companyInfo {
@@ -118,167 +128,135 @@ body {
 }
 
 .companyName {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  margin: 0 0 var(--spacing-sm) 0;
-  letter-spacing: 1px;
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .contactInfo {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  gap: 4px;
+  font-size: 11px;
 }
 
-.address {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  margin: 0;
-}
-
+.address,
 .contact {
-  font-size: var(--font-size-sm);
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.contactIcon {
-  width: 12px;
-  height: 12px;
-  font-size: var(--font-size-sm);
+  opacity: 0.95;
 }
 
 .projectHeader {
   text-align: center;
-  padding-top: var(--spacing-lg);
-  border-top: 2px solid rgba(255, 255, 255, 0.2);
+  padding-top: 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .projectTitle {
-  font-size: var(--font-size-xxxl);
-  font-weight: var(--font-weight-bold);
-  margin: 0 0 var(--spacing-sm) 0;
-  letter-spacing: 2px;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
   text-transform: uppercase;
 }
 
 .projectNumber {
-  font-size: var(--font-size-base);
-  color: rgba(255, 255, 255, 0.8);
-  margin: 0 0 var(--spacing-md) 0;
-  font-weight: var(--font-weight-medium);
+  font-size: 12px;
+  margin: 0 0 8px 0;
+  opacity: 0.9;
 }
 
 .dateInfo {
+  font-size: 10px;
   display: flex;
-  justify-content: space-between;
-  font-size: var(--font-size-sm);
-  color: rgba(255, 255, 255, 0.7);
-}
-
-/* Section Styles - Screen */
-.sectionHeader {
-  display: flex;
+  justify-content: center;
+  gap: 15px;
   align-items: center;
-  gap: var(--spacing-md);
-  margin: var(--spacing-xl) 0 var(--spacing-lg) 0;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 2px solid var(--border);
+  opacity: 0.85;
 }
 
-.sectionIcon {
-  width: 20px;
-  height: 20px;
-  color: var(--secondary);
-  font-size: var(--font-size-lg);
+.separator {
+  opacity: 0.5;
+}
+
+/* Section Styles */
+.sectionHeader {
+  margin: 15px 0 10px 0;
+  padding-bottom: 5px;
+  border-bottom: 2px solid #005f73;
 }
 
 .sectionTitle {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+  font-size: 14px;
+  font-weight: 700;
   margin: 0;
-  color: var(--primary);
-  letter-spacing: 0.5px;
+  color: #005f73;
   text-transform: uppercase;
+  letter-spacing: 0.3px;
 }
 
-.section {
-  margin-bottom: var(--spacing-xl);
-  padding: var(--spacing-lg);
-  background: var(--surface-light);
-  border-radius: var(--radius-sm);
-  border-left: 4px solid var(--secondary);
-}
-
-/* Customer Information - Screen */
+/* Customer Section */
 .customerSection {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 20px;
 }
 
 .infoGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-lg);
+  gap: 15px;
 }
 
 .infoColumn {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
 }
 
 .infoGroup {
-  background: var(--surface);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  background: #fafafa;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
 }
 
 .infoHeader {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--primary);
-  margin: 0 0 var(--spacing-md) 0;
-  padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  color: #005f73;
+  margin: 0 0 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #ddd;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .infoRow {
   display: flex;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-sm);
-  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
 }
 
 .label {
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-light);
-  min-width: 90px;
-  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: #666;
+  min-width: 80px;
 }
 
 .value {
   flex: 1;
-  color: var(--text);
-  font-size: var(--font-size-sm);
+  color: #333;
 }
 
-/* Table Styles - Screen */
+/* Table Styles */
 .tableContainer {
   overflow-x: auto;
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
 }
 
 .summaryTable,
@@ -287,985 +265,453 @@ body {
 .paymentTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--font-size-sm);
-  background: var(--surface);
+  font-size: 11px;
 }
 
 .tableHeader {
-  background: var(--primary);
-  color: var(--surface);
-  padding: var(--spacing-sm) var(--spacing-md);
+  background: #005f73;
+  color: white;
+  padding: 8px 10px;
   text-align: left;
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
-  border-bottom: 2px solid var(--primary-dark);
+  font-weight: 600;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  border-bottom: 2px solid #003d4c;
 }
 
 .tableCell,
 .tableCellRight {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border-bottom: 1px solid var(--border);
-  vertical-align: top;
+  padding: 8px 10px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .tableCellRight {
   text-align: right;
-  font-weight: var(--font-weight-medium);
+  font-weight: 500;
 }
 
 .tableRow:nth-child(even) {
-  background: #fafbfc;
+  background: #f9f9f9;
 }
 
 .tableTotalRow {
-  background: var(--primary);
-  color: var(--surface);
+  background: #005f73;
+  color: white;
+  font-weight: 700;
 }
 
 .tableTotalRow .tableCell,
 .tableTotalRow .tableCellRight {
   border-bottom: none;
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-base);
+  padding: 10px;
 }
 
-.itemDescription {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+/* Section Spacing */
+.categorySection,
+.detailSection,
+.calculationSection,
+.paymentSection,
+.termsSection,
+.notesSection,
+.authorizationSection {
+  margin-bottom: 20px;
+  page-break-inside: avoid;
 }
 
-.itemName {
-  font-weight: var(--font-weight-semibold);
-  font-size: var(--font-size-sm);
-}
-
-.itemType {
-  font-size: var(--font-size-xs);
-  color: var(--text-light);
-}
-
-.subtype {
-  color: var(--secondary);
-  font-weight: var(--font-weight-medium);
-}
-
-/* Calculation Table - Screen */
-.calculationTable {
-  font-size: var(--font-size-base);
-}
-
+/* Calculation Table */
 .calculationRow {
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid #eee;
 }
 
 .calculationLabel {
-  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-md) 0;
-  width: 70%;
-  vertical-align: top;
-  font-size: var(--font-size-base);
+  padding: 8px 10px;
+  width: 65%;
+  font-size: 11px;
 }
 
 .calculationValue,
 .calculationValueNegative {
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 8px 10px;
   text-align: right;
-  font-weight: var(--font-weight-semibold);
-  width: 30%;
-  font-size: var(--font-size-base);
+  font-weight: 600;
+  width: 35%;
 }
 
 .calculationValueNegative {
-  color: var(--accent);
+  color: #d00000;
 }
 
 .subtotalRow {
-  border-top: 2px solid var(--primary);
-  border-bottom: 2px solid var(--primary);
+  border-top: 2px solid #005f73;
+  border-bottom: 2px solid #005f73;
+  background: #f0f0f0;
 }
 
 .subtotalRow .calculationLabel,
 .subtotalRow .calculationValue {
-  font-size: var(--font-size-lg);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px;
 }
 
 .grandTotalRow {
-  border-top: 3px double var(--accent);
-  background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 20%, transparent 20%);
+  border-top: 3px double #005f73;
+  background: #e8f4f8;
 }
 
+.grandTotalRow .calculationLabel,
 .grandTotalValue {
-  color: var(--surface) !important;
-  font-size: var(--font-size-xxl) !important;
+  font-size: 14px;
+  font-weight: 700;
+  color: #005f73;
+  padding: 12px 10px;
 }
 
-/* Payment Table - Screen */
-.paymentTable {
-  font-size: var(--font-size-base);
-}
-
+/* Payment Table */
 .paymentRow {
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid #eee;
 }
 
 .paymentLabel {
-  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-md) 0;
-  width: 70%;
-  vertical-align: top;
+  padding: 8px 10px;
+  width: 65%;
 }
 
 .paymentValue,
 .paymentValueNegative,
 .paymentValuePositive {
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: 8px 10px;
   text-align: right;
-  font-weight: var(--font-weight-semibold);
-  width: 30%;
+  font-weight: 600;
+  width: 35%;
 }
 
 .paymentValueNegative {
-  color: var(--accent);
+  color: #d00000;
 }
 
 .paymentValuePositive {
-  color: var(--success);
+  color: #2b9348;
 }
 
 .balanceRow {
-  border-top: 2px solid var(--primary);
+  border-top: 2px solid #005f73;
+  background: #f0f0f0;
+}
+
+.balanceValue {
+  padding: 10px;
+  text-align: right;
 }
 
 .balanceDue {
-  color: var(--accent) !important;
-  font-size: var(--font-size-xl) !important;
+  color: #d00000;
+  font-size: 14px;
 }
 
 .balancePaid {
-  color: var(--success) !important;
-  font-size: var(--font-size-xl) !important;
+  color: #2b9348;
+  font-size: 14px;
 }
 
-/* Terms Section - Screen */
+/* Terms Section */
 .termsSection {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
 }
 
 .termsContent {
-  display: grid;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .termsItem {
-  padding: var(--spacing-md);
-  background: var(--surface);
-  border-left: 3px solid var(--secondary);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
+  padding: 10px;
+  background: white;
+  border-left: 3px solid #005f73;
+  font-size: 10px;
   line-height: 1.5;
 }
 
-/* Notes Section - Screen */
+/* Notes Section */
 .notesSection {
-  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-  border-left-color: var(--warning);
+  background: #fffef0;
+  border: 1px solid #e0dda0;
+  border-radius: 4px;
+  padding: 15px;
 }
 
 .notesContent {
-  background: var(--surface);
-  padding: var(--spacing-lg);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  background: white;
+  padding: 12px;
+  border-radius: 4px;
 }
 
 .notesContent p {
   margin: 0;
-  font-size: var(--font-size-base);
-  line-height: 1.6;
-  color: var(--text);
+  font-size: 11px;
+  line-height: 1.5;
 }
 
-/* Authorization Section - Screen */
+/* Authorization Section */
 .authorizationSection {
-  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-  border-left-color: var(--success);
+  background: #f0f8ff;
+  border: 2px solid #005f73;
+  border-radius: 4px;
+  padding: 15px;
 }
 
 .authorizationContent {
-  background: var(--surface);
-  padding: var(--spacing-xl);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  background: white;
+  padding: 15px;
+  border-radius: 4px;
 }
 
 .authorizationText {
-  font-size: var(--font-size-base);
+  font-size: 11px;
   line-height: 1.6;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 20px;
   text-align: justify;
 }
 
 .contractAmount {
-  color: var(--accent);
-  font-size: var(--font-size-lg);
+  color: #d00000;
+  font-size: 14px;
+  font-weight: 700;
 }
 
+/* Signature Styles */
 .signatureContainer {
-  margin-bottom: var(--spacing-lg);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-top: 20px;
 }
 
-.signatureLine {
+.signatureBlock {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-md);
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .signatureLabel {
-  font-weight: var(--font-weight-semibold);
-  min-width: 120px;
-  font-size: var(--font-size-base);
-  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 600;
+  color: #005f73;
+  margin-bottom: 5px;
 }
 
-.signatureBox {
-  flex: 1;
-  min-width: 200px;
-  height: 1.5em;
-  border-bottom: 2px solid var(--border-dark);
-  margin: 0 var(--spacing-md);
-  font-family: 'Courier New', monospace;
-  font-size: var(--font-size-lg);
+.signatureLine {
+  border-bottom: 2px solid #333;
+  height: 50px;
+  margin-bottom: 10px;
 }
 
-.signatureDate {
-  font-size: var(--font-size-base);
-  color: var(--text-light);
-  white-space: nowrap;
-}
-
-.contractorSignature {
-  border-top: 1px solid var(--border);
-  padding-top: var(--spacing-lg);
-  margin-top: var(--spacing-lg);
+.signatureInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 10px;
+  color: #666;
 }
 
 .contractorName {
-  text-align: right;
-  font-size: var(--font-size-sm);
-  color: var(--text-light);
-  margin: var(--spacing-md) 0 0 0;
+  text-align: left;
+  font-size: 10px;
+  color: #666;
+  margin: 8px 0 0 0;
   font-style: italic;
 }
 
-/* Footer - Screen */
+/* Footer */
 .documentFooter {
-  background: var(--primary);
-  color: var(--surface);
-  padding: var(--spacing-lg);
+  background: #f9f9f9;
+  padding: 15px;
   text-align: center;
-}
-
-.footerContent {
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: var(--spacing-md);
+  border-top: 2px solid #005f73;
+  margin-top: 20px;
+  border-radius: 4px;
 }
 
 .footerText {
-  margin: 0 0 var(--spacing-xs) 0;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #005f73;
 }
 
 .footerTextSmall {
   margin: 0;
-  font-size: var(--font-size-sm);
-  opacity: 0.8;
+  font-size: 10px;
+  color: #666;
   line-height: 1.4;
 }
 
-/* Loading and Error States */
-.loadingContainer,
-.errorContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
-  text-align: center;
-  padding: var(--spacing-xl);
-}
-
+/* Loading & Error States */
 .loadingSpinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--border);
-  border-top: 3px solid var(--primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: var(--spacing-md);
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #005f73;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.errorContainer h3 {
-  color: var(--accent);
-  margin-bottom: var(--spacing-sm);
-}
-
-.errorContainer p {
-  color: var(--text-light);
-  margin-bottom: var(--spacing-lg);
+.error {
+  text-align: center;
+  padding: 40px;
+  font-size: 16px;
+  color: #d00000;
+  background: #ffe0e0;
+  border: 1px solid #d00000;
+  border-radius: 4px;
+  margin: 20px;
 }
 
 /* ============================================================================ */
-/* PRINT STYLES - INK EFFICIENT BLACK & WHITE */
+/* PRINT STYLES - Optimized for A4 with Navbar Hiding */
 /* ============================================================================ */
 
 @media print {
-  /* Reset all colors to black/white */
-  *,
-  *::before,
-  *::after {
-    background: transparent !important;
-    color: var(--print-text) !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    border-color: var(--print-border) !important;
-  }
-
-  /* Page setup */
   @page {
+    size: A4;
     margin: 8mm;
-    size: A4 portrait;
   }
 
-  /* Main container */
-  .mainContent,
-  .container {
-    background: white !important;
-    color: var(--print-text) !important;
-    padding: 0 !important;
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* CRITICAL: Hide all navigation and app UI elements */
+  body {
     margin: 0 !important;
-    max-width: none !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  /* Hide common navigation patterns */
+  nav,
+  header:not([class*="documentHeader"]),
+  aside,
+  .sidebar,
+  .navbar,
+  .nav-bar,
+  .navigation,
+  .app-header,
+  .app-nav,
+  .main-nav,
+  .top-bar,
+  .menu,
+  [role="navigation"],
+  [class*="Nav"]:not([class*="navigate"]),
+  [class*="Header"]:not([class*="documentHeader"]):not([class*="sectionHeader"]):not([class*="infoHeader"]):not([class*="projectHeader"]):not([class*="companyHeader"]),
+  [class*="Sidebar"],
+  [class*="Menu"],
+  [class*="TopBar"],
+  [class*="AppBar"] {
+    display: none !important;
+  }
+
+  /* Hide action buttons and instructions */
+  .headerSection,
+  .printInstructions {
+    display: none !important;
+  }
+
+  .mainContent {
+    background: white !important;
+    padding: 0 !important;
+    min-height: auto !important;
+    margin: 0 !important;
+  }
+
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
     box-shadow: none !important;
+    border-radius: 0 !important;
   }
 
   .document {
+    font-size: 8pt !important;
+    line-height: 1.2 !important;
+    color: black !important;
     background: white !important;
-    color: var(--print-text) !important;
-    border: 1px solid var(--print-border) !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    font-size: 10pt !important;
-    line-height: 1.3 !important;
-    max-width: none !important;
-    page-break-after: avoid;
   }
 
-  /* Hide screen-only elements */
-  .headerSection,
-  .actionButtons,
-  .actionButton,
-  .title {
-    display: none !important;
-  }
-
-  /* Document Header - Print Optimized */
+  /* Document Header - Compact for print */
   .documentHeader {
     background: white !important;
-    color: var(--print-text) !important;
-    padding: 8mm !important;
-    border-bottom: 2px solid var(--print-border) !important;
-    page-break-after: avoid;
+    color: black !important;
+    padding: 3mm !important;
+    margin-bottom: 3mm !important;
+    border-bottom: 1pt solid #005f73 !important;
+    border-radius: 0 !important;
   }
 
   .companyHeader {
-    display: block !important;
-    margin-bottom: 4mm !important;
-    page-break-inside: avoid;
-  }
-
-  .logoContainer {
-    display: inline-block !important;
-    vertical-align: top;
-    width: 24mm !important;
-    margin-right: 4mm !important;
+    grid-template-columns: 18mm 1fr !important;
+    gap: 3mm !important;
+    margin-bottom: 3mm !important;
   }
 
   .logo {
-    width: 20mm !important;
-    height: auto !important;
+    width: 16mm !important;
+    height: 16mm !important;
     filter: none !important;
-    max-width: 100% !important;
-    border: none !important;
-  }
-
-  .companyInfo {
-    display: inline-block !important;
-    width: calc(100% - 28mm) !important;
-    vertical-align: top;
-    text-align: left !important;
   }
 
   .companyName {
-    font-size: 14pt !important;
-    font-weight: bold !important;
-    margin: 0 0 2mm 0 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5pt !important;
-    border-bottom: 1px solid var(--print-border) !important;
-    padding-bottom: 1mm !important;
+    font-size: 10pt !important;
+    color: #005f73 !important;
   }
 
   .contactInfo {
-    font-size: 9pt !important;
-    line-height: 1.2 !important;
-  }
-
-  .address {
-    font-size: 10pt !important;
-    font-weight: 600 !important;
-    margin: 0 0 1mm 0 !important;
-  }
-
-  .contact {
-    font-size: 8pt !important;
-    margin: 0.5mm 0 !important;
-  }
-
-  .contactIcon {
-    display: none !important;
+    font-size: 7pt !important;
+    color: black !important;
   }
 
   .projectHeader {
-    text-align: center !important;
-    padding: 4mm 0 !important;
-    border-top: 1px solid var(--print-border) !important;
-    margin-top: 4mm !important;
+    padding-top: 2mm !important;
+    border-top: 0.5pt solid #ccc !important;
   }
 
   .projectTitle {
-    font-size: 16pt !important;
-    font-weight: bold !important;
-    margin: 0 0 2mm 0 !important;
-    letter-spacing: 1pt !important;
-    text-transform: uppercase !important;
-    text-align: center !important;
+    font-size: 11pt !important;
+    color: #005f73 !important;
   }
 
   .projectNumber {
-    font-size: 9pt !important;
-    font-weight: 500 !important;
-    margin: 0 0 2mm 0 !important;
-    text-align: center !important;
+    font-size: 7pt !important;
+    color: black !important;
   }
 
   .dateInfo {
-    font-size: 8pt !important;
-    display: block !important;
-    text-align: right !important;
-    margin-top: 2mm !important;
+    font-size: 7pt !important;
+    color: black !important;
   }
 
-  .dateInfo span:last-child {
-    display: block !important;
-    margin-top: 1mm !important;
+  .separator {
+    display: inline !important;
   }
 
-  /* Section Headers - Print */
+  /* Sections */
   .sectionHeader {
-    margin: 6mm 0 3mm 0 !important;
-    padding: 0 0 2mm 0 !important;
-    border-bottom: 1px solid var(--print-border) !important;
-    display: block !important;
-    page-break-inside: avoid;
-  }
-
-  .sectionIcon {
-    display: none !important;
+    margin: 2.5mm 0 1.5mm 0 !important;
+    padding-bottom: 1mm !important;
+    border-bottom: 1pt solid #005f73 !important;
   }
 
   .sectionTitle {
-    font-size: 11pt !important;
-    font-weight: bold !important;
-    margin: 0 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5pt !important;
-    color: var(--print-text) !important;
-    border: none !important;
-    padding: 0 !important;
-  }
-
-  /* Sections - Print */
-  .section {
-    margin: 0 0 4mm 0 !important;
-    padding: 0 !important;
-    background: white !important;
-    border: none !important;
-    border-left: none !important;
-    border-radius: 0 !important;
-    page-break-inside: avoid;
-  }
-
-  /* Customer Section - Print */
-  .customerSection {
-    background: white !important;
-    border: 1px solid var(--print-border) !important;
-    border-radius: 0 !important;
-    margin-bottom: 4mm !important;
-    page-break-inside: avoid;
-  }
-
-  .infoGrid {
-    display: block !important;
-    gap: 0 !important;
-    padding: 3mm !important;
-  }
-
-  .infoColumn {
-    display: block !important;
-    margin-bottom: 3mm !important;
-  }
-
-  .infoColumn:last-child {
-    margin-bottom: 0 !important;
-  }
-
-  .infoGroup {
-    background: white !important;
-    padding: 2mm !important;
-    border: 1px solid var(--print-light) !important;
-    border-radius: 0 !important;
-    margin-bottom: 2mm !important;
-  }
-
-  .infoHeader {
-    font-size: 10pt !important;
-    font-weight: bold !important;
-    margin: 0 0 2mm 0 !important;
-    padding-bottom: 1mm !important;
-    border-bottom: 1px solid var(--print-border) !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.3pt !important;
-  }
-
-  .infoRow {
-    display: block !important;
-    margin-bottom: 1.5mm !important;
-    gap: 0 !important;
     font-size: 9pt !important;
+    color: #005f73 !important;
   }
 
-  .label {
-    font-weight: 600 !important;
-    min-width: auto !important;
-    display: inline-block !important;
-    width: 60px !important;
-    text-align: right !important;
-    margin-right: 3mm !important;
-    color: var(--print-subtle) !important;
-    font-size: 9pt !important;
-  }
-
-  .value {
-    display: inline !important;
-    color: var(--print-text) !important;
-    font-size: 9pt !important;
-  }
-
-  /* Table Containers - Print */
-  .tableContainer {
-    overflow: visible !important;
-    background: white !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    margin: 0 0 3mm 0 !important;
-    page-break-inside: avoid;
-  }
-
-  /* Tables - Print Optimized */
-  .summaryTable,
-  .detailTable,
-  .calculationTable,
-  .paymentTable {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    font-size: 8pt !important;
-    background: white !important;
-    margin: 0 !important;
-    page-break-inside: avoid;
-  }
-
-  .tableHeader {
-    background: var(--print-highlight) !important;
-    color: var(--print-text) !important;
-    padding: 2mm 2.5mm !important;
-    text-align: center !important;
-    font-weight: bold !important;
-    font-size: 8pt !important;
-    border: 1px solid var(--print-border) !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.2pt !important;
-  }
-
-  .tableCell,
-  .tableCellRight {
-    padding: 1.5mm 2mm !important;
-    border: 1px solid var(--print-light) !important;
-    vertical-align: middle !important;
-    font-size: 8pt !important;
-    line-height: 1.2 !important;
-  }
-
-  .tableCellRight {
-    text-align: right !important;
-    font-weight: 500 !important;
-  }
-
-  .tableRow {
-    page-break-inside: avoid;
-  }
-
-  .tableRow:nth-child(even) {
-    background: #fafafa !important;
-  }
-
-  .tableTotalRow {
-    background: var(--print-primary) !important;
-    color: white !important;
-    border: 2px solid var(--print-primary) !important;
-  }
-
-  .tableTotalRow .tableCell,
-  .tableTotalRow .tableCellRight {
-    border: 2px solid var(--print-primary) !important;
-    font-weight: bold !important;
-    font-size: 9pt !important;
-    padding: 2mm 2.5mm !important;
-  }
-
-  .itemDescription {
-    display: block !important;
-    gap: 0 !important;
-  }
-
-  .itemName {
-    font-weight: 600 !important;
-    font-size: 8pt !important;
-    margin-bottom: 0.5mm !important;
-  }
-
-  .itemType {
-    font-size: 7.5pt !important;
-    color: var(--print-subtle) !important;
-  }
-
-  .subtype {
-    color: var(--print-text) !important;
-    font-weight: 600 !important;
-    font-size: 8pt !important;
-  }
-
-  /* Detail Tables - Print */
-  .detailTable {
-    font-size: 7.5pt !important;
-  }
-
-  .detailTable .tableCell,
-  .detailTable .tableCellRight {
-    padding: 1mm 1.5mm !important;
-    border: 0.5px solid var(--print-light) !important;
-  }
-
-  .detailTable .tableHeader {
-    padding: 1.5mm 2mm !important;
-    font-size: 7.5pt !important;
-  }
-
-  /* Calculation Table - Print */
-  .calculationTable {
-    font-size: 9pt !important;
-    border: 1px solid var(--print-border) !important;
-  }
-
-  .calculationRow {
-    border-bottom: 1px solid var(--print-light) !important;
-  }
-
-  .calculationLabel {
-    padding: 2mm 3mm 2mm 0 !important;
-    width: 70% !important;
-    vertical-align: top !important;
-    font-size: 9pt !important;
-    border-right: 1px solid var(--print-light) !important;
-  }
-
-  .calculationValue,
-  .calculationValueNegative {
-    padding: 2mm 3mm !important;
-    text-align: right !important;
-    font-weight: 600 !important;
-    width: 30% !important;
-    font-size: 9pt !important;
-    border-left: none !important;
-  }
-
-  .calculationValueNegative {
-    color: var(--print-text) !important;
-    font-style: italic !important;
-  }
-
-  .subtotalRow {
-    border-top: 2px solid var(--print-border) !important;
-    border-bottom: 2px solid var(--print-border) !important;
-    background: #f5f5f5 !important;
-  }
-
-  .subtotalRow .calculationLabel,
-  .subtotalRow .calculationValue {
-    font-size: 10pt !important;
-    font-weight: bold !important;
-  }
-
-  .grandTotalRow {
-    border-top: 2px double var(--print-primary) !important;
-    border-bottom: 2px double var(--print-primary) !important;
-    background: #f0f0f0 !important;
-  }
-
-  .grandTotalValue {
-    color: var(--print-primary) !important;
-    font-size: 12pt !important;
-    font-weight: bold !important;
-  }
-
-  /* Payment Table - Print */
-  .paymentTable {
-    font-size: 9pt !important;
-    border: 1px solid var(--print-border) !important;
-  }
-
-  .paymentRow {
-    border-bottom: 1px solid var(--print-light) !important;
-  }
-
-  .paymentLabel {
-    padding: 2mm 3mm 2mm 0 !important;
-    width: 70% !important;
-    vertical-align: top !important;
-    border-right: 1px solid var(--print-light) !important;
-  }
-
-  .paymentValue,
-  .paymentValueNegative,
-  .paymentValuePositive {
-    padding: 2mm 3mm !important;
-    text-align: right !important;
-    font-weight: 600 !important;
-    width: 30% !important;
-  }
-
-  .paymentValueNegative {
-    color: var(--print-text) !important;
-    font-style: italic !important;
-  }
-
-  .paymentValuePositive {
-    color: var(--print-text) !important;
-    font-weight: bold !important;
-  }
-
-  .balanceRow {
-    border-top: 2px solid var(--print-primary) !important;
-    background: #f5f5f5 !important;
-  }
-
-  .balanceDue,
-  .balancePaid {
-    color: var(--print-primary) !important;
-    font-size: 11pt !important;
-    font-weight: bold !important;
-  }
-
-  /* Terms Section - Print */
-  .termsSection {
-    background: white !important;
-    border: 1px solid var(--print-light) !important;
-    margin: 4mm 0 !important;
-    page-break-inside: avoid;
-  }
-
-  .termsContent {
-    display: block !important;
-    gap: 0 !important;
-    padding: 3mm !important;
-  }
-
-  .termsItem {
-    padding: 2mm 0 !important;
-    background: white !important;
-    border-left: none !important;
-    border-radius: 0 !important;
-    font-size: 8pt !important;
-    line-height: 1.3 !important;
-    margin-bottom: 1mm !important;
-    border-bottom: 0.5px solid var(--print-light) !important;
-    padding-left: 3mm !important;
-  }
-
-  .termsItem:last-child {
-    border-bottom: none !important;
-    margin-bottom: 0 !important;
-  }
-
-  .termsItem strong {
-    color: var(--print-primary) !important;
-    font-weight: bold !important;
-  }
-
-  /* Notes Section - Print */
-  .notesSection {
-    background: white !important;
-    border: 1px solid var(--print-light) !important;
-    margin: 4mm 0 !important;
-    page-break-inside: avoid;
-  }
-
-  .notesContent {
-    background: white !important;
-    padding: 3mm !important;
-    border-radius: 0 !important;
-    border: none !important;
-  }
-
-  .notesContent p {
-    margin: 0 !important;
-    font-size: 9pt !important;
-    line-height: 1.4 !important;
-    color: var(--print-text) !important;
-    text-align: justify !important;
-  }
-
-  /* Authorization Section - Print */
-  .authorizationSection {
-    background: white !important;
-    border: 2px solid var(--print-primary) !important;
-    margin: 6mm 0 !important;
-    page-break-inside: avoid;
-  }
-
-  .authorizationContent {
-    background: white !important;
-    padding: 4mm !important;
-    border-radius: 0 !important;
-    border: none !important;
-  }
-
-  .authorizationText {
-    font-size: 9pt !important;
-    line-height: 1.4 !important;
-    margin-bottom: 3mm !important;
-    text-align: justify !important;
-    color: var(--print-text) !important;
-  }
-
-  .contractAmount {
-    color: var(--print-primary) !important;
-    font-size: 10pt !important;
-    font-weight: bold !important;
-  }
-
-  .signatureContainer {
-    margin-bottom: 3mm !important;
-  }
-
-  .signatureLine {
-    display: block !important;
-    margin-bottom: 3mm !important;
-    gap: 0 !important;
-    page-break-inside: avoid;
-  }
-
-  .signatureLabel {
-    display: block !important;
-    font-weight: 600 !important;
-    min-width: auto !important;
-    font-size: 9pt !important;
-    color: var(--print-subtle) !important;
-    margin-bottom: 1mm !important;
-  }
-
-  .signatureBox {
-    flex: none !important;
-    min-width: 100% !important;
-    width: 100% !important;
-    height: 2mm !important;
-    border-bottom: 1px solid var(--print-border) !important;
-    margin: 0 0 1mm 0 !important;
-    font-family: 'Courier New', monospace !important;
-    font-size: 9pt !important;
-    letter-spacing: 1pt !important;
-    padding-left: 2mm !important;
-  }
-
-  .signatureDate {
-    display: block !important;
-    font-size: 9pt !important;
-    color: var(--print-subtle) !important;
-    margin-top: 1mm !important;
-  }
-
-  .contractorSignature {
-    border-top: 1px solid var(--print-border) !important;
-    padding-top: 3mm !important;
-    margin-top: 3mm !important;
-  }
-
-  .contractorName {
-    text-align: right !important;
-    font-size: 8pt !important;
-    color: var(--print-subtle) !important;
-    margin: 2mm 0 0 0 !important;
-    font-style: italic !important;
-  }
-
-  /* Footer - Print */
-  .documentFooter {
-    background: white !important;
-    color: var(--print-text) !important;
-    padding: 4mm !important;
-    text-align: center !important;
-    border-top: 1px solid var(--print-border) !important;
-    margin-top: 6mm !important;
-    page-break-before: always;
-  }
-
-  .footerContent {
-    border-top: none !important;
-    padding-top: 0 !important;
-  }
-
-  .footerText {
-    margin: 0 0 1mm 0 !important;
-    font-size: 9pt !important;
-    font-weight: 500 !important;
-  }
-
-  .footerTextSmall {
-    margin: 0 !important;
-    font-size: 8pt !important;
-    line-height: 1.3 !important;
-    color: var(--print-subtle) !important;
-  }
-
-  /* Page break controls */
+  .customerSection,
   .categorySection,
   .detailSection,
   .calculationSection,
@@ -1273,53 +719,307 @@ body {
   .termsSection,
   .notesSection,
   .authorizationSection {
+    padding: 2mm !important;
+    margin-bottom: 3mm !important;
+    border: 0.5pt solid #ddd !important;
     page-break-inside: avoid !important;
+    border-radius: 0 !important;
+    background: white !important;
+  }
+
+  /* Customer Info */
+  .infoGrid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 2mm !important;
+    padding: 0 !important;
+  }
+
+  .infoGroup {
+    padding: 2mm !important;
+    background: white !important;
+    border: 0.5pt solid #ddd !important;
+  }
+
+  .infoHeader {
+    font-size: 8pt !important;
+    margin-bottom: 1mm !important;
+    padding-bottom: 1mm !important;
+    border-bottom: 0.5pt solid #ccc !important;
+  }
+
+  .infoRow {
+    font-size: 7pt !important;
+    margin-bottom: 1mm !important;
+  }
+
+  .label {
+    font-size: 7pt !important;
+    min-width: 18mm !important;
+  }
+
+  .value {
+    font-size: 7pt !important;
+  }
+
+  /* Tables */
+  .tableContainer {
+    margin-bottom: 2mm !important;
+    border: 0.5pt solid #999 !important;
+    overflow: visible !important;
+  }
+
+  .summaryTable,
+  .detailTable,
+  .calculationTable,
+  .paymentTable {
+    font-size: 7pt !important;
+    page-break-inside: avoid !important;
+  }
+
+  .tableHeader {
+    background: #e6e6e6 !important;
+    color: black !important;
+    padding: 1.5mm !important;
+    font-size: 7pt !important;
+    border: 0.5pt solid #999 !important;
+  }
+
+  .tableCell,
+  .tableCellRight {
+    padding: 1.5mm !important;
+    border: 0.5pt solid #ccc !important;
+    font-size: 7pt !important;
+  }
+
+  .tableRow:nth-child(even) {
+    background: #f9f9f9 !important;
+  }
+
+  .tableTotalRow {
+    background: #e6e6e6 !important;
+    color: black !important;
+  }
+
+  .tableTotalRow .tableCell,
+  .tableTotalRow .tableCellRight {
+    font-size: 8pt !important;
+    font-weight: bold !important;
+    padding: 2mm !important;
+    border: 0.5pt solid #999 !important;
+  }
+
+  /* Calculation Table */
+  .calculationRow {
+    border-bottom: 0.5pt solid #ddd !important;
+  }
+
+  .calculationLabel,
+  .calculationValue,
+  .calculationValueNegative {
+    padding: 1.5mm !important;
+    font-size: 7pt !important;
+  }
+
+  .calculationValueNegative {
+    color: black !important;
+    font-style: italic !important;
+  }
+
+  .subtotalRow {
+    background: #f0f0f0 !important;
+    border-top: 1pt solid #999 !important;
+    border-bottom: 1pt solid #999 !important;
+  }
+
+  .subtotalRow .calculationLabel,
+  .subtotalRow .calculationValue {
+    font-size: 8pt !important;
+    padding: 2mm !important;
+  }
+
+  .grandTotalRow {
+    background: #e6e6e6 !important;
+    border-top: 1.5pt double #005f73 !important;
+    border-bottom: 1.5pt double #005f73 !important;
+  }
+
+  .grandTotalRow .calculationLabel,
+  .grandTotalValue {
+    font-size: 9pt !important;
+    padding: 2.5mm !important;
+    color: black !important;
+    font-weight: bold !important;
+  }
+
+  /* Payment Table */
+  .paymentRow {
+    border-bottom: 0.5pt solid #ddd !important;
+  }
+
+  .paymentLabel,
+  .paymentValue,
+  .paymentValueNegative,
+  .paymentValuePositive {
+    padding: 1.5mm !important;
+    font-size: 7pt !important;
+  }
+
+  .paymentValueNegative,
+  .paymentValuePositive {
+    color: black !important;
+    font-style: italic !important;
+  }
+
+  .balanceRow {
+    background: #f0f0f0 !important;
+    border-top: 1pt solid #999 !important;
+  }
+
+  .balanceDue,
+  .balancePaid {
+    font-size: 9pt !important;
+    color: black !important;
+    font-weight: bold !important;
+  }
+
+  /* Terms */
+  .termsSection {
+    background: white !important;
+    padding: 2mm !important;
+  }
+
+  .termsContent {
+    gap: 0 !important;
+  }
+
+  .termsItem {
+    padding: 1.5mm 2mm !important;
+    font-size: 6.5pt !important;
+    line-height: 1.3 !important;
+    border-left: 1pt solid #005f73 !important;
+    border-bottom: 0.5pt solid #eee !important;
+    background: white !important;
+  }
+
+  .termsItem:last-child {
+    border-bottom: none !important;
+  }
+
+  /* Notes */
+  .notesSection {
+    background: white !important;
+    border: 0.5pt solid #ddd !important;
+    padding: 2mm !important;
+  }
+
+  .notesContent {
+    padding: 2mm !important;
+    background: white !important;
+  }
+
+  .notesContent p {
+    font-size: 7pt !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Authorization & Signatures */
+  .authorizationSection {
+    background: white !important;
+    border: 1pt solid #005f73 !important;
+    padding: 3mm !important;
+    page-break-inside: avoid !important;
+  }
+
+  .authorizationContent {
+    padding: 2mm !important;
+    background: white !important;
+  }
+
+  .authorizationText {
+    font-size: 7pt !important;
+    line-height: 1.4 !important;
     margin-bottom: 3mm !important;
   }
 
-  .detailSection {
+  .contractAmount {
+    font-size: 9pt !important;
+    color: black !important;
+    font-weight: bold !important;
+  }
+
+  .signatureContainer {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10mm !important;
+    margin-top: 5mm !important;
+  }
+
+  .signatureBlock {
+    gap: 2mm !important;
+  }
+
+  .signatureLabel {
+    font-size: 7pt !important;
+    margin-bottom: 1mm !important;
+    font-weight: bold !important;
+  }
+
+  .signatureLine {
+    border-bottom: 1pt solid #333 !important;
+    height: 12mm !important;
+    margin-bottom: 2mm !important;
+  }
+
+  .signatureInfo {
+    gap: 2mm !important;
+    font-size: 6pt !important;
+  }
+
+  .contractorName {
+    font-size: 6pt !important;
+    margin-top: 2mm !important;
+  }
+
+  /* Footer */
+  .documentFooter {
+    background: white !important;
+    padding: 2mm !important;
+    border-top: 1pt solid #005f73 !important;
+    margin-top: 3mm !important;
     page-break-before: auto !important;
   }
 
-  /* Loading and error states */
-  .loadingContainer,
-  .errorContainer {
-    display: none !important;
+  .footerText {
+    font-size: 7pt !important;
+    color: black !important;
+    margin-bottom: 1mm !important;
   }
 
-  /* Force black text for all content */
-  h1, h2, h3, h4, h5, h6,
-  p, span, div, td, th,
-  strong, em, .value, .label {
-    color: var(--print-text) !important;
+  .footerTextSmall {
+    font-size: 6pt !important;
+    color: black !important;
   }
 
-  /* Remove all decorative elements */
-  .sectionIcon,
-  .contactIcon,
-  .shadow,
-  .gradient,
-  .loadingSpinner {
-    display: none !important;
+  /* Table page break controls */
+  thead {
+    display: table-header-group !important;
   }
 
-  /* Ensure tables don't break across pages */
-  thead { display: table-header-group !important; }
-  tbody { display: table-row-group !important; }
-  tr { page-break-inside: avoid !important; }
-
-  /* Ink-saving borders */
-  table {
-    border-collapse: collapse !important;
+  tbody {
+    display: table-row-group !important;
   }
 
-  th, td {
-    border: 0.5pt solid var(--print-light) !important;
+  tr {
+    page-break-inside: avoid !important;
   }
 
-  /* Last borders */
-  tr:last-child td {
-    border-bottom: 1pt solid var(--print-border) !important;
+  /* Avoid orphans and widows */
+  p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
   }
 }
 
@@ -1327,96 +1027,101 @@ body {
 /* RESPONSIVE DESIGN - Screen Only */
 /* ============================================================================ */
 
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   .container {
-    padding: var(--spacing-md);
+    padding: 10px;
   }
-  
+
+  .document {
+    font-size: 10px;
+  }
+
   .infoGrid {
     grid-template-columns: 1fr;
-    gap: var(--spacing-md);
+    gap: 10px;
   }
-  
+
   .companyHeader {
     grid-template-columns: 1fr;
     text-align: center;
-    gap: var(--spacing-md);
+    gap: 10px;
   }
-  
-  .logo {
-    width: 60px;
-    height: 60px;
+
+  .companyInfo {
+    text-align: center;
   }
-  
+
   .actionButtons {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .actionButton {
     width: 100%;
     max-width: 200px;
   }
-  
+
   .tableContainer {
-    font-size: var(--font-size-sm);
+    font-size: 9px;
   }
-  
-  .detailTable {
-    font-size: 0.7rem;
+
+  .calculationLabel,
+  .paymentLabel {
+    width: 60%;
   }
-  
-  .sectionHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
+
+  .calculationValue,
+  .calculationValueNegative,
+  .paymentValue,
+  .paymentValueNegative,
+  .paymentValuePositive {
+    width: 40%;
+  }
+
+  .signatureCanvas {
+    height: 120px;
   }
 }
 
-@media (max-width: 480px) {
-  .document {
-    font-size: var(--font-size-xs);
+@media screen and (max-width: 480px) {
+  .title {
+    font-size: 18px;
   }
-  
-  .companyHeader {
-    grid-template-columns: 1fr;
-  }
-  
-  .logo {
-    width: 50px;
-    height: 50px;
-  }
-  
+
   .companyName {
-    font-size: var(--font-size-xl);
+    font-size: 14px;
   }
-  
+
   .projectTitle {
-    font-size: var(--font-size-xxl);
+    font-size: 16px;
   }
-  
+
+  .document {
+    font-size: 9px;
+  }
+
   .tableHeader,
   .tableCell,
   .tableCellRight {
-    padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: var(--font-size-xs);
+    padding: 6px 8px;
+    font-size: 9px;
   }
-  
+
   .calculationLabel,
-  .calculationValue {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
+  .calculationValue,
+  .paymentLabel,
+  .paymentValue {
+    font-size: 9px;
+    padding: 6px 8px;
   }
-  
-  .infoRow {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-xs);
+
+  .termsItem {
+    font-size: 9px;
+    padding: 8px;
   }
-  
-  .label {
-    min-width: auto;
-    margin-bottom: var(--spacing-xxs);
+
+  .signatureCanvas {
+    height: 100px;
   }
 }
 
@@ -1429,7 +1134,23 @@ body {
 }
 
 /* Focus styles for accessibility */
-.actionButton:focus {
-  outline: 2px solid var(--secondary);
+.actionButton:focus,
+.clearButton:focus {
+  outline: 2px solid #0a9396;
   outline-offset: 2px;
+}
+
+/* Prevent text selection on canvas */
+.signatureCanvas {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Print preview warning */
+@media screen {
+  .printWarning {
+    display: none;
+  }
 }

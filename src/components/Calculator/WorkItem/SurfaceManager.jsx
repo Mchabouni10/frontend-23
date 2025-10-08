@@ -1,20 +1,15 @@
 // src/components/Calculator/SurfaceManager/SurfaceManager.jsx
-import { useEffect, useCallback, useState } from 'react';
+import { useEffect, useCallback, useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import styles from './SurfaceManager.module.css';
 import SquareFootageInput from './inputs/SquareFootageInput';
 import LinearFootInput from './inputs/LinearFootInput';
 import ByUnitInput from './inputs/ByUnitInput';
-import { MEASUREMENT_TYPES } from '../../../context/WorkTypeContext';
-
-// Normalize measurement type to match server schema
-const normalizeMeasurementType = (type) => {
-  if (!type) return 'sqft'; // Default fallback
-  if (type === MEASUREMENT_TYPES.SQUARE_FOOT || type === 'square-foot' || type === 'Square Foot (sqft)') return 'sqft';
-  if (type === MEASUREMENT_TYPES.LINEAR_FOOT || type === 'linear ft' || type === 'Linear Foot') return 'linear-foot';
-  if (type === MEASUREMENT_TYPES.BY_UNIT || type === 'by unit' || type === 'By Unit') return 'by-unit';
-  return 'sqft'; // Default fallback for unknown types
-};
+import { 
+  MEASUREMENT_TYPES, 
+  normalizeMeasurementType,
+  getMeasurementTypeUnit 
+} from '../../../constants/measurementTypes';
 
 // Validate surface object structure
 const validateSurface = (surface, measurementType) => {
@@ -22,9 +17,10 @@ const validateSurface = (surface, measurementType) => {
     return { isValid: false, error: 'Surface must be an object' };
   }
 
+  // FIXED: Use normalized measurement type
   const normalizedType = normalizeMeasurementType(measurementType);
   
-  if (normalizedType === 'sqft') {
+  if (normalizedType === MEASUREMENT_TYPES.SQUARE_FOOT) {
     const hasValidDimensions = (
       (typeof surface.width === 'number' && surface.width >= 0 && 
        typeof surface.height === 'number' && surface.height >= 0) ||
@@ -33,11 +29,11 @@ const validateSurface = (surface, measurementType) => {
     if (!hasValidDimensions) {
       return { isValid: false, error: 'Square foot surface must have valid width/height or sqft value' };
     }
-  } else if (normalizedType === 'linear-foot') {
+  } else if (normalizedType === MEASUREMENT_TYPES.LINEAR_FOOT) {
     if (typeof surface.linearFt !== 'number' || surface.linearFt < 0) {
       return { isValid: false, error: 'Linear foot surface must have valid linearFt value' };
     }
-  } else if (normalizedType === 'by-unit') {
+  } else if (normalizedType === MEASUREMENT_TYPES.BY_UNIT) {
     if (typeof surface.units !== 'number' || surface.units < 0) {
       return { isValid: false, error: 'Unit surface must have valid units value' };
     }
@@ -48,21 +44,20 @@ const validateSurface = (surface, measurementType) => {
 
 const getSurfaceName = (measurementType, index) => {
   const normalizedType = normalizeMeasurementType(measurementType);
-  if (normalizedType === 'by-unit') {
+  if (normalizedType === MEASUREMENT_TYPES.BY_UNIT) {
     return `Unit ${index}`;
-  } else if (normalizedType === 'linear-foot') {
+  } else if (normalizedType === MEASUREMENT_TYPES.LINEAR_FOOT) {
     return `Linear Section ${index}`;
   } else {
     return `Surface ${index}`;
   }
 };
 
-// Create a clean surface object with proper structure for the measurement type
+// FIXED: Create clean surface with normalized measurement type
 const createCleanSurface = (measurementType, index, existingSurface = {}) => {
   const normalizedType = normalizeMeasurementType(measurementType);
   const surfaceId = existingSurface.id || `surface_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-  // Ensure name and subtype are always strings
   const safeName = (typeof existingSurface.name === 'string')
     ? existingSurface.name
     : getSurfaceName(normalizedType, index);
@@ -74,19 +69,19 @@ const createCleanSurface = (measurementType, index, existingSurface = {}) => {
   const baseSurface = {
     id: surfaceId,
     name: safeName,
-    measurementType: normalizedType,
+    measurementType: normalizedType, // FIXED: Store normalized type
     subtype: safeSubtype
   };
 
-  if (normalizedType === 'sqft') {
+  if (normalizedType === MEASUREMENT_TYPES.SQUARE_FOOT) {
     const width = typeof existingSurface.width === 'number' ? existingSurface.width : 5;
     const height = typeof existingSurface.height === 'number' ? existingSurface.height : 5;
     const sqft = typeof existingSurface.sqft === 'number' ? existingSurface.sqft : (width * height);
     
     return { ...baseSurface, width, height, sqft };
-  } else if (normalizedType === 'linear-foot') {
+  } else if (normalizedType === MEASUREMENT_TYPES.LINEAR_FOOT) {
     return { ...baseSurface, linearFt: typeof existingSurface.linearFt === 'number' ? existingSurface.linearFt : 10 };
-  } else if (normalizedType === 'by-unit') {
+  } else if (normalizedType === MEASUREMENT_TYPES.BY_UNIT) {
     return { ...baseSurface, units: typeof existingSurface.units === 'number' ? existingSurface.units : 1 };
   }
 
@@ -105,31 +100,34 @@ export default function SurfaceManager({
 }) {
   const [validationErrors, setValidationErrors] = useState({});
 
-  // Sanitize and validate all surfaces with proper cleanup
+  const surfaces = useMemo(() => Array.isArray(workItem.surfaces) ? workItem.surfaces : [], [workItem.surfaces]);
+
+  // FIXED: Sanitize with normalized measurement types
   const sanitizeSurfaces = useCallback((surfaces, measurementType) => {
     if (!Array.isArray(surfaces)) {
       console.warn('Surfaces is not an array, creating empty array');
       return [];
     }
 
+    const normalizedType = normalizeMeasurementType(measurementType);
     const sanitizedSurfaces = [];
     const errors = {};
 
     surfaces.forEach((surface, index) => {
       try {
-        const cleanSurface = createCleanSurface(measurementType, index + 1, surface);
-        const validation = validateSurface(cleanSurface, measurementType);
+        const cleanSurface = createCleanSurface(normalizedType, index + 1, surface);
+        const validation = validateSurface(cleanSurface, normalizedType);
         if (validation.isValid) {
           sanitizedSurfaces.push(cleanSurface);
         } else {
           console.warn(`Surface ${index + 1} validation failed:`, validation.error);
           errors[index] = validation.error;
-          sanitizedSurfaces.push(createCleanSurface(measurementType, index + 1));
+          sanitizedSurfaces.push(createCleanSurface(normalizedType, index + 1));
         }
       } catch (error) {
         console.error(`Error processing surface ${index + 1}:`, error);
         errors[index] = error.message;
-        sanitizedSurfaces.push(createCleanSurface(measurementType, index + 1));
+        sanitizedSurfaces.push(createCleanSurface(normalizedType, index + 1));
       }
     });
 
@@ -141,109 +139,122 @@ export default function SurfaceManager({
     return sanitizedSurfaces;
   }, [onError]);
 
-  // Only sanitize existing surfaces â€” don't auto-create
+  // Only sanitize existing surfaces
   useEffect(() => {
     if (!workItem || !workItem.measurementType || disabled) return;
 
     try {
-      const surfaces = Array.isArray(workItem.surfaces) ? workItem.surfaces : [];
-      if (surfaces.length > 0) {
-        const sanitizedSurfaces = sanitizeSurfaces(surfaces, workItem.measurementType);
-        const updatedWorkItem = { ...workItem, surfaces: sanitizedSurfaces };
-        onChange(updatedWorkItem);
+      const currentSurfaces = Array.isArray(workItem.surfaces) ? workItem.surfaces : [];
+      if (currentSurfaces.length > 0) {
+        const sanitizedSurfaces = sanitizeSurfaces(currentSurfaces, workItem.measurementType);
+        if (JSON.stringify(sanitizedSurfaces) !== JSON.stringify(currentSurfaces)) {
+          const updatedWorkItem = { ...workItem, surfaces: sanitizedSurfaces };
+          onChange(updatedWorkItem);
+        }
       }
     } catch (error) {
       console.error('Error in SurfaceManager useEffect:', error);
       onError?.(`Failed to initialize surfaces: ${error.message}`);
     }
-  }, [workItem?.measurementType, workItem?.surfaces?.length, disabled, onChange, onError, sanitizeSurfaces]);
+  }, [workItem, disabled, sanitizeSurfaces, onChange, onError]);
 
-  if (!workItem) {
-    return (
-      <div className={styles.emptyState}>
-        <i className="fas fa-exclamation-triangle"></i>
-        <p>No work item provided</p>
-      </div>
-    );
-  }
+  // FIXED: Use helper function from constants
+  const getMeasurementUnit = useCallback(() => {
+    return getMeasurementTypeUnit(workItem.measurementType);
+  }, [workItem.measurementType]);
 
-  if (!workItem.measurementType) {
-    return (
-      <div className={styles.emptyState}>
-        <i className="fas fa-ruler-combined"></i>
-        <p>Please select a measurement method above to add surfaces.</p>
-      </div>
-    );
-  }
+  const getAddButtonText = useCallback((measurementType) => {
+    const normalizedType = normalizeMeasurementType(measurementType);
+    if (normalizedType === MEASUREMENT_TYPES.SQUARE_FOOT) return 'Add Surface';
+    if (normalizedType === MEASUREMENT_TYPES.LINEAR_FOOT) return 'Add Linear Section';
+    if (normalizedType === MEASUREMENT_TYPES.BY_UNIT) return 'Add Unit';
+    return 'Add Item';
+  }, []);
 
-  const surfaces = Array.isArray(workItem.surfaces) ? workItem.surfaces : [];
+  const addSurface = useCallback(() => {
+    if (disabled || surfaces.length >= 50) return;
 
-  const addSurface = () => {
     try {
-      if (surfaces.length >= 50) {
-        onError?.('Maximum 50 surfaces allowed.');
-        return;
-      }
       const newSurface = createCleanSurface(workItem.measurementType, surfaces.length + 1);
-      console.log("New surface created:", newSurface); // ðŸ” Debug
-      const updatedWorkItem = { ...workItem, surfaces: [...surfaces, newSurface] };
+      const updatedSurfaces = [...surfaces, newSurface];
+      const updatedWorkItem = { ...workItem, surfaces: updatedSurfaces };
       onChange(updatedWorkItem);
+      onError?.(null);
     } catch (error) {
       console.error('Error adding surface:', error);
       onError?.(`Failed to add surface: ${error.message}`);
     }
-  };
+  }, [disabled, surfaces, workItem, onChange, onError]);
 
-  const removeSurface = (index) => {
+  const removeSurface = useCallback((indexToRemove) => {
+    if (disabled || indexToRemove < 0 || indexToRemove >= surfaces.length) return;
+
+    if (surfaces.length === 1) {
+      const confirmRemove = window.confirm(
+        `This will remove the last ${getMeasurementUnit().toLowerCase()}. Are you sure? You can always add it back.`
+      );
+      if (!confirmRemove) return;
+    }
+
     try {
-      const updatedSurfaces = surfaces.filter((_, i) => i !== index);
-      onChange({ ...workItem, surfaces: updatedSurfaces });
+      const updatedSurfaces = surfaces.filter((_, index) => index !== indexToRemove);
+      
+      const reindexedSurfaces = updatedSurfaces.map((surface, index) => ({
+        ...surface,
+        name: surface.name || getSurfaceName(workItem.measurementType, index + 1)
+      }));
+
+      const updatedWorkItem = { ...workItem, surfaces: reindexedSurfaces };
+      onChange(updatedWorkItem);
+
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[indexToRemove];
+        return newErrors;
+      });
+
+      onError?.(null);
     } catch (error) {
       console.error('Error removing surface:', error);
       onError?.(`Failed to remove surface: ${error.message}`);
     }
-  };
+  }, [disabled, surfaces, workItem, onChange, onError, getMeasurementUnit]);
 
-  const clearAllSurfaces = () => {
-    try {
-      onChange({ ...workItem, surfaces: [] });
-    } catch (error) {
-      console.error('Error clearing surfaces:', error);
-      onError?.(`Failed to clear surfaces: ${error.message}`);
-    }
-  };
-
-  const getMeasurementUnit = () => {
+  const headerInfo = useMemo(() => {
     const normalizedType = normalizeMeasurementType(workItem.measurementType);
-    if (normalizedType === 'sqft') return 'sqft';
-    if (normalizedType === 'linear-foot') return 'linear ft';
-    if (normalizedType === 'by-unit') return 'units';
-    return 'units';
-  };
-
-  const getAddButtonText = (measurementType) => {
-    const normalizedType = normalizeMeasurementType(measurementType);
-    if (normalizedType === 'sqft') return 'Add Surface';
-    if (normalizedType === 'linear-foot') return 'Add Linear Section';
-    if (normalizedType === 'by-unit') return 'Add Unit';
-    return 'Add Item';
-  };
-
-  const headerInfo = (() => {
-    const normalizedType = normalizeMeasurementType(workItem.measurementType);
-    if (normalizedType === 'sqft') {
-      return { text: 'Surfaces', emptyText: 'No surfaces added yet. Add a surface to start.', icon: 'fas fa-ruler-combined', emptyIcon: 'fas fa-ruler' };
+    if (normalizedType === MEASUREMENT_TYPES.SQUARE_FOOT) {
+      return { 
+        text: 'Surfaces', 
+        emptyText: 'No surfaces added yet. Add a surface to start.', 
+        icon: 'fas fa-ruler-combined', 
+        emptyIcon: 'fas fa-ruler' 
+      };
     }
-    if (normalizedType === 'linear-foot') {
-      return { text: 'Linear Sections', emptyText: 'No linear sections added yet. Add a section to start.', icon: 'fas fa-ruler-horizontal', emptyIcon: 'fas fa-ruler-horizontal' };
+    if (normalizedType === MEASUREMENT_TYPES.LINEAR_FOOT) {
+      return { 
+        text: 'Linear Sections', 
+        emptyText: 'No linear sections added yet. Add a section to start.', 
+        icon: 'fas fa-ruler-horizontal', 
+        emptyIcon: 'fas fa-ruler-horizontal' 
+      };
     }
-    if (normalizedType === 'by-unit') {
-      return { text: 'Units', emptyText: 'No units added yet. Add a unit to start.', icon: 'fas fa-cube', emptyIcon: 'fas fa-cube' };
+    if (normalizedType === MEASUREMENT_TYPES.BY_UNIT) {
+      return { 
+        text: 'Units', 
+        emptyText: 'No units added yet. Add a unit to start.', 
+        icon: 'fas fa-cube', 
+        emptyIcon: 'fas fa-cube' 
+      };
     }
-    return { text: 'Items', emptyText: 'No items added yet. Add an item to start.', icon: 'fas fa-ruler-combined', emptyIcon: 'fas fa-ruler' };
-  })();
+    return { 
+      text: 'Items', 
+      emptyText: 'No items added yet. Add an item to start.', 
+      icon: 'fas fa-ruler-combined', 
+      emptyIcon: 'fas fa-ruler' 
+    };
+  }, [workItem.measurementType]);
 
-  const renderSurfaceInputs = (surface, index) => {
+  const renderSurfaceInputs = useCallback((surface, index) => {
     const validation = validateSurface(surface, workItem.measurementType);
     if (!validation.isValid) {
       return (
@@ -255,14 +266,41 @@ export default function SurfaceManager({
     }
 
     const normalizedType = normalizeMeasurementType(workItem.measurementType);
-    if (normalizedType === 'sqft') {
-      return <SquareFootageInput catIndex={catIndex} workIndex={workIndex} surfIndex={index} surface={surface} disabled={disabled} categoryKey={categoryKey} workType={workType} onError={onError} />;
+    if (normalizedType === MEASUREMENT_TYPES.SQUARE_FOOT) {
+      return <SquareFootageInput 
+        catIndex={catIndex} 
+        workIndex={workIndex} 
+        surfIndex={index} 
+        surface={surface} 
+        disabled={disabled} 
+        categoryKey={categoryKey} 
+        workType={workType} 
+        onError={onError} 
+      />;
     }
-    if (normalizedType === 'linear-foot') {
-      return <LinearFootInput catIndex={catIndex} workIndex={workIndex} surfIndex={index} surface={surface} disabled={disabled} categoryKey={categoryKey} workType={workType} onError={onError} />;
+    if (normalizedType === MEASUREMENT_TYPES.LINEAR_FOOT) {
+      return <LinearFootInput 
+        catIndex={catIndex} 
+        workIndex={workIndex} 
+        surfIndex={index} 
+        surface={surface} 
+        disabled={disabled} 
+        categoryKey={categoryKey} 
+        workType={workType} 
+        onError={onError} 
+      />;
     }
-    if (normalizedType === 'by-unit') {
-      return <ByUnitInput catIndex={catIndex} workIndex={workIndex} surfIndex={index} surface={surface} disabled={disabled} categoryKey={categoryKey} workType={workType} onError={onError} />;
+    if (normalizedType === MEASUREMENT_TYPES.BY_UNIT) {
+      return <ByUnitInput 
+        catIndex={catIndex} 
+        workIndex={workIndex} 
+        surfIndex={index} 
+        surface={surface} 
+        disabled={disabled} 
+        categoryKey={categoryKey} 
+        workType={workType} 
+        onError={onError} 
+      />;
     }
     return (
       <div className={styles.errorState}>
@@ -270,20 +308,20 @@ export default function SurfaceManager({
         <span>Unknown measurement type: {normalizedType}</span>
       </div>
     );
-  };
+  }, [workItem.measurementType, catIndex, workIndex, disabled, categoryKey, workType, onError]);
 
-  const getTotalUnits = () => {
+  const getTotalUnits = useCallback(() => {
     try {
       return surfaces.reduce((total, surface) => {
         if (!surface) return total;
         const normalizedType = normalizeMeasurementType(workItem.measurementType);
-        if (normalizedType === 'sqft') {
+        if (normalizedType === MEASUREMENT_TYPES.SQUARE_FOOT) {
           return total + (parseFloat(surface.sqft) || (parseFloat(surface.width || 0) * parseFloat(surface.height || 0)));
         }
-        if (normalizedType === 'linear-foot') {
+        if (normalizedType === MEASUREMENT_TYPES.LINEAR_FOOT) {
           return total + (parseFloat(surface.linearFt) || 0);
         }
-        if (normalizedType === 'by-unit') {
+        if (normalizedType === MEASUREMENT_TYPES.BY_UNIT) {
           return total + (parseInt(surface.units) || 0);
         }
         return total;
@@ -291,7 +329,7 @@ export default function SurfaceManager({
     } catch {
       return 0;
     }
-  };
+  }, [surfaces, workItem.measurementType]);
 
   return (
     <div className={styles.surfaceManager}>
@@ -308,16 +346,10 @@ export default function SurfaceManager({
           {headerInfo.text} ({surfaces.length}/50)
           {surfaces.length > 0 && (
             <span className={styles.totalUnits}>
-              - Total: {getTotalUnits().toFixed(2)} {getMeasurementUnit()}
+              Total: {getTotalUnits().toFixed(2)} {getMeasurementUnit()}
             </span>
           )}
         </h4>
-
-        {!disabled && surfaces.length > 1 && (
-          <button onClick={clearAllSurfaces} className={`${styles.clearAllButton} ${styles.button} ${styles['button--error']}`}>
-            <i className="fas fa-trash"></i> Clear All
-          </button>
-        )}
       </div>
 
       {surfaces.length === 0 && (
@@ -343,8 +375,11 @@ export default function SurfaceManager({
                 className={`${styles.surfaceName} ${styles.input}`}
                 placeholder={getSurfaceName(workItem.measurementType, index + 1)}
               />
-              {!disabled && surfaces.length > 1 && (
-                <button onClick={() => removeSurface(index)} className={`${styles.removeButton} ${styles.button} ${styles['button--error']}`}>
+              {!disabled && (
+                <button 
+                  onClick={() => removeSurface(index)} 
+                  className={`${styles.removeButton} ${styles.button} ${styles['button--error']}`}
+                >
                   <i className="fas fa-times"></i>
                 </button>
               )}
@@ -358,7 +393,10 @@ export default function SurfaceManager({
 
       {!disabled && surfaces.length < 50 && (
         <div className={styles.addButtons}>
-          <button onClick={addSurface} className={`${styles.addButton} ${styles.button} ${styles['button--secondary']}`}>
+          <button 
+            onClick={addSurface} 
+            className={`${styles.addButton} ${styles.button} ${styles['button--secondary']}`}
+          >
             <i className="fas fa-plus"></i> {getAddButtonText(workItem.measurementType)}
           </button>
         </div>

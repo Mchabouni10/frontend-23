@@ -1,20 +1,47 @@
-/* ByUnitInput.module.css */
+/* ByUnitInput.module.css - Enhanced with global style alignment and modern effects */
+
 .byUnitInput {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  transition: all 0.3s ease;
-  border: 1px solid rgba(209, 213, 219, 0.3);
-  animation: fadeIn 0.3s ease;
+  gap: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border: 2px solid rgba(var(--primary), 0.15);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 8px 32px var(--shadow);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.byUnitInput::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+  background-size: 200% 100%;
+  animation: shimmer 3s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.byUnitInput:hover {
+  border-color: rgba(var(--primary), 0.3);
+  box-shadow: 0 12px 40px var(--shadow);
+  transform: translateY(-2px);
 }
 
 .byUnitInput.hasError {
   border-color: var(--error);
-  box-shadow: 0 0 0 2px rgba(var(--error), 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--error), 0.2);
+  animation: shake 0.5s ease-in-out;
 }
 
 .field {
@@ -25,48 +52,52 @@
 }
 
 .label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
   color: var(--text);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  letter-spacing: 0.5px;
 }
 
 .required {
   color: var(--error);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-extrabold);
 }
 
 .inputWrapper {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md); /* Increased gap for better spacing between icon, input, and unit */
+  gap: var(--spacing-md);
   position: relative;
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+  padding: var(--spacing-sm);
+  backdrop-filter: blur(5px);
 }
 
 .inputWrapper input {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) calc(var(--spacing-md) + 1.5rem); /* Added left padding to account for icon */
-  border: 1px solid rgba(209, 213, 219, 0.3);
-  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) calc(var(--spacing-md) + 1.75rem);
+  border: none;
+  border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   color: var(--text);
-  background-color: var(--surface);
-  transition: all 0.3s ease;
-  font-family: var(--font-family);
+  background: transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .inputWrapper input:focus {
   outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--shadow);
-  border-radius: var(--radius-md);
+  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
 }
 
 .inputWrapper input:disabled {
-  background: rgba(233, 236, 239, 0.1);
+  background: transparent;
+  color: var(--text-light);
   opacity: 0.7;
   cursor: not-allowed;
 }
@@ -76,77 +107,120 @@
 }
 
 .inputWrapper.errorInput input {
-  border-color: var(--error);
-  box-shadow: 0 0 0 2px rgba(var(--error), 0.1);
+  box-shadow: 0 0 0 3px rgba(var(--error), 0.2);
 }
 
 .inputError {
   border-color: var(--error) !important;
-  box-shadow: 0 0 0 2px rgba(var(--error), 0.1) !important;
+  box-shadow: 0 0 0 3px rgba(var(--error), 0.2) !important;
 }
 
 .unit {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   color: var(--text-light);
-  padding: 0 var(--spacing-sm);
+  padding: 0 var(--spacing-md);
 }
 
 .inputWrapper .fa-cube {
   position: absolute;
-  left: var(--spacing-sm);
+  left: var(--spacing-md);
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-light);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
 }
 
 .errorMessage {
   color: var(--error);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  animation: fadeIn 0.3s ease;
+  padding: var(--spacing-sm);
+  background: rgba(var(--error), 0.15);
+  border-radius: var(--radius-md);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+  20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
   .byUnitInput {
+    padding: var(--spacing-md);
+  }
+
+  .inputWrapper {
     flex-direction: column;
     align-items: stretch;
-    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
   }
 }
 
-@media (prefers-contrast: high) {
+@media (max-width: 480px) {
   .byUnitInput {
-    border-color: #000000;
+    margin-bottom: var(--spacing-md);
   }
 
-  .inputWrapper input {
-    border-color: #000000;
-  }
-  
-  .inputWrapper.errorInput input {
-    border-color: #000000;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .byUnitInput,
-  .inputWrapper input {
-    transition: none;
+  .label {
+    font-size: var(--font-size-sm);
   }
 }
 
 /* Dark Mode */
 .dark .byUnitInput {
+  background: linear-gradient(135deg, var(--surface) 0%, rgba(0, 0, 0, 0.3) 100%);
+  border-color: rgba(var(--primary), 0.2);
+}
+
+.dark .inputWrapper {
   background: var(--surface);
-  border-color: rgba(209, 213, 219, 0.3);
+  border-color: rgba(209, 213, 219, 0.2);
 }
 
 .dark .inputWrapper input {
-  background-color: var(--surface);
-  border-color: rgba(209, 213, 219, 0.3);
+  color: var(--text);
+}
+
+/* High Contrast */
+@media (prefers-contrast: high) {
+  .byUnitInput {
+    border-color: #000000;
+  }
+
+  .inputWrapper {
+    border-color: #000000;
+  }
+
+  .inputWrapper.errorInput {
+    border-color: #000000;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .byUnitInput,
+  .inputWrapper input,
+  .errorMessage {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .byUnitInput {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
 }

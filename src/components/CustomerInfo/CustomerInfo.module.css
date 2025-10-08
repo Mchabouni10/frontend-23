@@ -3,7 +3,7 @@
 /* Main Container */
 .customerInfo {
   width: 100%;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
   background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: 0 6px 20px var(--shadow);
@@ -13,7 +13,7 @@
 
 /* Title Section */
 .title {
-  font-size: var(--font-size-2xl);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-extrabold);
   margin-bottom: var(--spacing-xl);
   color: var(--primary);
@@ -48,7 +48,8 @@
   border: 1px solid rgba(209, 213, 219, 0.2);
   border-radius: var(--radius-md);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
-  overflow: hidden;
+  /* overflow hidden caused calendar clipping - changed to visible */
+  overflow: visible;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px var(--shadow);
 }
@@ -63,14 +64,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-md);
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: var(--surface);
   border: none;
   width: 100%;
   cursor: pointer;
   transition: all 0.3s ease;
-  font-family: var(--font-family);
 }
 
 .sectionHeader:hover {
@@ -428,7 +428,13 @@ textarea.input {
 
 /* Enhanced Futuristic Calendar */
 .calendarPopper {
-  z-index: 1000;
+  z-index: 10000 !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  margin-top: 8px !important;
+  width: 100% !important;
+  max-width: 360px !important;
 }
 
 .react-datepicker {
@@ -438,9 +444,12 @@ textarea.input {
   border-radius: var(--radius-lg);
   box-shadow: 0 12px 30px var(--shadow);
   padding: var(--spacing-lg);
-  width: 360px;
+  width: 100% !important;
+  max-width: 360px !important;
   backdrop-filter: blur(10px);
   animation: scaleIn 0.3s ease-out;
+  position: relative;
+  z-index: 10000;
 }
 
 @keyframes scaleIn {
@@ -457,11 +466,13 @@ textarea.input {
 .react-datepicker__header {
   background: rgba(255, 255, 255, 0.1);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: var(--spacing-md) 0;
+  padding: var(--spacing-lg) 0 var(--spacing-md) 0;
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   text-transform: uppercase;
   letter-spacing: 2px;
   backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 2;
 }
 
 .react-datepicker__current-month {
@@ -469,6 +480,7 @@ textarea.input {
   font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  padding-top: var(--spacing-sm);
 }
 
 .react-datepicker__day-names {
@@ -476,6 +488,8 @@ textarea.input {
   background: rgba(255, 255, 255, 0.05);
   padding: var(--spacing-sm) 0;
   border-radius: var(--radius-sm);
+  position: relative;
+  z-index: 1;
 }
 
 .react-datepicker__day-name {
@@ -492,6 +506,14 @@ textarea.input {
   background: rgba(255, 255, 255, 0.05);
   padding: var(--spacing-sm);
   border-radius: var(--radius-md);
+  position: relative;
+  z-index: 1;
+}
+
+.react-datepicker__week {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacing-xs);
 }
 
 .react-datepicker__day {
@@ -506,12 +528,15 @@ textarea.input {
   font-weight: var(--font-weight-medium);
   box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.1);
   cursor: pointer;
+  position: relative;
+  z-index: 1;
 }
 
 .react-datepicker__day:hover {
   background: rgba(255, 255, 255, 0.3);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transform: scale(1.1);
+  z-index: 2;
 }
 
 .react-datepicker__day--highlighted {
@@ -519,6 +544,7 @@ textarea.input {
   color: var(--surface);
   box-shadow: 0 0 15px rgba(229, 62, 62, 0.6);
   font-weight: var(--font-weight-bold);
+  z-index: 2;
 }
 
 .react-datepicker__day--highlighted:hover {
@@ -532,6 +558,7 @@ textarea.input {
   box-shadow: 0 0 20px rgba(52, 152, 219, 0.8);
   font-weight: var(--font-weight-bold);
   transform: scale(1.15);
+  z-index: 2;
 }
 
 .react-datepicker__day--selected:hover {
@@ -543,6 +570,7 @@ textarea.input {
   color: var(--surface);
   box-shadow: 0 0 20px rgba(56, 161, 105, 0.8);
   transform: scale(1.15);
+  z-index: 2;
 }
 
 .react-datepicker__day--outside-month {
@@ -556,17 +584,25 @@ textarea.input {
 }
 
 .react-datepicker__navigation {
-  top: var(--spacing-lg);
+  top: 18px;
   width: 36px;
   height: 36px;
   border: none;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   transition: all 0.3s ease;
+  z-index: 10 !important;
+  cursor: pointer;
+  position: absolute;
 }
 
-.react-datepicker__navigation--previous,
+.react-datepicker__navigation--previous {
+  left: 18px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
 .react-datepicker__navigation--next {
+  right: 18px;
   box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
@@ -582,6 +618,7 @@ textarea.input {
   border-width: 3px 3px 0 0;
   width: 10px;
   height: 10px;
+  top: 11px;
 }
 
 /* Busy Dates Section */
@@ -593,7 +630,8 @@ textarea.input {
   border-radius: var(--radius-md);
   box-shadow: 0 4px 12px var(--shadow);
   transition: all 0.3s ease;
-  overflow: hidden;
+  /* overflow hidden could clip popper - changed */
+  overflow: visible;
 }
 
 .busyDatesSection:hover {
@@ -749,7 +787,8 @@ textarea.input {
   }
 
   .react-datepicker {
-    width: 300px;
+    width: 100% !important;
+    max-width: 300px !important;
     padding: var(--spacing-md);
   }
 
@@ -793,7 +832,8 @@ textarea.input {
   }
 
   .react-datepicker {
-    width: 280px;
+    width: 100% !important;
+    max-width: 280px !important;
   }
 
   .react-datepicker__day {
@@ -900,4 +940,26 @@ textarea.input {
   .busyDateItem {
     border: 2px solid var(--primary);
   }
+}
+
+/* Ensure datepicker popper can escape parent containers and sit on top */
+.react-datepicker-popper,
+.calendarPopper {
+  position: absolute !important;
+  z-index: 20000 !important;
+  left: 0 !important;
+  top: 0 !important;
+  pointer-events: auto !important;
+}
+
+/* If you use react-datepicker's portal mode, ensure portal content has high z-index */
+.react-datepicker__portal {
+  z-index: 20000 !important;
+}
+
+/* keep previous calendar popper styling but allow it to sit above containers */
+.calendarPopper {
+  margin-top: 8px !important;
+  width: 100% !important;
+  max-width: 360px !important;
 }

@@ -3,15 +3,25 @@ import React, { createContext, useContext, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { 
   WORK_TYPES, 
-  MEASUREMENT_TYPES,
-  MEASUREMENT_TYPE_LABELS,
-  MEASUREMENT_TYPE_UNITS,
-  MEASUREMENT_TYPE_ICONS,
   getCategoryWorkTypes,
   getSubtypeOptions,
   getDefaultSubtype,
   isCategoryValid 
 } from '../components/Calculator/data/workTypes';
+
+// FIXED: Import from centralized constants file
+import { 
+  MEASUREMENT_TYPES,
+  MEASUREMENT_TYPE_LABELS,
+  MEASUREMENT_TYPE_UNITS,
+  MEASUREMENT_TYPE_ICONS,
+  normalizeMeasurementType,
+  isValidMeasurementType as validateMeasurementType,
+  getMeasurementTypeLabel as getTypeLabel,
+  getMeasurementTypeUnit as getTypeUnit,
+  getMeasurementTypeIcon as getTypeIcon,
+  ALL_MEASUREMENT_TYPES
+} from '../constants/measurementTypes';
 
 const WorkTypeContext = createContext({
   getCategoryWorkTypes: () => [],
@@ -73,30 +83,33 @@ export function WorkTypeProvider({ children }) {
     []
   );
 
+  // FIXED: Use centralized function
   const getAllMeasurementTypes = useCallback(
-    () => Object.values(MEASUREMENT_TYPES),
+    () => ALL_MEASUREMENT_TYPES,
     []
   );
 
+  // FIXED: Use centralized function
   const getMeasurementTypeLabel = useCallback(
-    (measurementType) =>
-      MEASUREMENT_TYPE_LABELS[measurementType] || measurementType || 'Unknown',
+    (measurementType) => getTypeLabel(measurementType),
     []
   );
 
+  // FIXED: Use centralized function
   const getMeasurementTypeUnit = useCallback(
-    (measurementType) => MEASUREMENT_TYPE_UNITS[measurementType] || '',
+    (measurementType) => getTypeUnit(measurementType),
     []
   );
 
+  // FIXED: Use centralized function
   const getMeasurementTypeIcon = useCallback(
-    (measurementType) => MEASUREMENT_TYPE_ICONS[measurementType] || 'fas fa-question',
+    (measurementType) => getTypeIcon(measurementType),
     []
   );
 
-  // Enhanced getMeasurementType function with better business logic
+  // FIXED: Enhanced getMeasurementType with consistent constants
   const getMeasurementType = useCallback((categoryName, workType) => {
-    if (!categoryName || !workType) return 'single-surface';
+    if (!categoryName || !workType) return MEASUREMENT_TYPES.SQUARE_FOOT;
     
     const lowerWorkType = workType.toLowerCase();
     
@@ -109,7 +122,7 @@ export function WorkTypeProvider({ children }) {
         lowerWorkType.includes('ceiling') ||
         lowerWorkType.includes('walls') ||
         lowerWorkType.includes('surface')) {
-      return 'single-surface';
+      return MEASUREMENT_TYPES.SQUARE_FOOT;
     }
     
     // Linear measurements for trim, molding, pipes, etc.
@@ -120,7 +133,7 @@ export function WorkTypeProvider({ children }) {
         lowerWorkType.includes('edge') ||
         lowerWorkType.includes('pipe') ||
         lowerWorkType.includes('strip')) {
-      return 'linear-foot';
+      return MEASUREMENT_TYPES.LINEAR_FOOT;
     }
     
     // Unit-based for individual items
@@ -138,22 +151,23 @@ export function WorkTypeProvider({ children }) {
         lowerWorkType.includes('hardware') ||
         lowerWorkType.includes('organizer') ||
         lowerWorkType.includes('lighting')) {
-      return 'by-unit';
+      return MEASUREMENT_TYPES.BY_UNIT;
     }
     
     // Category-specific defaults
     if (categoryName) {
       const lowerCategory = categoryName.toLowerCase();
-      if (lowerCategory.includes('electric')) return 'by-unit';
-      if (lowerCategory.includes('plumb')) return 'by-unit';
+      if (lowerCategory.includes('electric')) return MEASUREMENT_TYPES.BY_UNIT;
+      if (lowerCategory.includes('plumb')) return MEASUREMENT_TYPES.BY_UNIT;
     }
     
     // Default fallback
-    return 'single-surface';
+    return MEASUREMENT_TYPES.SQUARE_FOOT;
   }, []);
 
+  // FIXED: Use centralized validation function
   const isValidMeasurementType = useCallback(
-    (measurementType) => Object.values(MEASUREMENT_TYPES).includes(measurementType),
+    (measurementType) => validateMeasurementType(measurementType),
     []
   );
 
@@ -174,7 +188,7 @@ export function WorkTypeProvider({ children }) {
       getMeasurementTypeIcon,
       workTypesData: WORK_TYPES,
       categories: Object.keys(WORK_TYPES),
-      measurementTypes: Object.values(MEASUREMENT_TYPES),
+      measurementTypes: ALL_MEASUREMENT_TYPES,
     }),
     [
       isValidWorkType,
@@ -208,4 +222,5 @@ export const useWorkType = () => {
   return context;
 };
 
+// FIXED: Re-export MEASUREMENT_TYPES for backwards compatibility
 export { MEASUREMENT_TYPES };

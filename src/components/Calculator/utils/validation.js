@@ -2,7 +2,7 @@
  * Validation utilities for numeric inputs
  * @file src/components/Calculator/utils/validation.js
  */
-import { CALCULATION_LIMITS, PRECISION_CONFIG } from './calculatorUtils';
+import { CALCULATION_LIMITS, PRECISION_CONFIG } from '../engine/CalculatorEngine';
 import { ERROR_CATEGORIES, ERROR_SEVERITY } from '../../../context/ErrorContext';
 
 /**

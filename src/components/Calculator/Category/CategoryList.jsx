@@ -5,7 +5,6 @@ import { useCategories } from '../../../context/CategoriesContext';
 import { useError } from '../../../context/ErrorContext';
 import styles from './CategoryList.module.css';
 import WorkItem from '../WorkItem/WorkItem';
-import AdditionalCosts from './AdditionalCosts';
 
 // --- helpers ---------------------------------------------------------------
 
@@ -383,6 +382,13 @@ export default function CategoryList({ disabled = false }) {
           <h3 className={styles.sectionTitle}>
             <i className="fas fa-list" aria-hidden="true"></i> Categories
           </h3>
+          
+          {/* NEW: Category Count Badge */}
+          <div className={styles.categoryCount}>
+            <div className={styles.categoryCountNumber}>
+              {categories.length}
+            </div>
+          </div>
         </div>
 
         {expandedSections.categories && (
@@ -403,7 +409,7 @@ export default function CategoryList({ disabled = false }) {
                         {option.label}
                       </option>
                     ))}
-                  <option value="custom">Custom</option>
+                  <option value="custom">Custom Category</option>
                 </select>
 
                 {selectedCategory === 'custom' && (
@@ -577,7 +583,6 @@ export default function CategoryList({ disabled = false }) {
       </div>
 
       <SafeBoundary onError={(e) => addError(e)}>
-        <AdditionalCosts disabled={disabled} />
       </SafeBoundary>
     </div>
   );
