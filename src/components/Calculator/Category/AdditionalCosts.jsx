@@ -16,15 +16,10 @@ export default function AdditionalCosts({ disabled = false }) {
   const [useManualLaborDiscount, setUseManualLaborDiscount] = useState(false);
   const [expandedSections, setExpandedSections] = useState({ additionalCosts: true });
 
-  // FIX 1: Stabilize dependencies using JSON serialization
-  // This prevents calculator from recreating on every render
-  const categoriesKey = useMemo(() => JSON.stringify(categories), [categories]);
-  const settingsKey = useMemo(() => JSON.stringify(settings), [settings]);
-
   // Initialize CalculatorEngine with stable dependencies
   const calculator = useMemo(() => {
     return new CalculatorEngine(categories, settings);
-  }, [categoriesKey, settingsKey]);
+  }, [categories, settings]);
 
   // Calculate totals to derive monetary values
   const totals = useMemo(() => {
@@ -33,27 +28,36 @@ export default function AdditionalCosts({ disabled = false }) {
     } catch (error) {
       console.error('Error calculating totals:', error);
       return {
-        wasteCost: '0.00',
         taxAmount: '0.00',
         markupAmount: '0.00',
         laborDiscount: '0.00',
-        total: '0.00'
+        total: '0.00',
+        miscFeesTotal: '0.00'
       };
     }
   }, [calculator]);
 
-  // NEW: Calculate additional costs summary for innovative breakdown
+  // Calculate waste cost from waste entries
+  const wasteEntriesCost = useMemo(() => {
+    const wasteEntries = settings.wasteEntries || [];
+    return wasteEntries.reduce((total, entry) => {
+      const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+      const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+      return total + (surfaceCost * wasteFactor);
+    }, 0);
+  }, [settings.wasteEntries]);
+
+  // Calculate additional costs summary
   const additionalCostsSummary = useMemo(() => {
-    const waste = parseFloat(totals.wasteCost) || 0;
+    const waste = wasteEntriesCost;
     const tax = parseFloat(totals.taxAmount) || 0;
     const markup = parseFloat(totals.markupAmount) || 0;
-    const laborDiscount = parseFloat(totals.laborDiscount) || 0;
     const transportation = parseFloat(settings.transportationFee) || 0;
     const misc = parseFloat(totals.miscFeesTotal) || 0;
     const totalAdditional = waste + tax + markup + transportation + misc;
     const percentage = totals.total ? (totalAdditional / parseFloat(totals.total) * 100).toFixed(1) : 0;
     return { totalAdditional: totalAdditional.toFixed(2), percentage: `${percentage}%` };
-  }, [totals, settings.transportationFee]);
+  }, [wasteEntriesCost, totals, settings.transportationFee]);
 
   // Find deposit payment for display
   const depositPayment = useMemo(() => {
@@ -87,7 +91,7 @@ export default function AdditionalCosts({ disabled = false }) {
   const handleSettingsChange = (field, value) => {
     if (disabled) return;
 
-    if (['laborDiscount', 'markup', 'wasteFactor', 'taxRate'].includes(field)) {
+    if (['laborDiscount', 'markup', 'taxRate'].includes(field)) {
       const max = field === 'laborDiscount' ? 100 : 500;
       const num = validateNumber(value, field.charAt(0).toUpperCase() + field.slice(1), 0, max);
       if (num === false) return;
@@ -154,7 +158,74 @@ export default function AdditionalCosts({ disabled = false }) {
     }));
   };
 
-  // NEW: Innovative tooltip helper for modern UX
+  // Waste Entry handlers
+  const handleWasteEntryChange = (index, field, value) => {
+    if (disabled) return;
+    
+    if (field === 'surfaceCost') {
+      const num = validateNumber(value, `Waste entry ${index + 1} cost`, 0, 1000000);
+      if (num === false) return;
+      
+      setSettings((prev) => ({
+        ...prev,
+        wasteEntries: (prev.wasteEntries || []).map((entry, i) =>
+          i === index ? { ...entry, surfaceCost: num } : entry
+        ),
+      }));
+    } else if (field === 'wasteFactor') {
+      const num = parseFloat(value);
+      if (isNaN(num) || num < 0 || num > 0.30) {
+        addError(`Waste factor must be between 0% and 30%.`);
+        return;
+      }
+      
+      setSettings((prev) => ({
+        ...prev,
+        wasteEntries: (prev.wasteEntries || []).map((entry, i) =>
+          i === index ? { ...entry, wasteFactor: num } : entry
+        ),
+      }));
+    } else if (field === 'surfaceName') {
+      if (!value.trim()) {
+        addError(`Waste entry ${index + 1} name cannot be empty.`);
+        return;
+      }
+      
+      setSettings((prev) => ({
+        ...prev,
+        wasteEntries: (prev.wasteEntries || []).map((entry, i) =>
+          i === index ? { ...entry, surfaceName: value } : entry
+        ),
+      }));
+    }
+  };
+
+  const addWasteEntry = () => {
+    if (disabled) return;
+    
+    setSettings((prev) => ({
+      ...prev,
+      wasteEntries: [
+        ...(prev.wasteEntries || []),
+        { 
+          surfaceName: `Surface ${(prev.wasteEntries?.length || 0) + 1}`, 
+          surfaceCost: 0,
+          wasteFactor: 0
+        }
+      ],
+    }));
+  };
+
+  const removeWasteEntry = (index) => {
+    if (disabled) return;
+    
+    setSettings((prev) => ({
+      ...prev,
+      wasteEntries: (prev.wasteEntries || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  // Tooltip helper for modern UX
   const renderTooltip = (text, children) => (
     <div className={styles.tooltipWrapper}>
       {children}
@@ -164,12 +235,12 @@ export default function AdditionalCosts({ disabled = false }) {
 
   // Safe settings with proper defaults
   const safeSettings = {
-    wasteFactor: 0,
     transportationFee: 0,
     taxRate: 0,
     markup: 0,
     laborDiscount: 0,
     miscFees: [],
+    wasteEntries: [],
     payments: [],
     ...settings,
   };
@@ -188,32 +259,101 @@ export default function AdditionalCosts({ disabled = false }) {
         <h3 className={styles.sectionTitle}>
           <i className="fas fa-cogs" /> Additional Costs
         </h3>
-        {/* UPDATED: Compact one-line header with Grand Total + Additional (percentage) */}
         <div className={styles.totalCost}>
           <span className={styles.additionalInline}> +${additionalCostsSummary.totalAdditional} ({additionalCostsSummary.percentage})</span>
         </div>
       </div>
       {expandedSections.additionalCosts && (
         <div className={styles.settingsContent}>
-          {/* Waste Factor */}
-          <div className={styles.field}>
-            {renderTooltip('Percentage of material cost added for waste/scrap', 
+          {/* Waste Entries - Material Surface Waste Factor */}
+          <div className={styles.wasteSection}>
+            {renderTooltip('Add waste factors for material surfaces. Enter the material cost and select waste percentage.', 
               <label>
-                <i className="fas fa-recycle" /> Waste Factor (%):
+                <i className="fas fa-recycle" /> Waste Factors by Surface:
               </label>
             )}
-            <input
-              type="number"
-              value={(safeSettings.wasteFactor * 100).toFixed(1)}
-              onChange={(e) => handleSettingsChange('wasteFactor', e.target.value)}
-              min="0"
-              max="500"
-              step="0.1"
-              disabled={disabled}
-            />
-            <span className={styles.costDisplay}>
-              (${totals.wasteCost})
-            </span>
+            {(safeSettings.wasteEntries || []).map((entry, index) => {
+              const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+              const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+              const wasteCost = surfaceCost * wasteFactor;
+              
+              return (
+                <div key={index} className={styles.wasteEntryRow}>
+                  <div className={styles.inputWrapper}>
+                    <i className={`fas fa-tag ${styles.inputIcon}`} />
+                    <input
+                      type="text"
+                      value={entry.surfaceName}
+                      onChange={(e) => handleWasteEntryChange(index, 'surfaceName', e.target.value)}
+                      placeholder="Surface name (e.g., Kitchen Floor)"
+                      disabled={disabled}
+                      className={styles.surfaceNameInput}
+                      title="Name of the material surface"
+                    />
+                  </div>
+                  <div className={styles.inputWrapper}>
+                    <i className={`fas fa-dollar-sign ${styles.inputIcon}`} />
+                    <input
+                      type="number"
+                      value={entry.surfaceCost}
+                      onChange={(e) => handleWasteEntryChange(index, 'surfaceCost', e.target.value)}
+                      placeholder="Material Cost ($)"
+                      min="0"
+                      step="0.01"
+                      max="1000000"
+                      disabled={disabled}
+                      className={styles.costInput}
+                      title="Total material cost for this surface"
+                    />
+                  </div>
+                  <div className={styles.inputWrapper}>
+                    <i className={`fas fa-percentage ${styles.inputIcon}`} />
+                    <select
+                      value={(wasteFactor * 100).toFixed(0)}
+                      onChange={(e) => handleWasteEntryChange(index, 'wasteFactor', parseFloat(e.target.value) / 100)}
+                      disabled={disabled}
+                      className={styles.wasteSelect}
+                      title="Waste percentage"
+                    >
+                      <option value="0">0%</option>
+                      <option value="5">5%</option>
+                      <option value="10">10%</option>
+                      <option value="15">15%</option>
+                      <option value="20">20%</option>
+                      <option value="25">25%</option>
+                      <option value="30">30%</option>
+                    </select>
+                  </div>
+                  <span className={styles.wasteCostDisplay} title="Calculated waste cost">
+                    = ${wasteCost.toFixed(2)}
+                  </span>
+                  {!disabled && (
+                    <button
+                      onClick={() => removeWasteEntry(index)}
+                      className={styles.removeButton}
+                      title="Remove this waste entry"
+                    >
+                      <i className="fas fa-trash-alt" />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+            {(safeSettings.wasteEntries || []).length > 0 && (
+              <div className={styles.wasteTotalRow}>
+                <strong>Total Waste Cost:</strong>
+                <span className={styles.wasteTotalAmount}>${wasteEntriesCost.toFixed(2)}</span>
+              </div>
+            )}
+            {!disabled && (
+              <button
+                onClick={addWasteEntry}
+                className={styles.addButton}
+                title="Add Waste Entry"
+              >
+                <i className="fas fa-plus" /> Add Waste Entry
+              </button>
+            )}
           </div>
 
           {/* Transportation Fee */}
@@ -394,7 +534,7 @@ export default function AdditionalCosts({ disabled = false }) {
             )}
           </div>
 
-          {/* NEW: Deposit info if available, for modern payment preview */}
+          {/* Deposit info if available */}
           {depositPayment && (
             <div className={styles.depositInfo}>
               <i className="fas fa-hand-holding-usd" />

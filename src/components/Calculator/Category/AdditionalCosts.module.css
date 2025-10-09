@@ -1,4 +1,4 @@
-/* AdditionalCosts.module.css - Enhanced with total cost counter */
+/* AdditionalCosts.module.css - Enhanced with waste factor styles */
 
 /* Section container */
 .section {
@@ -28,7 +28,7 @@
   background: linear-gradient(to right, var(--primary-dark) 0%, var(--primary) 100%);
 }
 
-/* UPDATED: Compact one-line total cost with inline additional */
+/* Total cost display */
 .totalCost {
   margin-left: auto;
   padding: var(--spacing-xs) var(--spacing-sm);
@@ -195,6 +195,142 @@
   color: var(--text);
 }
 
+/* ========================================
+   WASTE FACTOR SECTION STYLES
+   ======================================== */
+
+.wasteSection {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.05) 0%, rgba(76, 175, 80, 0.05) 100%);
+  border: 1px solid rgba(46, 125, 50, 0.2);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.wasteSection > label {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-xs);
+}
+
+.wasteEntryRow {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr auto auto;
+  gap: var(--spacing-sm);
+  align-items: center;
+  padding: var(--spacing-sm);
+  background: var(--surface);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.wasteEntryRow:hover {
+  border-color: var(--secondary);
+  box-shadow: 0 2px 6px var(--shadow);
+  transform: translateY(-1px);
+}
+
+.surfaceNameInput {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.surfaceNameInput:focus {
+  border-color: var(--secondary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+.costInput {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  text-align: right;
+}
+
+.costInput:focus {
+  border-color: var(--secondary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+.wasteSelect {
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  min-width: 100px;
+}
+
+.wasteSelect:focus {
+  border-color: var(--secondary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
+.wasteCostDisplay {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--success);
+  white-space: nowrap;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: rgba(46, 125, 50, 0.1);
+  border-radius: var(--radius-sm);
+  min-width: 80px;
+  text-align: center;
+}
+
+.wasteTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
+  border: 2px solid rgba(46, 125, 50, 0.3);
+  border-radius: var(--radius-md);
+  margin-top: var(--spacing-sm);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+}
+
+.wasteTotalAmount {
+  font-size: var(--font-size-lg);
+  color: var(--success);
+  font-weight: var(--font-weight-bold);
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+/* ========================================
+   END WASTE FACTOR SECTION
+   ======================================== */
+
 /* Miscellaneous fees section */
 .miscFees {
   margin-top: var(--spacing-md);
@@ -247,6 +383,24 @@
   box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
 }
 
+.inputWrapper select {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
+  border: 1px solid rgba(209, 213, 219, 0.4);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  background: var(--surface);
+  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.inputWrapper select:focus {
+  border-color: var(--secondary);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+}
+
 /* Input icon */
 .inputIcon {
   position: absolute;
@@ -255,6 +409,8 @@
   transform: translateY(-50%);
   color: var(--text-light);
   font-size: var(--font-size-base);
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* Add button */
@@ -271,6 +427,7 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  align-self: flex-start;
 }
 
 .addButton:hover:not(:disabled) {
@@ -300,6 +457,11 @@
   cursor: pointer;
   font-size: var(--font-size-base);
   transition: background 0.2s ease, transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
 }
 
 .removeButton:hover:not(:disabled) {
@@ -312,7 +474,7 @@
   box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3);
 }
 
-/* NEW: Tooltip for modern UX */
+/* Tooltip for modern UX */
 .tooltipWrapper {
   position: relative;
   display: inline-block;
@@ -320,7 +482,7 @@
 
 .tooltip {
   visibility: hidden;
-  width: 200px;
+  width: 220px;
   background: var(--text);
   color: var(--surface);
   text-align: center;
@@ -330,12 +492,13 @@
   z-index: 10;
   bottom: 125%;
   left: 50%;
-  margin-left: -100px;
+  margin-left: -110px;
   opacity: 0;
   transition: opacity 0.3s, visibility 0.3s;
   font-size: var(--font-size-xs);
   box-shadow: 0 4px 8px var(--shadow);
-  white-space: nowrap;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 .tooltip::after {
@@ -354,7 +517,7 @@
   opacity: 1;
 }
 
-/* NEW: Deposit info */
+/* Deposit info */
 .depositInfo {
   display: flex;
   align-items: center;
@@ -372,10 +535,26 @@
   border-radius: var(--radius-full);
   font-weight: var(--font-weight-bold);
   color: var(--surface);
-  background: var(--success); /* Assuming --success var exists, else use green */
+  background: var(--success);
 }
 
 /* Responsive design */
+@media (max-width: 968px) {
+  .wasteEntryRow {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .wasteCostDisplay {
+    text-align: left;
+    width: 100%;
+  }
+
+  .removeButton {
+    width: 100%;
+  }
+}
+
 @media (max-width: 768px) {
   .section {
     margin: var(--spacing-md) 0;
@@ -419,9 +598,19 @@
   }
 
   .tooltip {
-    width: 150px;
+    width: 180px;
     left: 0;
     margin-left: 0;
+  }
+
+  .wasteSection {
+    padding: var(--spacing-md);
+  }
+
+  .wasteTotalRow {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    text-align: center;
   }
 }
 
@@ -445,6 +634,10 @@
   .costDisplay {
     font-size: var(--font-size-xs);
   }
+
+  .wasteSection {
+    padding: var(--spacing-sm);
+  }
 }
 
 /* Dark mode specific adjustments */
@@ -464,7 +657,8 @@
   border-color: rgba(209, 213, 219, 0.2);
 }
 
-.dark .inputWrapper input {
+.dark .inputWrapper input,
+.dark .inputWrapper select {
   background: var(--surface);
   border-color: rgba(209, 213, 219, 0.2);
 }
@@ -472,6 +666,32 @@
 .dark .tooltip {
   background: var(--text);
   color: var(--surface);
+}
+
+.dark .wasteSection {
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.08) 0%, rgba(76, 175, 80, 0.08) 100%);
+  border-color: rgba(46, 125, 50, 0.3);
+}
+
+.dark .wasteEntryRow {
+  background: var(--surface);
+  border-color: rgba(209, 213, 219, 0.2);
+}
+
+.dark .surfaceNameInput,
+.dark .costInput,
+.dark .wasteSelect {
+  background: var(--surface);
+  border-color: rgba(209, 213, 219, 0.2);
+}
+
+.dark .wasteCostDisplay {
+  background: rgba(46, 125, 50, 0.15);
+}
+
+.dark .wasteTotalRow {
+  background: linear-gradient(135deg, rgba(46, 125, 50, 0.15) 0%, rgba(76, 175, 80, 0.15) 100%);
+  border-color: rgba(46, 125, 50, 0.4);
 }
 
 /* Print styles */
@@ -491,9 +711,19 @@
   .totalCost {
     border: 1px solid #000;
   }
+
+  .wasteSection {
+    background: none;
+    border: 1px solid #000;
+  }
+
+  .wasteEntryRow {
+    border: 1px solid #000;
+    page-break-inside: avoid;
+  }
 }
 
-/* NEW: Shimmer animation */
+/* Shimmer animation */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }

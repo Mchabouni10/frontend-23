@@ -1,37 +1,32 @@
 /* src/components/Calculator/Category/CostSummary.module.css */
-/* ==========================================================================
-   Section Styles - Consistent with AdditionalCosts
-   ========================================================================== */
+
+/* Section Styles */
 .section {
   margin: var(--spacing-lg) 0;
   background: var(--surface);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 8px var(--shadow);
+  box-shadow: var(--shadow-md);
   overflow: hidden;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition: background-color var(--transition-duration), box-shadow var(--transition-duration);
 }
 
-/* ==========================================================================
-   Section Header - Enhanced with Simplified Icon-based Overview
-   ========================================================================== */
+/* Section Header */
 .sectionHeader {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  background: linear-gradient(to right, var(--primary) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(to right, var(--primary), var(--primary-dark));
   color: var(--surface);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
   cursor: pointer;
-  transition: background 0.3s ease;
-  position: relative;
+  transition: background var(--transition-duration);
 }
 
 .sectionHeader:hover {
-  background: linear-gradient(to right, var(--primary-dark) 0%, var(--primary) 100%);
+  background: linear-gradient(to right, var(--primary-dark), var(--primary));
 }
 
-/* SIMPLIFIED ONE-LINE: Header Inline with Total and Stats */
 .headerInline {
   margin-left: auto;
   display: flex;
@@ -60,7 +55,7 @@
   font-size: var(--font-size-sm);
 }
 
-/* Toggle Button - Matching AdditionalCosts */
+/* Toggle Button */
 .toggleButton {
   background: none;
   border: none;
@@ -68,7 +63,7 @@
   font-size: var(--font-size-lg);
   color: var(--surface);
   padding: var(--spacing-sm);
-  transition: color 0.2s ease, transform 0.2s ease;
+  transition: color var(--transition-duration), transform var(--transition-duration);
 }
 
 .toggleButton:hover,
@@ -79,11 +74,11 @@
 
 .toggleButton:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+  box-shadow: var(--focus-ring);
   border-radius: var(--radius-sm);
 }
 
-/* Section Title - Matching AdditionalCosts */
+/* Section Title */
 .sectionTitle {
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
@@ -95,13 +90,11 @@
   font-family: var(--font-family);
 }
 
-/* ==========================================================================
-   Summary Content - Clean and Consistent
-   ========================================================================== */
+/* Summary Content */
 .summaryContent {
   padding: var(--spacing-lg);
   background: var(--background);
-  border: 1px solid rgba(209, 213, 219, 0.4);
+  border: 1px solid var(--border-light);
   border-top: none;
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   display: flex;
@@ -109,58 +102,203 @@
   gap: var(--spacing-lg);
 }
 
-/* SIMPLIFIED: Icon-based Metrics Row */
+/* Metrics Row - Enhanced */
 .metricsRow {
-  display: flex;
-  justify-content: space-around;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xs);
-  padding: var(--spacing-am);
-  background: var(--surface);
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, var(--surface), rgba(var(--primary-rgb), 0.03));
   border-radius: var(--radius-md);
-  border: 1px solid rgba(209, 213, 219, 0.2);
+  border: 1px solid var(--border-light);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
 .metricItem {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-xs);
-  flex: 1;
-  padding: var(--spacing-sm);
-  transition: all 0.2s ease;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-lg);
+  background: var(--surface);
+  border-radius: var(--radius-md);
+  border: 2px solid transparent;
+  transition: all var(--transition-duration);
+  position: relative;
+  overflow: hidden;
+}
+
+.metricItem::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  transform: scaleX(0);
+  transition: transform var(--transition-duration);
 }
 
 .metricItem:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+}
+
+.metricItem:hover::before {
+  transform: scaleX(1);
 }
 
 .metricItem i {
-  font-size: 2rem;
+  font-size: 2.5rem;
   color: var(--primary);
-  opacity: 0.8;
+  opacity: 0.9;
+  transition: all var(--transition-duration);
+}
+
+.metricItem:hover i {
+  color: var(--secondary);
+  transform: scale(1.1) rotateY(360deg);
 }
 
 .metricValue {
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--text);
+  transition: color var(--transition-duration);
+}
+
+.metricItem:hover .metricValue {
+  color: var(--primary);
 }
 
 .metricItem small {
   font-size: var(--font-size-sm);
   color: var(--text-light);
   text-align: center;
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-/* ==========================================================================
-   Empty State - Clean Design
-   ========================================================================== */
+/* Waste Details Section - Fixed Full Width */
+.wasteDetailsSection {
+  width: 100%;
+  margin: 0;
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05), rgba(var(--secondary-rgb), 0.05));
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  animation: expandDown 0.3s ease-out;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+@keyframes expandDown {
+  from { 
+    opacity: 0; 
+    max-height: 0;
+    transform: scaleY(0.95);
+  }
+  to { 
+    opacity: 1; 
+    max-height: 500px;
+    transform: scaleY(1);
+  }
+}
+
+.wasteDetailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+  transition: all var(--transition-duration);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.wasteDetailRow:hover {
+  background: var(--hover-bg);
+  border-left-color: var(--secondary);
+  transform: translateX(4px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.wasteDetailLabel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-base);
+  color: var(--text);
+  flex: 1;
+}
+
+.wasteDetailLabel i {
+  font-size: var(--font-size-sm);
+  color: var(--primary);
+  margin-right: var(--spacing-xs);
+}
+
+.wasteDetailLabel small {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  font-weight: var(--font-weight-normal);
+  margin-left: var(--spacing-lg);
+}
+
+.wasteDetailValue {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  text-align: right;
+  min-width: 120px;
+  transition: all var(--transition-duration);
+}
+
+.wasteDetailRow:hover .wasteDetailValue {
+  color: var(--secondary);
+  transform: scale(1.05);
+}
+
+/* Detail Toggle Button */
+.detailToggle {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border: none;
+  color: var(--surface);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  margin-left: var(--spacing-md);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-duration);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detailToggle:hover {
+  background: linear-gradient(135deg, var(--secondary), var(--primary));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.detailToggle:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Empty State */
 .emptyState {
   text-align: center;
   padding: var(--spacing-xl);
   background: var(--surface);
-  border: 2px dashed var(--text-light);
+  border: 2px dashed var(--border-light);
   border-radius: var(--radius-md);
   margin: var(--spacing-lg) 0;
 }
@@ -187,7 +325,7 @@
 .helpMessage h4 {
   font-size: var(--font-size-lg);
   color: var(--text);
-  margin: 0 0 var(--spacing-sm) 0;
+  margin: 0 0 var(--spacing-sm);
 }
 
 .helpMessage p {
@@ -195,11 +333,9 @@
   margin: 0;
 }
 
-/* ==========================================================================
-   Error Section - Consistent Alert Design
-   ========================================================================== */
+/* Error Section */
 .errorSection {
-  background: rgba(229, 62, 62, 0.1);
+  background: var(--error-bg);
   border-radius: var(--radius-md);
   padding: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
@@ -215,7 +351,7 @@
 }
 
 .errorSection h4 {
-  margin: 0 0 var(--spacing-sm) 0;
+  margin: 0 0 var(--spacing-sm);
   font-size: var(--font-size-base);
   color: var(--error);
   display: flex;
@@ -238,74 +374,77 @@
 }
 
 .errorSection li::before {
-  content: '⚠';
+  content: '⚠ ';
   margin-right: var(--spacing-sm);
 }
 
-/* ==========================================================================
-   Summary Grid - WIDER Two-Column with Hover Effects
-   ========================================================================== */
+/* Summary Grid - Flexible Layout */
 .summaryGrid {
-  display: grid;
-  grid-template-columns: 2fr auto;
-  gap: var(--spacing-sm) var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
   max-width: 1000px;
-  min-width: auto;
   margin: 0 auto;
   font-size: var(--font-size-base);
   color: var(--text);
   background: var(--surface);
   border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
-  box-shadow: 0 2px 8px var(--shadow);
 }
 
 .stickyHeader {
-  display: contents;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--spacing-md);
   font-weight: var(--font-weight-bold);
-  color: var(--primary);
-  font-size: var(--font-size-lg);
-  padding: var(--spacing-md) 0;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: var(--surface);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  padding: var(--spacing-md) var(--spacing-xl);
 }
 
 .summaryItem {
-  display: contents;
-  transition: all 0.2s ease;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--spacing-md);
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-xl);
+  border-bottom: 1px solid var(--border-light);
+  transition: all var(--transition-duration);
+  position: relative;
+}
+
+.summaryItem:last-child {
+  border-bottom: none;
 }
 
 .summaryItem:hover {
-  background: rgba(52, 152, 219, 0.05);
+  background: var(--hover-bg);
+}
+
+.summaryItem::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: var(--primary);
+  opacity: 0;
+  transition: opacity var(--transition-duration);
+}
+
+.summaryItem:hover::before {
+  opacity: 1;
 }
 
 .summaryLabel {
   font-weight: var(--font-weight-medium);
   color: var(--text);
-  text-align: right;
-  padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) var(--spacing-xl);
+  text-align: left;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: var(--spacing-xl);
-  transition: color 0.2s ease;
-  position: relative;
-}
-
-.summaryLabel::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 0;
-  background: var(--primary);
-  transition: height 0.3s ease;
-}
-
-.summaryItem:hover .summaryLabel::after {
-  height: 100%;
+  gap: var(--spacing-sm);
+  transition: color var(--transition-duration);
 }
 
 .summaryLabel:hover {
@@ -315,91 +454,87 @@
 .summaryValue {
   font-weight: var(--font-weight-medium);
   color: var(--text);
-  text-align: left;
-  padding: var(--spacing-sm) var(--spacing-xl) var(--spacing-sm) 0;
-  transition: color 0.2s ease;
-  border-left: 1px solid rgba(209, 213, 219, 0.2);
+  text-align: right;
+  white-space: nowrap;
+  transition: all var(--transition-duration);
+  min-width: 120px;
 }
 
 .summaryItem:hover .summaryValue {
   color: var(--primary);
   font-weight: var(--font-weight-bold);
+  transform: translateX(-2px);
 }
 
 /* Highlighted Rows */
 .total, .balance {
-  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(44, 62, 80, 0.1) 100%);
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), rgba(var(--secondary-rgb), 0.05));
   font-size: var(--font-size-lg);
+  padding: var(--spacing-lg) var(--spacing-xl) !important;
+  border-left: 4px solid var(--primary);
+  margin: var(--spacing-sm) 0;
+  border-radius: var(--radius-sm);
 }
 
 .total .summaryLabel,
 .balance .summaryLabel {
   color: var(--primary);
   font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+}
+
+.total .summaryValue,
+.balance .summaryValue {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
 }
 
 .paid {
   color: var(--success);
-}
-
-/* ==========================================================================
-   Notices - Enhanced with Icons and Animations
-   ========================================================================== */
-.overpaymentNotice,
-.dueAmountNotice {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  font-size: var(--font-size-base);
-  background: var(--surface);
-  border: 1px solid transparent;
-  transition: all 0.3s ease;
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  margin-top: var(--spacing-md);
-}
-
-.overpaymentNotice {
-  border-color: var(--success);
-  background: rgba(56, 161, 105, 0.05);
-  color: var(--success);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.dueAmountNotice {
-  border-color: var(--error);
-  background: rgba(229, 62, 62, 0.05);
-  color: var(--error);
-  animation: shake 0.5s ease-out;
-}
-
-.overpaymentNotice i,
-.dueAmountNotice i {
-  font-size: var(--font-size-xl);
-  flex-shrink: 0;
-  animation: bounce 1s ease-in-out infinite alternate;
-}
-
-@keyframes bounce {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(-5px); }
-}
-
-.overpaymentNotice strong,
-.dueAmountNotice strong {
-  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
-  display: block;
-  margin-bottom: var(--spacing-xs);
 }
 
-.overpaymentNotice p,
-.dueAmountNotice p {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
+/* Payment Progress Styles */
+.paymentProgress {
+  width: 100%;
+  max-width: 300px;
 }
 
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background: var(--border-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--success), var(--primary));
+  border-radius: var(--radius-sm);
+  transition: width 0.5s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+.progressBarFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.3),
+    transparent
+  );
+  animation: shimmer 2s infinite;
+}
 
 @keyframes shimmer {
   0% { transform: translateX(-100%); }
@@ -409,24 +544,122 @@
 .progressLabels {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-xs);
   font-size: var(--font-size-sm);
-  color: var(--text-light);
+  gap: var(--spacing-sm);
 }
 
 .progressLabel {
-  color: var(--success);
+  color: var(--text);
   font-weight: var(--font-weight-medium);
 }
 
 .overdueLabel {
   color: var(--error);
   font-weight: var(--font-weight-bold);
+  padding: 2px var(--spacing-xs);
+  background: var(--error-bg);
+  border-radius: var(--radius-sm);
+  animation: pulse 2s ease-in-out infinite;
 }
 
+/* Notices - Enhanced */
+.overpaymentNotice,
+.dueAmountNotice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+  font-size: var(--font-size-base);
+  background: var(--surface);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+  transition: all var(--transition-duration);
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 
-/* ==========================================================================
-   Responsive Design - Mobile First
-   ========================================================================== */
+.overpaymentNotice::before,
+.dueAmountNotice::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  transition: width var(--transition-duration);
+}
+
+.overpaymentNotice:hover::before,
+.dueAmountNotice:hover::before {
+  width: 8px;
+}
+
+.overpaymentNotice {
+  border-color: var(--success);
+  background: linear-gradient(135deg, var(--success-bg), rgba(var(--success-rgb), 0.05));
+  color: var(--success);
+}
+
+.overpaymentNotice::before {
+  background: var(--success);
+}
+
+.dueAmountNotice {
+  border-color: var(--error);
+  background: linear-gradient(135deg, var(--error-bg), rgba(var(--error-rgb), 0.05));
+  color: var(--error);
+}
+
+.dueAmountNotice::before {
+  background: var(--error);
+}
+
+.overpaymentNotice:hover,
+.dueAmountNotice:hover {
+  transform: translateX(4px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.overpaymentNotice i,
+.dueAmountNotice i {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% { 
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+.overpaymentNotice strong,
+.dueAmountNotice strong {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  display: block;
+  margin-bottom: var(--spacing-sm);
+}
+
+.overpaymentNotice p,
+.dueAmountNotice p {
+  margin: 0;
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  color: inherit;
+  opacity: 0.9;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
   .section {
     margin: var(--spacing-md) 0;
@@ -456,49 +689,26 @@
     padding: var(--spacing-md);
   }
 
-  .summaryGrid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-md);
-    max-width: none;
-  }
-
   .summaryItem {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--spacing-md) 0;
-    border-bottom: 1px solid rgba(209, 213, 219, 0.2);
+    padding: var(--spacing-sm) var(--spacing-md);
   }
 
   .summaryLabel {
-    text-align: left !important;
-    justify-content: flex-start !important;
-    flex: 1;
     font-size: var(--font-size-sm);
-    padding-left: var(--spacing-sm);
   }
 
   .summaryValue {
-    text-align: right;
-    font-weight: var(--font-weight-bold);
     font-size: var(--font-size-base);
-    padding-right: var(--spacing-sm);
   }
 
-  /* Mobile Hero Elements - Still highlighted but scaled */
   .total .summaryLabel,
   .balance .summaryLabel {
-    font-size: var(--font-size-base) !important;
-    padding: var(--spacing-sm) !important;
-    background: none;
-    border: none;
+    font-size: var(--font-size-base);
   }
 
   .total .summaryValue,
   .balance .summaryValue {
-    font-size: var(--font-size-lg) !important;
-    padding: var(--spacing-sm) !important;
-    background: rgba(0, 0, 0, 0.03);
+    font-size: var(--font-size-lg);
   }
 
   .overpaymentNotice,
@@ -508,29 +718,32 @@
     padding: var(--spacing-md);
   }
 
-  .overpaymentNotice i,
-  .dueAmountNotice i {
-    font-size: var(--font-size-lg);
-  }
-
   .metricsRow {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     gap: var(--spacing-sm);
   }
 
   .metricItem {
     flex-direction: row;
     justify-content: space-between;
-    width: 100%;
+    padding: var(--spacing-md);
   }
 
-  .quickActions {
-    flex-direction: column;
+  .metricItem i {
+    font-size: 2rem;
   }
 
-  .actionButton {
-    width: 100%;
-    justify-content: center;
+  .wasteDetailsSection {
+    padding: var(--spacing-sm);
+    margin: var(--spacing-sm) 0;
+  }
+
+  .wasteDetailRow {
+    padding: var(--spacing-sm);
+  }
+
+  .paymentProgress {
+    max-width: 100%;
   }
 }
 
@@ -557,7 +770,7 @@
 
   .total .summaryValue,
   .balance .summaryValue {
-    font-size: var(--font-size-base) !important;
+    font-size: var(--font-size-base);
   }
 
   .headerInline {
@@ -572,28 +785,34 @@
     font-size: var(--font-size-xxs);
     gap: var(--spacing-xs);
   }
+
+  .wasteDetailsSection {
+    padding: var(--spacing-xs);
+  }
+
+  .metricItem {
+    padding: var(--spacing-sm);
+  }
 }
 
-/* ==========================================================================
-   Dark Mode Support - Consistent with Global
-   ========================================================================== */
+/* Dark Mode Support */
 .dark .section {
-  background: var(--surface);
-  box-shadow: 0 4px 8px var(--shadow);
+  background: var(--surface-dark);
+  box-shadow: var(--shadow-md);
 }
 
 .dark .summaryContent {
-  background: var(--background);
-  border-color: rgba(75, 85, 99, 0.3);
+  background: var(--background-dark);
+  border-color: var(--border-dark);
 }
 
 .dark .summaryGrid {
-  background: var(--surface);
+  background: var(--surface-dark);
 }
 
 .dark .emptyState {
-  background: var(--surface);
-  border-color: var(--text-light);
+  background: var(--surface-dark);
+  border-color: var(--border-dark);
 }
 
 .dark .helpMessage i {
@@ -602,18 +821,28 @@
 
 .dark .overpaymentNotice,
 .dark .dueAmountNotice {
-  background: var(--surface);
-}
-
-.dark .progressBar {
-  background: var(--text-light);
+  background: var(--surface-dark);
 }
 
 .dark .metricsRow {
-  background: var(--surface);
-  border-color: rgba(75, 85, 99, 0.3);
+  background: var(--surface-dark);
+  border-color: var(--border-dark);
+}
+
+.dark .wasteDetailsSection {
+  background: var(--surface-dark);
+  border-color: var(--border-dark);
 }
 
 .dark .headerInline {
   color: var(--surface);
+}
+
+.dark .metricItem {
+  background: var(--surface-dark);
+  border-color: var(--border-dark);
+}
+
+.dark .wasteDetailRow {
+  background: var(--surface-dark);
 }

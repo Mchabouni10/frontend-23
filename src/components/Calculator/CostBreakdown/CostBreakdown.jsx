@@ -38,11 +38,22 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
   const [showLaborDetails, setShowLaborDetails] = useState(false);
   const [showMiscDetails, setShowMiscDetails] = useState(false);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+  const [showWasteDetails, setShowWasteDetails] = useState(false);
   const [materialBreakdown, setMaterialBreakdown] = useState([]);
   const [laborBreakdown, setLaborBreakdown] = useState([]);
   const [isProcessingBreakdowns, setIsProcessingBreakdowns] = useState(false);
 
-  // Create Calculator Engine instance - EXACTLY like CostSummary does
+  // Calculate waste entries total
+  const wasteEntriesTotal = useMemo(() => {
+    const wasteEntries = settings.wasteEntries || [];
+    return wasteEntries.reduce((total, entry) => {
+      const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+      const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+      return total + (surfaceCost * wasteFactor);
+    }, 0);
+  }, [settings.wasteEntries]);
+
+  // Create Calculator Engine instance
   const calculatorEngine = useMemo(() => {
     try {
       if (!getMeasurementType || !isValidSubtype || !getWorkTypeDetails) {
@@ -71,6 +82,8 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     
     if (!calculatorEngine) {
       console.warn('No calculator engine available');
+      const errorMessage = 'Calculator engine not available';
+      addError(errorMessage); // Use addError here
       return {
         totals: { 
           total: '0.00', 
@@ -84,7 +97,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
           transportationFee: '0.00',
           miscFeesTotal: '0.00',
           subtotal: '0.00',
-          errors: ['Calculator engine not available'] 
+          errors: [errorMessage] 
         },
         payments: { 
           totalPaid: '0.00', 
@@ -92,7 +105,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
           overduePayments: '0.00',
           deposit: '0.00',
           summary: { paidPayments: 0, totalPayments: 0, overduePayments: 0 },
-          errors: ['Calculator engine not available'] 
+          errors: [errorMessage] 
         },
         categoryBreakdowns: []
       };
@@ -119,6 +132,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     } catch (err) {
       console.error('Calculation error:', err);
       const errorMessage = err?.message || String(err) || 'Calculation error';
+      addError(errorMessage); // Use addError here
       return {
         totals: { 
           total: '0.00', 
@@ -145,7 +159,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         categoryBreakdowns: []
       };
     }
-  }, [calculatorEngine]); // <-- CORRECTED DEPENDENCY ARRAY
+  }, [calculatorEngine, categories, addError]); // Added categories and addError to dependencies
 
   // Process detailed breakdowns
   useEffect(() => {
@@ -162,7 +176,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         const materialItems = [];
         const laborItems = [];
 
-        // Process each category and item directly from context
         categories.forEach((category) => {
           (category.workItems || []).forEach((item) => {
             try {
@@ -201,6 +214,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
               }
             } catch (error) {
               console.error('Error processing item for breakdown:', error);
+              addError(`Error processing item ${item.name}: ${error.message}`); // Use addError here
             }
           });
         });
@@ -209,6 +223,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         setLaborBreakdown(laborItems);
       } catch (error) {
         console.error('Error processing breakdowns:', error);
+        addError(`Error processing breakdowns: ${error.message}`); // Use addError here
         setMaterialBreakdown([]);
         setLaborBreakdown([]);
       } finally {
@@ -217,7 +232,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     };
 
     processBreakdowns();
-  }, [categories, calculatorEngine]);
+  }, [categories, calculatorEngine, addError]);
 
   // Format currency
   const formatCurrency = (value) => {
@@ -241,6 +256,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
   }
 
   const hasData = categories.some(cat => cat.workItems?.length > 0);
+  const wasteEntries = settings.wasteEntries || [];
 
   return (
     <div className={styles.costBreakdown}>
@@ -420,10 +436,55 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
               <td>Base Subtotal</td>
               <td>{formatCurrency(calculations.totals.subtotal)}</td>
             </tr>
-            <tr>
-              <td>Waste Cost ({((settings?.wasteFactor || 0) * 100).toFixed(1)}%)</td>
-              <td>{formatCurrency(calculations.totals.wasteCost)}</td>
-            </tr>
+            
+            {/* Waste Entries Section - UPDATED */}
+            {wasteEntries.length > 0 && (
+              <tr className={styles.detailRow}>
+                <td>
+                  Waste Factor by Surface
+                  <button
+                    className={styles.toggleButton}
+                    onClick={() => setShowWasteDetails(!showWasteDetails)}
+                  >
+                    {showWasteDetails ? 'Hide' : 'Show'} Details
+                  </button>
+                </td>
+                <td>
+                  <span className={styles.totalValue}>{formatCurrency(wasteEntriesTotal)}</span>
+                  {showWasteDetails && (
+                    <div className={styles.detailBreakdown}>
+                      <table className={styles.innerTable}>
+                        <thead>
+                          <tr>
+                            <th>Surface</th>
+                            <th>Material Cost</th>
+                            <th>Waste %</th>
+                            <th>Waste Cost</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {wasteEntries.map((entry, index) => {
+                            const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+                            const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+                            const wasteCost = surfaceCost * wasteFactor;
+                            
+                            return (
+                              <tr key={index}>
+                                <td>{entry.surfaceName || `Surface ${index + 1}`}</td>
+                                <td>{formatCurrency(surfaceCost)}</td>
+                                <td>{(wasteFactor * 100).toFixed(0)}%</td>
+                                <td>{formatCurrency(wasteCost)}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            )}
+            
             <tr>
               <td>Tax ({((settings?.taxRate || 0) * 100).toFixed(1)}%)</td>
               <td>{formatCurrency(calculations.totals.taxAmount)}</td>

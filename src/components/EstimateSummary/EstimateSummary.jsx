@@ -86,6 +86,7 @@ export default function EstimateSummary() {
           taxRate: 0,
           transportationFee: 0,
           wasteFactor: 0,
+          wasteEntries: [],
           miscFees: [],
           deposit: 0,
           depositDate: '',
@@ -104,6 +105,16 @@ export default function EstimateSummary() {
 
     loadProject();
   }, [id, navigate]);
+
+  // Calculate waste entries total
+  const wasteEntriesTotal = useMemo(() => {
+    const wasteEntries = settings?.wasteEntries || [];
+    return wasteEntries.reduce((total, entry) => {
+      const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+      const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+      return total + (surfaceCost * wasteFactor);
+    }, 0);
+  }, [settings?.wasteEntries]);
 
   const calculatorEngine = useMemo(() => {
     if (!Array.isArray(categories) || categories.length === 0 || !settings) {
@@ -263,7 +274,6 @@ export default function EstimateSummary() {
   const laborDiscount = parseFloat(totals.laborDiscount) || 0;
   const preDiscountLaborCost = parseFloat(totals.laborCostBeforeDiscount) || 0;
   const baseSubtotal = parseFloat(totals.subtotal) || 0;
-  const wasteCost = parseFloat(totals.wasteCost) || 0;
   const taxAmount = parseFloat(totals.taxAmount) || 0;
   const markupAmount = parseFloat(totals.markupAmount) || 0;
   const transportationFee = parseFloat(totals.transportationFee) || 0;
@@ -273,6 +283,8 @@ export default function EstimateSummary() {
   const adjustedGrandTotal = Math.max(0, grandTotal - depositAmount);
   const remainingBalance = Math.max(0, adjustedGrandTotal - paymentDetails.totalPaid);
   const overpayment = paymentDetails.totalPaid > adjustedGrandTotal ? paymentDetails.totalPaid - adjustedGrandTotal : 0;
+
+  const wasteEntries = settings?.wasteEntries || [];
 
   const handlePrint = async () => {
     setIsPrinting(true);
@@ -588,14 +600,31 @@ export default function EstimateSummary() {
                     <td className={styles.calculationLabel}><strong>Base Subtotal</strong></td>
                     <td className={styles.calculationValue}><strong>{formatCurrency(baseSubtotal)}</strong></td>
                   </tr>
-                  {wasteCost > 0 && (
-                    <tr className={styles.calculationRow}>
-                      <td className={styles.calculationLabel}>
-                        Waste Factor ({((settings?.wasteFactor || 0) * 100).toFixed(1)}%)
-                      </td>
-                      <td className={styles.calculationValue}>{formatCurrency(wasteCost)}</td>
-                    </tr>
+                  
+                  {/* Waste Entries Section - UPDATED */}
+                  {wasteEntries.length > 0 && (
+                    <>
+                      <tr className={styles.calculationRow}>
+                        <td className={styles.calculationLabel}>Waste Factor by Surface:</td>
+                        <td className={styles.calculationValue}>{formatCurrency(wasteEntriesTotal)}</td>
+                      </tr>
+                      {wasteEntries.map((entry, index) => {
+                        const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+                        const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+                        const wasteCost = surfaceCost * wasteFactor;
+                        
+                        return (
+                          <tr key={index} className={styles.calculationSubRow}>
+                            <td className={styles.calculationSubLabel}>
+                              • {entry.surfaceName} (${surfaceCost.toFixed(2)} × {(wasteFactor * 100).toFixed(0)}%)
+                            </td>
+                            <td className={styles.calculationSubValue}>{formatCurrency(wasteCost)}</td>
+                          </tr>
+                        );
+                      })}
+                    </>
                   )}
+                  
                   {taxAmount > 0 && (
                     <tr className={styles.calculationRow}>
                       <td className={styles.calculationLabel}>

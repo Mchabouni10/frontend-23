@@ -1,5 +1,5 @@
 // src/components/Calculator/Category/CostSummary.jsx
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useCategories } from "../../../context/CategoriesContext";
 import { useSettings } from "../../../context/SettingsContext";
 import { useWorkType } from "../../../context/WorkTypeContext";
@@ -14,18 +14,6 @@ const errorToString = (error) => {
     return error.message || error.toString() || "Unknown error";
   }
   return String(error || "Unknown error");
-};
-
-// Helper to format currency
-const formatCurrency = (value) => {
-  const num = parseFloat(value) || 0;
-  return num.toFixed(2);
-};
-
-// Helper to format percentage
-const formatPercentage = (value) => {
-  const num = parseFloat(value) || 0;
-  return (num * 100).toFixed(1);
 };
 
 // Helper to format number with commas
@@ -70,7 +58,17 @@ export default function CostSummary() {
 
   const [isExpanded, setIsExpanded] = useState(true);
   const [calculationErrors, setCalculationErrors] = useState([]);
-  const [lastCalculationTime, setLastCalculationTime] = useState(null);
+  const [showWasteDetails, setShowWasteDetails] = useState(false);
+
+  // Calculate waste entries total
+  const wasteEntriesTotal = useMemo(() => {
+    const wasteEntries = settings.wasteEntries || [];
+    return wasteEntries.reduce((total, entry) => {
+      const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+      const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+      return total + (surfaceCost * wasteFactor);
+    }, 0);
+  }, [settings.wasteEntries]);
 
   // Create Calculator Engine instance
   const calculatorEngine = useMemo(() => {
@@ -137,11 +135,8 @@ export default function CostSummary() {
     }
 
     try {
-      const startTime = performance.now();
       const totals = calculatorEngine.calculateTotals();
       const payments = calculatorEngine.calculatePaymentDetails();
-      const endTime = performance.now();
-      setLastCalculationTime(endTime - startTime);
 
       return { totals, payments };
     } catch (err) {
@@ -190,6 +185,7 @@ export default function CostSummary() {
     const tax = parseFloat(calculations.totals.taxAmount || 0);
     const markup = parseFloat(calculations.totals.markupAmount || 0);
     const misc = parseFloat(calculations.totals.miscFeesTotal || 0);
+    const transportation = parseFloat(calculations.totals.transportationFee || 0);
 
     // Calculate discount percentage and amount
     const discountAmount = laborBeforeDiscount - labor;
@@ -216,12 +212,14 @@ export default function CostSummary() {
       discountAmount,
       discountPercentage,
       waste,
+      wasteEntries: wasteEntriesTotal,
       tax,
       markup,
       misc,
+      transportation,
       grandTotal: total,
     };
-  }, [calculations]);
+  }, [calculations, wasteEntriesTotal]);
 
   // Category stats for header innovation
   const categoryStats = useMemo(() => {
@@ -286,6 +284,7 @@ export default function CostSummary() {
   }
 
   const depositPayment = settings.payments?.find((p) => p.method === "Deposit");
+  const wasteEntries = settings.wasteEntries || [];
 
   return (
     <div className={styles.section}>
@@ -342,11 +341,11 @@ export default function CostSummary() {
               <span className={styles.metricValue}>
                 $
                 {formatNumber(
-                  parseFloat(calculations.totals.wasteCost) +
-                    parseFloat(calculations.totals.taxAmount) +
-                    parseFloat(calculations.totals.markupAmount) +
-                    parseFloat(calculations.totals.miscFeesTotal) +
-                    parseFloat(settings.transportationFee || 0)
+                  derivedValues.wasteEntries +
+                    derivedValues.tax +
+                    derivedValues.markup +
+                    derivedValues.misc +
+                    derivedValues.transportation
                 )}
               </span>
               <small>Adjustments</small>
@@ -383,7 +382,7 @@ export default function CostSummary() {
 
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>
-                <i className="fas fa-percentage" /> Labor Discount ({formatPercentage(derivedValues.discountPercentage)}%):
+                <i className="fas fa-percentage" /> Labor Discount ({((derivedValues.discountPercentage || 0) * 100).toFixed(1)}%):
               </span>
               <span className={styles.summaryValue}>
                 -${formatNumber(derivedValues.discountAmount)}
@@ -408,15 +407,47 @@ export default function CostSummary() {
               </span>
             </div>
 
-            {parseFloat(calculations.totals.wasteCost || 0) > 0 && (
+            {/* Waste Entries Section - NEW */}
+            {wasteEntries.length > 0 && (
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>
-                  <i className="fas fa-recycle" /> Waste Factor (
-                  {formatPercentage(settings.wasteFactor || 0)}%):
+                  <i className="fas fa-recycle" /> Waste Factor by Surface:
+                  <button
+                    className={styles.detailToggle}
+                    onClick={() => setShowWasteDetails(!showWasteDetails)}
+                    title={showWasteDetails ? "Hide Details" : "Show Details"}
+                  >
+                    {showWasteDetails ? "Hide" : "Show"} Details
+                  </button>
                 </span>
                 <span className={styles.summaryValue}>
-                  ${formatNumber(calculations.totals.wasteCost)}
+                  ${formatNumber(wasteEntriesTotal)}
                 </span>
+              </div>
+            )}
+
+            {/* Waste Details Breakdown */}
+            {showWasteDetails && wasteEntries.length > 0 && (
+              <div className={styles.wasteDetailsSection}>
+                {wasteEntries.map((entry, index) => {
+                  const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+                  const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+                  const wasteCost = surfaceCost * wasteFactor;
+                  
+                  return (
+                    <div key={index} className={styles.wasteDetailRow}>
+                      <span className={styles.wasteDetailLabel}>
+                        <i className="fas fa-tag" /> {entry.surfaceName}
+                        <small>
+                          (${formatNumber(surfaceCost)} × {(wasteFactor * 100).toFixed(0)}%)
+                        </small>
+                      </span>
+                      <span className={styles.wasteDetailValue}>
+                        ${formatNumber(wasteCost)}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -435,7 +466,7 @@ export default function CostSummary() {
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>
                   <i className="fas fa-chart-line" /> Markup (
-                  {formatPercentage(settings.markup || 0)}%):
+                  {formatNumber((settings.markup || 0) * 100)}%):
                 </span>
                 <span className={styles.summaryValue}>
                   ${formatNumber(calculations.totals.markupAmount)}
@@ -447,7 +478,7 @@ export default function CostSummary() {
               <div className={styles.summaryItem}>
                 <span className={styles.summaryLabel}>
                   <i className="fas fa-percentage" /> Tax (
-                  {formatPercentage(settings.taxRate || 0)}%):
+                  {formatNumber((settings.taxRate || 0) * 100)}%):
                 </span>
                 <span className={styles.summaryValue}>
                   ${formatNumber(calculations.totals.taxAmount)}
@@ -573,8 +604,6 @@ export default function CostSummary() {
               </div>
             </div>
           )}
-
-      
         </div>
       )}
     </div>
