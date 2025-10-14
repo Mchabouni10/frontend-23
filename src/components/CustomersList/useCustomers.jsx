@@ -47,7 +47,7 @@ export const useCustomers = ({ viewMode = 'table' } = {}) => {
         cache.clear();
       }
     };
-  }, []);
+  }, []); // No dependencies needed as this is only for unmount cleanup
 
   /**
    * Generate unique project identifier

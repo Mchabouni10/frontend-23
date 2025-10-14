@@ -10,7 +10,6 @@ import {
   faDollarSign,
   faPercentage,
   faArrowTrendUp,  // Changed from faTrendUp
-  faCalendarAlt,
   faEye,
   faEyeSlash,
   faTimes,

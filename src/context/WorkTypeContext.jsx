@@ -9,13 +9,9 @@ import {
   isCategoryValid 
 } from '../components/Calculator/data/workTypes';
 
-// FIXED: Import from centralized constants file
+// FIXED: Import only what we actually use
 import { 
   MEASUREMENT_TYPES,
-  MEASUREMENT_TYPE_LABELS,
-  MEASUREMENT_TYPE_UNITS,
-  MEASUREMENT_TYPE_ICONS,
-  normalizeMeasurementType,
   isValidMeasurementType as validateMeasurementType,
   getMeasurementTypeLabel as getTypeLabel,
   getMeasurementTypeUnit as getTypeUnit,

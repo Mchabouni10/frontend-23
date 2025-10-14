@@ -14,7 +14,7 @@ import logoImage from '../../assets/CompanyLogo.png';
 export default function EstimateSummary() {
   const componentRef = useRef(null);
   const [isPrinting, setIsPrinting] = useState(false);
-  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  // REMOVED: setIsSendingEmail is not used
   const [customer, setCustomer] = useState(null);
   const [categories, setCategories] = useState([]);
   const [settings, setSettings] = useState(null);
@@ -274,7 +274,7 @@ export default function EstimateSummary() {
   const baseMaterialCost = parseFloat(totals.materialCost) || 0;
   const baseLaborCost = parseFloat(totals.laborCost) || 0;
   const laborDiscount = parseFloat(totals.laborDiscount) || 0;
-  const preDiscountLaborCost = parseFloat(totals.laborCostBeforeDiscount) || 0;
+  // REMOVED: preDiscountLaborCost is not used
   const baseSubtotal = parseFloat(totals.subtotal) || 0;
   const taxAmount = parseFloat(totals.taxAmount) || 0;
   const markupAmount = parseFloat(totals.markupAmount) || 0;
@@ -353,7 +353,7 @@ export default function EstimateSummary() {
           <button
             className={styles.actionButton}
             onClick={() => navigate('/home/customers')}
-            disabled={isPrinting || isSendingEmail}
+            disabled={isPrinting}
           >
             <FontAwesomeIcon icon={faArrowLeft} className={styles.icon} />
             Back to Customers
@@ -361,7 +361,7 @@ export default function EstimateSummary() {
           <button
             className={styles.actionButton}
             onClick={handlePrint}
-            disabled={isPrinting || isSendingEmail}
+            disabled={isPrinting}
           >
             <FontAwesomeIcon icon={faPrint} className={styles.icon} />
             {isPrinting ? 'Generating PDF...' : 'Print Estimate'}
