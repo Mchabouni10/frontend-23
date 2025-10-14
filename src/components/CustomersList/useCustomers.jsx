@@ -37,12 +37,13 @@ export const useCustomers = ({ viewMode = 'table' } = {}) => {
 
   // Cleanup on unmount
   useEffect(() => {
+    // Capture the ref values at effect creation
+    const abortController = abortControllerRef.current;
+    const cache = calculationCacheRef.current;
     return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      if (abortController) {
+        abortController.abort();
       }
-      // Create a local reference to avoid the warning
-      const cache = calculationCacheRef.current;
       if (cache) {
         cache.clear();
       }

@@ -1,4 +1,3 @@
-// src/components/Calculator/PaymentTracking/PaymentTracking.jsx
 import { useState, useMemo, useEffect } from 'react';
 import { useCategories } from '../../../context/CategoriesContext';
 import { useSettings } from '../../../context/SettingsContext';
@@ -38,9 +37,7 @@ export default function PaymentTracking({ disabled = false }) {
     ...settings,
   }), [settings]);
 
-  const categoriesKey = useMemo(() => JSON.stringify(categories), [categories]);
-  const settingsKey = useMemo(() => JSON.stringify(settings), [settings]);
-
+  // FIX: useMemo dependencies to fix ESLint warning
   const calculatorEngine = useMemo(() => {
     if (!getMeasurementType || !isValidSubtype || !getWorkTypeDetails) {
       return null;
@@ -54,7 +51,7 @@ export default function PaymentTracking({ disabled = false }) {
       strictValidation: false,
       timeoutMs: 30000,
     });
-  }, [categoriesKey, settingsKey, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
+  }, [categories, settings, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
 
   const calculations = useMemo(() => {
     if (!calculatorEngine) {

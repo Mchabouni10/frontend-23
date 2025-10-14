@@ -1,6 +1,6 @@
 //src/components/CustomerProjects/CustomerProjects.jsx
 import React, { useState, useMemo, useEffect } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
@@ -26,7 +26,7 @@ import styles from "./CustomerProjects.module.css";
 export default function CustomerProjects() {
   const location = useLocation();
   const navigate = useNavigate();
-  const params = useParams();
+  // Removed unused: const params = useParams();
   
   const [projects, setProjects] = useState(location.state?.projects || []);
   const [expandedProject, setExpandedProject] = useState(null);
@@ -59,7 +59,6 @@ export default function CustomerProjects() {
   // Refresh projects when component mounts or when returning from edit
   useEffect(() => {
     const customerPhone = location.state?.projects?.[0]?.customerInfo?.phone;
-    
     // If we have a phone number, fetch fresh data
     if (customerPhone) {
       fetchProjects(customerPhone);
@@ -67,7 +66,7 @@ export default function CustomerProjects() {
       // Fallback to location state if available
       setProjects(location.state.projects);
     }
-  }, [location.state?.refreshKey]); // Refresh when a key changes
+  }, [location.state?.refreshKey, location.state?.projects]); // Fixed: added missing dependency
 
   const handleBack = () => navigate("/home/customers");
   

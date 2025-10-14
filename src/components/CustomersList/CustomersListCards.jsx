@@ -240,7 +240,6 @@ export default function CustomersListCards({
             <ul 
               id="notification-list" 
               className={styles.notificationList}
-              role="list"
             >
               {notifications.map((note, index) => (
                 <li
@@ -252,7 +251,7 @@ export default function CustomersListCards({
                       ? styles.warning
                       : styles.info
                   }`}
-                  role="listitem"
+                  // role="listitem" // <-- Removed redundant role
                 >
                   <FontAwesomeIcon
                     icon={
@@ -545,7 +544,7 @@ export default function CustomersListCards({
             onClick={(e) => e.stopPropagation()}
           >
             <h3 id="error-modal-title">Calculation Errors</h3>
-            <ul role="list">
+            <ul>
               {selectedErrors.map((error, index) => (
                 <li key={`error-${index}`}>{error.message}</li>
               ))}

@@ -1,4 +1,3 @@
-// src/components/Calculator/CostBreakdown/CostBreakdown.jsx
 import { useState, useMemo, useEffect } from 'react';
 import { useCategories } from '../../../context/CategoriesContext';
 import { useSettings } from '../../../context/SettingsContext';
@@ -73,6 +72,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     }
   }, [categories, settings, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
 
+  // FIX: Remove 'categories' from dependency array
   const calculations = useMemo(() => {
     if (!calculatorEngine) {
       const errorMessage = 'Calculator engine not available';
@@ -143,7 +143,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         categoryBreakdowns: []
       };
     }
-  }, [calculatorEngine, categories, addError]);
+  }, [calculatorEngine, addError]);
 
   useEffect(() => {
     const processBreakdowns = async () => {
