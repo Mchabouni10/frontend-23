@@ -163,12 +163,11 @@ function WorkItemContent({
     const updatedItem = {
       ...workItem,
       categoryKey: normalizedCategoryKey,
-      // CRITICAL FIX: Don't default to 0 for materialCost and laborCost
-      // Keep the original values unless they're being updated
       type: workItem.type || '',
       subtype: workItem.subtype || '',
       measurementType: workItem.measurementType || '',
       surfaces: Array.isArray(workItem.surfaces) ? workItem.surfaces : [],
+      description: workItem.description || '',
     };
 
     if (field === 'type') {
@@ -185,8 +184,9 @@ function WorkItemContent({
     } else if (field === 'surfaces') {
       updatedItem.surfaces = value;
     } else if (field === 'materialCost' || field === 'laborCost') {
-      // Ensure costs are stored as numbers
       updatedItem[field] = typeof value === 'number' ? value : parseFloat(value) || 0;
+    } else if (field === 'description') {
+      updatedItem.description = value;
     } else {
       updatedItem[field] = value;
     }
@@ -231,6 +231,7 @@ function WorkItemContent({
     measurementType: workItem.measurementType || '',
     name: derivedName,
     surfaces: Array.isArray(workItem.surfaces) ? workItem.surfaces : [],
+    description: workItem.description || '',
   }), [workItem, normalizedCategoryKey, derivedName]);
 
   const calculationResults = useMemo(() => {
@@ -424,29 +425,49 @@ function WorkItemContent({
           )}
 
           {sanitizedWorkItem.type && sanitizedWorkItem.measurementType && (
-            <div className={styles.costInputsContainer}>
-              <h4><i className="fas fa-dollar-sign" /> Cost Per Unit</h4>
-              <div className={styles.costInputs}>
-                <CostInput 
-                  label="Material Cost" 
-                  value={workItem.materialCost}
-                  onChange={v => updateWorkItem('materialCost', v)} 
-                  disabled={disabled} 
-                  options={costOptions} 
-                  field="materialCost" 
-                  measurementType={sanitizedWorkItem.measurementType} 
+            <>
+              <div className={styles.field}>
+                <label htmlFor={`description-${catIndex}-${workIndex}`}>
+                  <i className="fas fa-file-alt" /> Work Description
+                </label>
+                <textarea
+                  id={`description-${catIndex}-${workIndex}`}
+                  className={styles.textarea}
+                  value={workItem.description || ''}
+                  onChange={e => updateWorkItem('description', e.target.value)}
+                  disabled={disabled}
+                  placeholder="Describe the specific work to be done..."
+                  rows="3"
                 />
-                <CostInput 
-                  label="Labor Cost" 
-                  value={workItem.laborCost}
-                  onChange={v => updateWorkItem('laborCost', v)} 
-                  disabled={disabled} 
-                  options={costOptions} 
-                  field="laborCost" 
-                  measurementType={sanitizedWorkItem.measurementType} 
-                />
+                <small className={styles.helpText}>
+                  Add details about the specific work you'll be performing
+                </small>
               </div>
-            </div>
+
+              <div className={styles.costInputsContainer}>
+                <h4><i className="fas fa-dollar-sign" /> Cost Per Unit</h4>
+                <div className={styles.costInputs}>
+                  <CostInput 
+                    label="Material Cost" 
+                    value={workItem.materialCost}
+                    onChange={v => updateWorkItem('materialCost', v)} 
+                    disabled={disabled} 
+                    options={costOptions} 
+                    field="materialCost" 
+                    measurementType={sanitizedWorkItem.measurementType} 
+                  />
+                  <CostInput 
+                    label="Labor Cost" 
+                    value={workItem.laborCost}
+                    onChange={v => updateWorkItem('laborCost', v)} 
+                    disabled={disabled} 
+                    options={costOptions} 
+                    field="laborCost" 
+                    measurementType={sanitizedWorkItem.measurementType} 
+                  />
+                </div>
+              </div>
+            </>
           )}
 
          {calculationResults.canCalculate && showCostBreakdown && (

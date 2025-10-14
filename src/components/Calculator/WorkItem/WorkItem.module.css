@@ -227,7 +227,8 @@
    =========================== */
 
 .select,
-.input {
+.input,
+.textarea {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);
   border: 1px solid rgba(var(--border-rgb, 209, 213, 219), 0.4);
@@ -241,19 +242,27 @@
   line-height: 1.5;
 }
 
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
 .select:hover,
-.input:hover {
+.input:hover,
+.textarea:hover {
   border-color: rgba(var(--primary-rgb, 59, 130, 246), 0.5);
 }
 
 .select:focus,
-.input:focus {
+.input:focus,
+.textarea:focus {
   border-color: var(--primary);
   box-shadow: 0 0 0 3px rgba(var(--primary-rgb, 59, 130, 246), 0.1);
 }
 
 .select:disabled,
-.input:disabled {
+.input:disabled,
+.textarea:disabled {
   background: rgba(var(--border-rgb, 209, 213, 219), 0.05);
   border-color: rgba(var(--border-rgb, 209, 213, 219), 0.2);
   color: var(--text-light);
@@ -668,7 +677,8 @@
 @media (prefers-contrast: high) {
   .workItem,
   .select,
-  .input {
+  .input,
+  .textarea {
     border-width: 2px;
     border-color: currentColor;
   }

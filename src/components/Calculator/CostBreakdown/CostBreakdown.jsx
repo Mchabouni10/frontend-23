@@ -8,7 +8,6 @@ import { CalculatorEngine } from '../engine/CalculatorEngine';
 import styles from './CostBreakdown.module.css';
 
 export default function CostBreakdown({ categories: propCategories, settings: propSettings }) {
-  // Try to use context first, fall back to props
   let categories, settings, addError;
   
   try {
@@ -42,8 +41,8 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
   const [materialBreakdown, setMaterialBreakdown] = useState([]);
   const [laborBreakdown, setLaborBreakdown] = useState([]);
   const [isProcessingBreakdowns, setIsProcessingBreakdowns] = useState(false);
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
-  // Calculate waste entries total
   const wasteEntriesTotal = useMemo(() => {
     const wasteEntries = settings.wasteEntries || [];
     return wasteEntries.reduce((total, entry) => {
@@ -53,7 +52,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     }, 0);
   }, [settings.wasteEntries]);
 
-  // Create Calculator Engine instance
   const calculatorEngine = useMemo(() => {
     try {
       if (!getMeasurementType || !isValidSubtype || !getWorkTypeDetails) {
@@ -75,15 +73,10 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     }
   }, [categories, settings, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
 
-  // Calculate required totals using Calculator Engine
   const calculations = useMemo(() => {
-    console.log('Starting calculations with engine:', !!calculatorEngine);
-    console.log('Categories for calculation:', categories);
-    
     if (!calculatorEngine) {
-      console.warn('No calculator engine available');
       const errorMessage = 'Calculator engine not available';
-      addError(errorMessage); // Use addError here
+      addError(errorMessage);
       return {
         totals: { 
           total: '0.00', 
@@ -112,17 +105,9 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     }
 
     try {
-      console.log('Calculating totals...');
       const totals = calculatorEngine.calculateTotals();
-      console.log('Totals result:', totals);
-      
-      console.log('Calculating payments...');
       const payments = calculatorEngine.calculatePaymentDetails();
-      console.log('Payments result:', payments);
-      
-      console.log('Calculating category breakdowns...');
       const categoryBreakdownResult = calculatorEngine.calculateCategoryBreakdowns();
-      console.log('Category breakdowns result:', categoryBreakdownResult);
       
       return { 
         totals, 
@@ -130,9 +115,8 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         categoryBreakdowns: categoryBreakdownResult.breakdowns || []
       };
     } catch (err) {
-      console.error('Calculation error:', err);
       const errorMessage = err?.message || String(err) || 'Calculation error';
-      addError(errorMessage); // Use addError here
+      addError(errorMessage);
       return {
         totals: { 
           total: '0.00', 
@@ -159,9 +143,8 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         categoryBreakdowns: []
       };
     }
-  }, [calculatorEngine, categories, addError]); // Added categories and addError to dependencies
+  }, [calculatorEngine, categories, addError]);
 
-  // Process detailed breakdowns
   useEffect(() => {
     const processBreakdowns = async () => {
       if (!categories || categories.length === 0 || !calculatorEngine) {
@@ -191,6 +174,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                   category: category.name,
                   type: item.type,
                   subtype: item.subtype || '',
+                  description: item.description || '',
                   quantity: units,
                   unitType: unitLabel,
                   costPerUnit: (parseFloat(item.materialCost) || 0).toFixed(4),
@@ -205,6 +189,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                   category: category.name,
                   type: item.type,
                   subtype: item.subtype || '',
+                  description: item.description || '',
                   quantity: units,
                   unitType: unitLabel,
                   costPerUnit: (parseFloat(item.laborCost) || 0).toFixed(4),
@@ -214,7 +199,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
               }
             } catch (error) {
               console.error('Error processing item for breakdown:', error);
-              addError(`Error processing item ${item.name}: ${error.message}`); // Use addError here
+              addError(`Error processing item ${item.name}: ${error.message}`);
             }
           });
         });
@@ -223,7 +208,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         setLaborBreakdown(laborItems);
       } catch (error) {
         console.error('Error processing breakdowns:', error);
-        addError(`Error processing breakdowns: ${error.message}`); // Use addError here
+        addError(`Error processing breakdowns: ${error.message}`);
         setMaterialBreakdown([]);
         setLaborBreakdown([]);
       } finally {
@@ -234,7 +219,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     processBreakdowns();
   }, [categories, calculatorEngine, addError]);
 
-  // Format currency
   const formatCurrency = (value) => {
     const numValue = parseFloat(value) || 0;
     return new Intl.NumberFormat('en-US', { 
@@ -245,7 +229,13 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     }).format(numValue);
   };
 
-  // Error handling
+  const toggleDescription = (index, type) => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [`${type}-${index}`]: !prev[`${type}-${index}`]
+    }));
+  };
+
   if (!categories || !Array.isArray(categories)) {
     return (
       <div className={styles.error}>
@@ -262,7 +252,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     <div className={styles.costBreakdown}>
       <h3 className={styles.sectionTitle}>Comprehensive Cost Analysis</h3>
 
-      {/* Debug Information */}
       <div style={{ marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f0f0f0', fontSize: '0.8rem' }}>
         <strong>Debug Info:</strong> Categories: {categories.length}, 
         Total Items: {categories.reduce((sum, cat) => sum + (cat.workItems?.length || 0), 0)}, 
@@ -277,7 +266,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         </div>
       )}
 
-      {/* Error Display */}
       {(calculations.totals.errors?.length > 0 || calculations.payments.errors?.length > 0) && (
         <div className={styles.errorSection} role="alert">
           <h4>Calculation Issues</h4>
@@ -289,7 +277,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         </div>
       )}
 
-      {/* Category Breakdown Section */}
       {calculations.categoryBreakdowns.length > 0 && (
         <section className={styles.categorySection}>
           <h4 className={styles.subSectionTitle}>Category Breakdown</h4>
@@ -325,7 +312,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         </section>
       )}
 
-      {/* Detailed Cost Calculation Section */}
       <section className={styles.totalSection}>
         <h4 className={styles.subSectionTitle}>Cost Calculation</h4>
         <table className={styles.breakdownTable}>
@@ -353,6 +339,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                             <th>Item</th>
                             <th>Category</th>
                             <th>Type</th>
+                            <th>Description</th>
                             <th>Qty</th>
                             <th>Unit Cost</th>
                             <th>Total</th>
@@ -364,6 +351,24 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                               <td>{item.item}</td>
                               <td>{item.category}</td>
                               <td>{item.type}{item.subtype ? ` - ${item.subtype}` : ''}</td>
+                              <td className={styles.descriptionCell}>
+                                <span 
+                                  className={styles.descriptionText} 
+                                  title={item.description || 'No description'}
+                                >
+                                  {expandedDescriptions[`material-${index}`] || item.description.length <= 50 
+                                    ? item.description || '-' 
+                                    : `${item.description.slice(0, 50)}...`}
+                                </span>
+                                {item.description.length > 50 && (
+                                  <button
+                                    className={styles.toggleDescriptionButton}
+                                    onClick={() => toggleDescription(index, 'material')}
+                                  >
+                                    {expandedDescriptions[`material-${index}`] ? 'Less' : 'More'}
+                                  </button>
+                                )}
+                              </td>
                               <td>{(item.quantity || 0).toFixed(2)} {item.unitType || 'units'}</td>
                               <td>{formatCurrency(item.costPerUnit || 0)}</td>
                               <td>{formatCurrency(item.total || 0)}</td>
@@ -401,6 +406,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                             <th>Item</th>
                             <th>Category</th>
                             <th>Type</th>
+                            <th>Description</th>
                             <th>Qty</th>
                             <th>Unit Cost</th>
                             <th>Total</th>
@@ -412,6 +418,24 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                               <td>{item.item}</td>
                               <td>{item.category}</td>
                               <td>{item.type}{item.subtype ? ` - ${item.subtype}` : ''}</td>
+                              <td className={styles.descriptionCell}>
+                                <span 
+                                  className={styles.descriptionText} 
+                                  title={item.description || 'No description'}
+                                >
+                                  {expandedDescriptions[`labor-${index}`] || item.description.length <= 50 
+                                    ? item.description || '-' 
+                                    : `${item.description.slice(0, 50)}...`}
+                                </span>
+                                {item.description.length > 50 && (
+                                  <button
+                                    className={styles.toggleDescriptionButton}
+                                    onClick={() => toggleDescription(index, 'labor')}
+                                  >
+                                    {expandedDescriptions[`labor-${index}`] ? 'Less' : 'More'}
+                                  </button>
+                                )}
+                              </td>
                               <td>{(item.quantity || 0).toFixed(2)} {item.unitType || 'units'}</td>
                               <td>{formatCurrency(item.costPerUnit || 0)}</td>
                               <td>{formatCurrency(item.total || 0)}</td>
@@ -436,8 +460,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
               <td>Base Subtotal</td>
               <td>{formatCurrency(calculations.totals.subtotal)}</td>
             </tr>
-            
-            {/* Waste Entries Section - UPDATED */}
             {wasteEntries.length > 0 && (
               <tr className={styles.detailRow}>
                 <td>
@@ -484,7 +506,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                 </td>
               </tr>
             )}
-            
             <tr>
               <td>Tax ({((settings?.taxRate || 0) * 100).toFixed(1)}%)</td>
               <td>{formatCurrency(calculations.totals.taxAmount)}</td>
@@ -541,7 +562,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
         </table>
       </section>
 
-      {/* Payment Summary Section */}
       <section className={styles.paymentSection}>
         <h4 className={styles.subSectionTitle}>
           Payment Summary

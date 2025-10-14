@@ -22,7 +22,8 @@ export default function EstimateSummary() {
   const [error, setError] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const [expandedDescriptions, setExpandedDescriptions] = useState({});
+
   const { getMeasurementType, isValidSubtype, getWorkTypeDetails } = useWorkType();
 
   const formatPhoneNumber = (phone) => {
@@ -106,7 +107,6 @@ export default function EstimateSummary() {
     loadProject();
   }, [id, navigate]);
 
-  // Calculate waste entries total
   const wasteEntriesTotal = useMemo(() => {
     const wasteEntries = settings?.wasteEntries || [];
     return wasteEntries.reduce((total, entry) => {
@@ -177,6 +177,7 @@ export default function EstimateSummary() {
               materialItems.push({
                 item: item.name,
                 category: category.name,
+                description: item.description || '',
                 quantity: units,
                 unitType: unitLabel,
                 costPerUnit: parseFloat(item.materialCost) || 0,
@@ -188,6 +189,7 @@ export default function EstimateSummary() {
               laborItems.push({
                 item: item.name,
                 category: category.name,
+                description: item.description || '',
                 quantity: units,
                 unitType: unitLabel,
                 costPerUnit: parseFloat(item.laborCost) || 0,
@@ -286,6 +288,13 @@ export default function EstimateSummary() {
 
   const wasteEntries = settings?.wasteEntries || [];
 
+  const toggleDescription = (index, type) => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [`${type}-${index}`]: !prev[`${type}-${index}`]
+    }));
+  };
+
   const handlePrint = async () => {
     setIsPrinting(true);
     try {
@@ -347,7 +356,7 @@ export default function EstimateSummary() {
             disabled={isPrinting || isSendingEmail}
           >
             <FontAwesomeIcon icon={faArrowLeft} className={styles.icon} />
-            Back
+            Back to Customers
           </button>
           <button
             className={styles.actionButton}
@@ -355,56 +364,50 @@ export default function EstimateSummary() {
             disabled={isPrinting || isSendingEmail}
           >
             <FontAwesomeIcon icon={faPrint} className={styles.icon} />
-            {isPrinting ? 'Printing...' : 'Print'}
-          </button>
-          <button
-            className={styles.actionButton}
-            onClick={() => {
-              setIsSendingEmail(true);
-              setTimeout(() => setIsSendingEmail(false), 1000);
-            }}
-            disabled={isPrinting || isSendingEmail}
-          >
-            <FontAwesomeIcon icon={faEnvelope} className={styles.icon} />
-            {isSendingEmail ? 'Sending...' : 'Send Email'}
+            {isPrinting ? 'Generating PDF...' : 'Print Estimate'}
           </button>
         </div>
+        <p className={styles.printInstructions}>
+          Use your browser's print function for a quick preview or download as PDF
+        </p>
       </div>
-      <div className={styles.container}>
-        <div className={styles.document} ref={componentRef}>
+
+      <div className={styles.container} ref={componentRef}>
+        <div className={styles.document}>
           <header className={styles.documentHeader}>
             <div className={styles.companyHeader}>
               <div className={styles.logoContainer}>
-                <img src={logoImage} alt="Rawdah Remodeling Logo" className={styles.logo} />
+                <img src={logoImage} alt="Company Logo" className={styles.logo} />
               </div>
               <div className={styles.companyInfo}>
                 <h2 className={styles.companyName}>Rawdah Remodeling Company</h2>
                 <div className={styles.contactInfo}>
-                  <p className={styles.address}>Lake in the Hills, IL 60156</p>
-                  <p className={styles.contact}>
-                    <FontAwesomeIcon icon={faPhone} className={styles.contactIcon} />
-                    (224) 817-3264
+                  <p className={styles.address}>
+                    1234 Example St, Suite 567, Chicago, IL 60601
                   </p>
                   <p className={styles.contact}>
-                    <FontAwesomeIcon icon={faEnvelope} className={styles.contactIcon} />
-                    rawdahremodeling@gmail.com
+                    <FontAwesomeIcon icon={faPhone} /> (224) 817-3264
+                  </p>
+                  <p className={styles.contact}>
+                    <FontAwesomeIcon icon={faEnvelope} /> info@rawdahremodeling.com
                   </p>
                 </div>
               </div>
             </div>
             <div className={styles.projectHeader}>
-              <h2 className={styles.projectTitle}>Detailed Project Estimate</h2>
-              <p className={styles.projectNumber}>Project # {id}</p>
+              <h3 className={styles.projectTitle}>{customer.projectName || 'Project Estimate'}</h3>
+              <p className={styles.projectNumber}>Estimate #{id}</p>
               <div className={styles.dateInfo}>
-                <span>Generated: {new Date().toLocaleDateString()}</span>
-                <span>Valid for 30 days</span>
+                <span>Estimate Date: {new Date().toLocaleDateString()}</span>
+                <span className={styles.separator}>|</span>
+                <span>Valid Until: {new Date(new Date().setDate(new Date().getDate() + 30)).toLocaleDateString()}</span>
               </div>
             </div>
           </header>
 
           <section className={styles.customerSection}>
             <div className={styles.sectionHeader}>
-              <h3 className={styles.sectionTitle}>Customer & Project Information</h3>
+              <h3 className={styles.sectionTitle}>Customer Information</h3>
             </div>
             <div className={styles.infoGrid}>
               <div className={styles.infoColumn}>
@@ -412,12 +415,8 @@ export default function EstimateSummary() {
                   <h4 className={styles.infoHeader}>Customer Details</h4>
                   <div className={styles.infoRow}>
                     <span className={styles.label}>Name:</span>
-                    <span className={styles.value}>{customer.firstName} {customer.lastName}</span>
-                  </div>
-                  <div className={styles.infoRow}>
-                    <span className={styles.label}>Address:</span>
                     <span className={styles.value}>
-                      {customer.street}{customer.unit ? ` ${customer.unit}` : ''}, {customer.state} {customer.zipCode}
+                      {customer.firstName} {customer.lastName}
                     </span>
                   </div>
                   <div className={styles.infoRow}>
@@ -434,24 +433,27 @@ export default function EstimateSummary() {
                 <div className={styles.infoGroup}>
                   <h4 className={styles.infoHeader}>Project Details</h4>
                   <div className={styles.infoRow}>
-                    <span className={styles.label}>Project:</span>
-                    <span className={styles.value}>{customer.projectName || 'N/A'}</span>
+                    <span className={styles.label}>Address:</span>
+                    <span className={styles.value}>
+                      {customer.street}
+                      {customer.unit ? `, ${customer.unit}` : ''}, {customer.state} {customer.zipCode}
+                    </span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.label}>Type:</span>
-                    <span className={styles.value}>{customer.type || 'N/A'}</span>
+                    <span className={styles.value}>{customer.type}</span>
                   </div>
                   <div className={styles.infoRow}>
                     <span className={styles.label}>Payment:</span>
-                    <span className={styles.value}>{customer.paymentType || 'N/A'}</span>
+                    <span className={styles.value}>{customer.paymentType}</span>
                   </div>
                   <div className={styles.infoRow}>
-                    <span className={styles.label}>Start Date:</span>
-                    <span className={styles.value}>{customer.startDate || 'N/A'}</span>
+                    <span className={styles.label}>Start:</span>
+                    <span className={styles.value}>{customer.startDate || 'TBD'}</span>
                   </div>
                   <div className={styles.infoRow}>
-                    <span className={styles.label}>Est. Finish:</span>
-                    <span className={styles.value}>{customer.finishDate || 'N/A'}</span>
+                    <span className={styles.label}>Finish:</span>
+                    <span className={styles.value}>{customer.finishDate || 'TBD'}</span>
                   </div>
                 </div>
               </div>
@@ -461,37 +463,37 @@ export default function EstimateSummary() {
           {categoryBreakdowns.length > 0 && (
             <section className={styles.categorySection}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Category Cost Summary</h3>
+                <h3 className={styles.sectionTitle}>Category Summary</h3>
               </div>
               <div className={styles.tableContainer}>
-                <table className={styles.summaryTable} aria-label="Category Cost Summary">
+                <table className={styles.summaryTable} aria-label="Category Summary">
                   <thead>
                     <tr>
-                      <th scope="col" className={styles.tableHeader}>Category</th>
-                      <th scope="col" className={styles.tableHeader}>Items</th>
-                      <th scope="col" className={styles.tableHeader}>Material Cost</th>
-                      <th scope="col" className={styles.tableHeader}>Labor Cost</th>
-                      <th scope="col" className={styles.tableHeader}>Subtotal</th>
+                      <th className={styles.tableHeader}>Category</th>
+                      <th className={styles.tableHeader}>Items</th>
+                      <th className={styles.tableHeader}>Material Cost</th>
+                      <th className={styles.tableHeader}>Labor Cost</th>
+                      <th className={styles.tableHeader}>Subtotal</th>
                     </tr>
                   </thead>
                   <tbody>
                     {categoryBreakdowns.map((category, index) => (
                       <tr key={index} className={styles.tableRow}>
-                        <td className={styles.tableCell}>{category.name || 'N/A'}</td>
-                        <td className={styles.tableCellRight}>{category.itemCount || 0}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(category.materialCost)}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(category.laborCost)}</td>
+                        <td className={styles.tableCell}>{category.name}</td>
+                        <td className={styles.tableCell}>{category.itemCount}</td>
+                        <td className={styles.tableCell}>{formatCurrency(category.materialCost)}</td>
+                        <td className={styles.tableCell}>{formatCurrency(category.laborCost)}</td>
                         <td className={styles.tableCellRight}>{formatCurrency(category.subtotal)}</td>
                       </tr>
                     ))}
                     <tr className={styles.tableTotalRow}>
-                      <td className={styles.tableCell}><strong>TOTAL</strong></td>
-                      <td className={styles.tableCellRight}>
-                        <strong>{categoryBreakdowns.reduce((sum, cat) => sum + (cat.itemCount || 0), 0)}</strong>
+                      <td className={styles.tableCell}>Total</td>
+                      <td className={styles.tableCell}>
+                        {categoryBreakdowns.reduce((sum, cat) => sum + cat.itemCount, 0)}
                       </td>
-                      <td className={styles.tableCellRight}><strong>{formatCurrency(baseMaterialCost)}</strong></td>
-                      <td className={styles.tableCellRight}><strong>{formatCurrency(baseLaborCost)}</strong></td>
-                      <td className={styles.tableCellRight}><strong>{formatCurrency(baseSubtotal)}</strong></td>
+                      <td className={styles.tableCell}>{formatCurrency(baseMaterialCost)}</td>
+                      <td className={styles.tableCell}>{formatCurrency(baseLaborCost)}</td>
+                      <td className={styles.tableCellRight}>{formatCurrency(baseSubtotal)}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -499,88 +501,116 @@ export default function EstimateSummary() {
             </section>
           )}
 
-          {materialBreakdown.length > 0 && (
-            <section className={styles.detailSection}>
-              <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Material Cost Details</h3>
-              </div>
-              <div className={styles.tableContainer}>
-                <table className={styles.detailTable} aria-label="Material Cost Breakdown">
-                  <thead>
-                    <tr>
-                      <th scope="col" className={styles.tableHeader}>Category</th>
-                      <th scope="col" className={styles.tableHeader}>Item</th>
-                      <th scope="col" className={styles.tableHeader}>Qty</th>
-                      <th scope="col" className={styles.tableHeader}>Unit</th>
-                      <th scope="col" className={styles.tableHeader}>Unit Cost</th>
-                      <th scope="col" className={styles.tableHeader}>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {materialBreakdown.map((item, index) => (
-                      <tr key={index} className={styles.tableRow}>
-                        <td className={styles.tableCell}>{item.category || 'N/A'}</td>
-                        <td className={styles.tableCell}>{item.item || 'Unnamed Item'}</td>
-                        <td className={styles.tableCellRight}>{(item.quantity || 0).toFixed(2)}</td>
-                        <td className={styles.tableCell}>{item.unitType || 'units'}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(item.costPerUnit)}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
+          <section className={styles.detailSection}>
+            <div className={styles.sectionHeader}>
+              <h3 className={styles.sectionTitle}>Detailed Cost Breakdown</h3>
+            </div>
+            <div className={styles.tableContainer}>
+              {materialBreakdown.length > 0 && (
+                <>
+                  <h4 className={styles.sectionTitle}>Material Costs</h4>
+                  <table className={styles.detailTable} aria-label="Material Cost Breakdown">
+                    <thead>
+                      <tr>
+                        <th className={styles.tableHeader}>Item</th>
+                        <th className={styles.tableHeader}>Category</th>
+                        <th className={styles.tableHeader}>Description</th>
+                        <th className={styles.tableHeader}>Quantity</th>
+                        <th className={styles.tableHeader}>Unit Cost</th>
+                        <th className={styles.tableHeader}>Total</th>
                       </tr>
-                    ))}
-                    <tr className={styles.tableTotalRow}>
-                      <td colSpan={5} className={styles.tableCell}><strong>TOTAL MATERIAL COST</strong></td>
-                      <td className={styles.tableCellRight}><strong>{formatCurrency(baseMaterialCost)}</strong></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
-
-          {laborBreakdown.length > 0 && (
-            <section className={styles.detailSection}>
-              <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Labor Cost Details</h3>
-              </div>
-              <div className={styles.tableContainer}>
-                <table className={styles.detailTable} aria-label="Labor Cost Breakdown">
-                  <thead>
-                    <tr>
-                      <th scope="col" className={styles.tableHeader}>Category</th>
-                      <th scope="col" className={styles.tableHeader}>Item</th>
-                      <th scope="col" className={styles.tableHeader}>Qty</th>
-                      <th scope="col" className={styles.tableHeader}>Unit</th>
-                      <th scope="col" className={styles.tableHeader}>Unit Cost</th>
-                      <th scope="col" className={styles.tableHeader}>Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {laborBreakdown.map((item, index) => (
-                      <tr key={index} className={styles.tableRow}>
-                        <td className={styles.tableCell}>{item.category || 'N/A'}</td>
-                        <td className={styles.tableCell}>{item.item || 'Unnamed Item'}</td>
-                        <td className={styles.tableCellRight}>{(item.quantity || 0).toFixed(2)}</td>
-                        <td className={styles.tableCell}>{item.unitType || 'units'}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(item.costPerUnit)}</td>
-                        <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
+                    </thead>
+                    <tbody>
+                      {materialBreakdown.map((item, index) => (
+                        <tr key={index} className={styles.tableRow}>
+                          <td className={styles.tableCell}>{item.item}</td>
+                          <td className={styles.tableCell}>{item.category}</td>
+                          <td className={styles.descriptionCell}>
+                            <span 
+                              className={styles.descriptionText} 
+                              title={item.description || 'No description'}
+                            >
+                              {expandedDescriptions[`material-${index}`] || item.description.length <= 50 
+                                ? item.description || '-' 
+                                : `${item.description.slice(0, 50)}...`}
+                            </span>
+                            {item.description.length > 50 && (
+                              <button
+                                className={styles.toggleDescriptionButton}
+                                onClick={() => toggleDescription(index, 'material')}
+                              >
+                                {expandedDescriptions[`material-${index}`] ? 'Less' : 'More'}
+                              </button>
+                            )}
+                          </td>
+                          <td className={styles.tableCell}>
+                            {(item.quantity || 0).toFixed(2)} {item.unitType}
+                          </td>
+                          <td className={styles.tableCell}>{formatCurrency(item.costPerUnit)}</td>
+                          <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+              {laborBreakdown.length > 0 && (
+                <>
+                  <h4 className={styles.sectionTitle}>Labor Costs</h4>
+                  <table className={styles.detailTable} aria-label="Labor Cost Breakdown">
+                    <thead>
+                      <tr>
+                        <th className={styles.tableHeader}>Item</th>
+                        <th className={styles.tableHeader}>Category</th>
+                        <th className={styles.tableHeader}>Description</th>
+                        <th className={styles.tableHeader}>Quantity</th>
+                        <th className={styles.tableHeader}>Unit Cost</th>
+                        <th className={styles.tableHeader}>Total</th>
                       </tr>
-                    ))}
-                    <tr className={styles.tableTotalRow}>
-                      <td colSpan={5} className={styles.tableCell}><strong>TOTAL LABOR COST</strong></td>
-                      <td className={styles.tableCellRight}><strong>{formatCurrency(preDiscountLaborCost)}</strong></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          )}
+                    </thead>
+                    <tbody>
+                      {laborBreakdown.map((item, index) => (
+                        <tr key={index} className={styles.tableRow}>
+                          <td className={styles.tableCell}>{item.item}</td>
+                          <td className={styles.tableCell}>{item.category}</td>
+                          <td className={styles.descriptionCell}>
+                            <span 
+                              className={styles.descriptionText} 
+                              title={item.description || 'No description'}
+                            >
+                              {expandedDescriptions[`labor-${index}`] || item.description.length <= 50 
+                                ? item.description || '-' 
+                                : `${item.description.slice(0, 50)}...`}
+                            </span>
+                            {item.description.length > 50 && (
+                              <button
+                                className={styles.toggleDescriptionButton}
+                                onClick={() => toggleDescription(index, 'labor')}
+                              >
+                                {expandedDescriptions[`labor-${index}`] ? 'Less' : 'More'}
+                              </button>
+                            )}
+                          </td>
+                          <td className={styles.tableCell}>
+                            {(item.quantity || 0).toFixed(2)} {item.unitType}
+                          </td>
+                          <td className={styles.tableCell}>{formatCurrency(item.costPerUnit)}</td>
+                          <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </>
+              )}
+            </div>
+          </section>
 
           <section className={styles.calculationSection}>
             <div className={styles.sectionHeader}>
-              <h3 className={styles.sectionTitle}>Cost Calculation Summary</h3>
+              <h3 className={styles.sectionTitle}>Cost Calculation</h3>
             </div>
             <div className={styles.tableContainer}>
-              <table className={styles.calculationTable} aria-label="Cost Calculation Summary">
+              <table className={styles.calculationTable} aria-label="Cost Calculation">
                 <tbody>
                   <tr className={styles.calculationRow}>
                     <td className={styles.calculationLabel}>Base Material Cost</td>
@@ -600,8 +630,6 @@ export default function EstimateSummary() {
                     <td className={styles.calculationLabel}><strong>Base Subtotal</strong></td>
                     <td className={styles.calculationValue}><strong>{formatCurrency(baseSubtotal)}</strong></td>
                   </tr>
-                  
-                  {/* Waste Entries Section - UPDATED */}
                   {wasteEntries.length > 0 && (
                     <>
                       <tr className={styles.calculationRow}>
@@ -624,7 +652,6 @@ export default function EstimateSummary() {
                       })}
                     </>
                   )}
-                  
                   {taxAmount > 0 && (
                     <tr className={styles.calculationRow}>
                       <td className={styles.calculationLabel}>

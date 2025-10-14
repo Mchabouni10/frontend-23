@@ -290,6 +290,47 @@
   font-weight: 500;
 }
 
+/* Description Cell Specific Styles */
+.descriptionCell {
+  position: relative;
+  max-width: 150px;
+  font-size: 11px;
+}
+
+.descriptionText {
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.descriptionText:hover {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.toggleDescriptionButton {
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 10px;
+  background: #005f73;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleDescriptionButton:hover {
+  background: #003d4c;
+  transform: translateY(-1px);
+}
+
+.toggleDescriptionButton:active {
+  transform: translateY(0);
+}
+
 .tableRow:nth-child(even) {
   background: #f9f9f9;
 }
@@ -506,232 +547,161 @@
 
 .signatureLine {
   border-bottom: 2px solid #333;
-  height: 50px;
-  margin-bottom: 10px;
+  height: 40px;
 }
 
 .signatureInfo {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  justify-content: space-between;
   font-size: 10px;
   color: #666;
 }
 
 .contractorName {
-  text-align: left;
   font-size: 10px;
-  color: #666;
-  margin: 8px 0 0 0;
   font-style: italic;
+  margin-top: 10px;
+  text-align: center;
 }
 
 /* Footer */
 .documentFooter {
-  background: #f9f9f9;
+  border-top: 2px solid #005f73;
   padding: 15px;
   text-align: center;
-  border-top: 2px solid #005f73;
   margin-top: 20px;
-  border-radius: 4px;
+}
+
+.footerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .footerText {
-  margin: 0 0 8px 0;
   font-size: 12px;
   font-weight: 600;
-  color: #005f73;
+  margin: 0 0 8px 0;
 }
 
 .footerTextSmall {
-  margin: 0;
   font-size: 10px;
   color: #666;
-  line-height: 1.4;
-}
-
-/* Loading & Error States */
-.loadingSpinner {
-  text-align: center;
-  padding: 40px;
-  font-size: 16px;
-  color: #005f73;
-}
-
-.error {
-  text-align: center;
-  padding: 40px;
-  font-size: 16px;
-  color: #d00000;
-  background: #ffe0e0;
-  border: 1px solid #d00000;
-  border-radius: 4px;
-  margin: 20px;
+  margin: 0;
 }
 
 /* ============================================================================ */
-/* PRINT STYLES - Optimized for A4 with Navbar Hiding */
+/* PRINT STYLES */
 /* ============================================================================ */
 
 @media print {
   @page {
     size: A4;
-    margin: 8mm;
+    margin: 10mm;
   }
 
-  * {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  /* CRITICAL: Hide all navigation and app UI elements */
   body {
     margin: 0 !important;
     padding: 0 !important;
-    background: white !important;
-  }
-
-  /* Hide common navigation patterns */
-  nav,
-  header:not([class*="documentHeader"]),
-  aside,
-  .sidebar,
-  .navbar,
-  .nav-bar,
-  .navigation,
-  .app-header,
-  .app-nav,
-  .main-nav,
-  .top-bar,
-  .menu,
-  [role="navigation"],
-  [class*="Nav"]:not([class*="navigate"]),
-  [class*="Header"]:not([class*="documentHeader"]):not([class*="sectionHeader"]):not([class*="infoHeader"]):not([class*="projectHeader"]):not([class*="companyHeader"]),
-  [class*="Sidebar"],
-  [class*="Menu"],
-  [class*="TopBar"],
-  [class*="AppBar"] {
-    display: none !important;
-  }
-
-  /* Hide action buttons and instructions */
-  .headerSection,
-  .printInstructions {
-    display: none !important;
   }
 
   .mainContent {
     background: white !important;
     padding: 0 !important;
     min-height: auto !important;
-    margin: 0 !important;
   }
 
   .container {
-    max-width: 100% !important;
-    width: 100% !important;
-    margin: 0 !important;
+    max-width: 190mm !important;
+    width: 190mm !important;
     padding: 0 !important;
+    margin: 0 !important;
     box-shadow: none !important;
     border-radius: 0 !important;
   }
 
-  .document {
-    font-size: 8pt !important;
-    line-height: 1.2 !important;
-    color: black !important;
-    background: white !important;
+  .headerSection {
+    display: none !important;
   }
 
-  /* Document Header - Compact for print */
+  .document {
+    font-size: 8pt !important;
+    line-height: 1.3 !important;
+    color: black !important;
+    page-break-before: always !important;
+  }
+
   .documentHeader {
     background: white !important;
     color: black !important;
     padding: 3mm !important;
-    margin-bottom: 3mm !important;
-    border-bottom: 1pt solid #005f73 !important;
+    margin-bottom: 5mm !important;
+    border-bottom: 1pt solid #999 !important;
     border-radius: 0 !important;
   }
 
   .companyHeader {
-    grid-template-columns: 18mm 1fr !important;
-    gap: 3mm !important;
+    grid-template-columns: 20mm 1fr !important;
+    gap: 5mm !important;
     margin-bottom: 3mm !important;
   }
 
   .logo {
-    width: 16mm !important;
-    height: 16mm !important;
+    width: 15mm !important;
+    height: 15mm !important;
     filter: none !important;
   }
 
   .companyName {
     font-size: 10pt !important;
-    color: #005f73 !important;
+    margin-bottom: 2mm !important;
   }
 
   .contactInfo {
     font-size: 7pt !important;
-    color: black !important;
+    gap: 1mm !important;
   }
 
   .projectHeader {
-    padding-top: 2mm !important;
-    border-top: 0.5pt solid #ccc !important;
+    padding-top: 3mm !important;
+    border-top: 0.5pt solid #999 !important;
   }
 
   .projectTitle {
-    font-size: 11pt !important;
-    color: #005f73 !important;
+    font-size: 10pt !important;
+    margin-bottom: 2mm !important;
   }
 
   .projectNumber {
-    font-size: 7pt !important;
-    color: black !important;
+    font-size: 8pt !important;
+    margin-bottom: 2mm !important;
   }
 
   .dateInfo {
     font-size: 7pt !important;
-    color: black !important;
+    gap: 5mm !important;
   }
 
-  .separator {
-    display: inline !important;
-  }
-
-  /* Sections */
   .sectionHeader {
-    margin: 2.5mm 0 1.5mm 0 !important;
+    margin: 3mm 0 2mm 0 !important;
     padding-bottom: 1mm !important;
     border-bottom: 1pt solid #005f73 !important;
   }
 
   .sectionTitle {
     font-size: 9pt !important;
-    color: #005f73 !important;
+    color: black !important;
   }
 
-  .customerSection,
-  .categorySection,
-  .detailSection,
-  .calculationSection,
-  .paymentSection,
-  .termsSection,
-  .notesSection,
-  .authorizationSection {
-    padding: 2mm !important;
-    margin-bottom: 3mm !important;
-    border: 0.5pt solid #ddd !important;
-    page-break-inside: avoid !important;
-    border-radius: 0 !important;
-    background: white !important;
+  .customerSection {
+    border: 0.5pt solid #999 !important;
+    padding: 3mm !important;
+    margin-bottom: 5mm !important;
   }
 
-  /* Customer Info */
   .infoGrid {
     grid-template-columns: 1fr 1fr !important;
-    gap: 2mm !important;
-    padding: 0 !important;
+    gap: 3mm !important;
   }
 
   .infoGroup {
@@ -789,6 +759,19 @@
     padding: 1.5mm !important;
     border: 0.5pt solid #ccc !important;
     font-size: 7pt !important;
+  }
+
+  .descriptionCell {
+    max-width: 40mm !important;
+    font-size: 7pt !important;
+  }
+
+  .descriptionText {
+    font-size: 7pt !important;
+  }
+
+  .toggleDescriptionButton {
+    display: none !important; /* Hide toggle button in print */
   }
 
   .tableRow:nth-child(even) {
@@ -1078,6 +1061,10 @@
     width: 40%;
   }
 
+  .descriptionCell {
+    max-width: 100px;
+  }
+
   .signatureCanvas {
     height: 120px;
   }
@@ -1118,6 +1105,19 @@
   .termsItem {
     font-size: 9px;
     padding: 8px;
+  }
+
+  .descriptionCell {
+    max-width: 80px;
+  }
+
+  .descriptionText {
+    font-size: 9px;
+  }
+
+  .toggleDescriptionButton {
+    font-size: 8px;
+    padding: 2px 6px;
   }
 
   .signatureCanvas {
