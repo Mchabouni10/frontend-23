@@ -1,23 +1,30 @@
+// config-overrides.js
+const webpack = require('webpack');
+
 module.exports = function override(config) {
-  console.log('Overriding Webpack config...');
-  
-  // Find the oneOf rule (CRA uses this structure)
-  const oneOfRule = config.module.rules.find(rule => rule.oneOf);
-  
-  if (oneOfRule) {
-    // Find the source-map-loader within oneOf
-    const sourceMapRule = oneOfRule.oneOf.find(
-      rule => rule.use && Array.isArray(rule.use) && 
-      rule.use.some(loader => loader.loader && loader.loader.includes('source-map-loader'))
-    );
-    
-    if (sourceMapRule) {
-      console.log('Found source-map-loader rule, excluding node_modules');
-      sourceMapRule.exclude = /node_modules/;
-    } else {
-      console.log('source-map-loader not found');
+  // 1️⃣ Remove source-map-loader (causing those TSX warnings)
+  config.module.rules = config.module.rules.map(rule => {
+    if (rule.oneOf) {
+      rule.oneOf = rule.oneOf.filter(subRule =>
+        !(subRule.loader && subRule.loader.includes('source-map-loader'))
+      );
     }
-  }
-  
+    return rule;
+  });
+
+  // 2️⃣ Disable source maps entirely (optional, but cleaner)
+  config.devtool = false;
+
+  // 3️⃣ Silence all Webpack deprecation warnings
+  config.ignoreWarnings = [/Failed to parse source map/, /source-map-loader/];
+
+  // 4️⃣ Suppress React-Datepicker and other vendor warnings
+  config.plugins.push(
+    new webpack.ContextReplacementPlugin(/.*/, data => {
+      delete data.dependencies;
+      return data;
+    })
+  );
+
   return config;
 };

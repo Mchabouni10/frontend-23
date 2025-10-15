@@ -57,7 +57,7 @@ export default function CustomersList() {
             type="button"
           >
             <FontAwesomeIcon icon={faTable} aria-hidden="true" />
-            <span>Table View</span>
+            <span> Table View</span>
           </button>
           <button
             onClick={handleCardsView}
@@ -67,7 +67,7 @@ export default function CustomersList() {
             type="button"
           >
             <FontAwesomeIcon icon={faTh} aria-hidden="true" />
-            <span>Card View</span>
+            <span> Card View</span>
           </button>
         </nav>
 

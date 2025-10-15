@@ -22,25 +22,25 @@ import {
 import styles from "./CustomersListCards.module.css";
 
 export default function CustomersListCards({
-  searchQuery,
+  searchQuery = "",
   setSearchQuery,
-  filteredCustomers,
-  isLoading,
-  error,
-  projectErrors,
-  lastUpdated,
-  totals,
-  notifications,
-  isNotificationsOpen,
+  filteredCustomers = [],
+  isLoading = false,
+  error = "",
+  projectErrors = new Map(),
+  lastUpdated = "",
+  totals = { grandTotal: 0, amountRemaining: 0 },
+  notifications = [],
+  isNotificationsOpen = false,
   setIsNotificationsOpen,
   handleDetails,
   handleEdit,
   handleDelete,
   handleNewProject,
-  formatPhoneNumber,
-  formatDate,
+  formatPhoneNumber = (phone) => phone || "N/A",
+  formatDate = (date) => date || "N/A",
   navigate,
-  statusFilter,
+  statusFilter = "",
   setStatusFilter,
 }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -48,134 +48,143 @@ export default function CustomersListCards({
   const [selectedErrors, setSelectedErrors] = useState([]);
   const itemsPerPage = 6;
 
-  // Memoize calculations to improve performance
-  const getPaymentProgress = useCallback((customer) => {
-    const total = customer.totalGrandTotal || 0;
-    const remaining = customer.totalAmountRemaining || 0;
+  const getPaymentProgress = useCallback((customer = {}) => {
+    const total = customer.totalGrandTotal ?? 0;
+    const remaining = customer.totalAmountRemaining ?? 0;
     return total > 0 ? ((total - remaining) / total) * 100 : 0;
   }, []);
 
-  const formatDateWithoutTime = useCallback((dateString) =>
-    dateString
-      ? new Date(dateString).toLocaleDateString("en-US", {
-          month: "2-digit",
-          day: "2-digit",
-          year: "numeric",
-        })
-      : "N/A",
+  const formatDateWithoutTime = useCallback(
+    (dateString) =>
+      dateString
+        ? new Date(dateString).toLocaleDateString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "numeric",
+          })
+        : "N/A",
     []
   );
 
-  const handleCardAction = useCallback((action, customer, e) => {
-    e?.stopPropagation();
-    const { projects } = customer;
-    
-    if (!projects?.length) {
-      alert("No projects available for this customer.");
-      return;
-    }
+  const handleCardAction = useCallback(
+    (action, customer = {}, e) => {
+      e?.stopPropagation();
+      const projects = customer.projects ?? [];
 
-    const firstProject = projects[0];
-    const hasMultipleProjects = projects.length > 1;
-
-    switch (action) {
-      case "view":
-        handleDetails(projects);
-        break;
-      case "edit":
-        if (!hasMultipleProjects && firstProject?._id) {
-          handleEdit(firstProject._id);
-        }
-        break;
-      case "delete":
-        if (!hasMultipleProjects && firstProject?._id) {
-          if (
-            window.confirm(
-              `Are you sure you want to delete ${customer.customerInfo.firstName}'s project? This action cannot be undone.`
-            )
-          ) {
-            handleDelete(firstProject._id);
-          }
-        }
-        break;
-      case "new":
-        handleNewProject(customer.customerInfo);
-        break;
-      default:
-        break;
-    }
-  }, [handleDetails, handleEdit, handleDelete, handleNewProject]);
-
-  const statusOptions = useMemo(() => [
-    { value: '', label: 'All Statuses' },
-    { value: 'Not Started', label: 'Not Started' },
-    { value: 'Starting Soon', label: 'Starting Soon' },
-    { value: 'In Progress', label: 'In Progress' },
-    { value: 'Due Soon', label: 'Due Soon' },
-    { value: 'Overdue', label: 'Overdue' },
-    { value: 'Completed', label: 'Completed' },
-    { value: 'Unknown', label: 'Unknown' },
-  ], []);
-
-  const showErrorsForCustomer = useCallback((customer) => {
-    const customerErrors = [];
-    customer.projects.forEach((project) => {
-      const projectId = project.id || JSON.stringify(project.customerInfo);
-      if (projectErrors.has(projectId)) {
-        customerErrors.push(...projectErrors.get(projectId));
+      if (!projects.length) {
+        alert("No projects available for this customer.");
+        return;
       }
-    });
-    setSelectedErrors(customerErrors);
-    setShowErrorModal(true);
-  }, [projectErrors]);
 
-  const totalPages = useMemo(() => 
-    Math.ceil(filteredCustomers.length / itemsPerPage),
-    [filteredCustomers.length, itemsPerPage]
+      const firstProject = projects[0] ?? {};
+      const hasMultipleProjects = projects.length > 1;
+
+      switch (action) {
+        case "view":
+          handleDetails?.(projects);
+          break;
+        case "edit":
+          if (!hasMultipleProjects && firstProject?._id) {
+            handleEdit?.(firstProject._id);
+          }
+          break;
+        case "delete":
+          if (!hasMultipleProjects && firstProject?._id) {
+            if (
+              window.confirm(
+                `Are you sure you want to delete ${customer.customerInfo?.firstName ?? "this customer"}'s project? This action cannot be undone.`
+              )
+            ) {
+              handleDelete?.(firstProject._id);
+            }
+          }
+          break;
+        case "new":
+          handleNewProject?.(customer.customerInfo ?? {});
+          break;
+        default:
+          break;
+      }
+    },
+    [handleDetails, handleEdit, handleDelete, handleNewProject]
   );
 
-  const paginatedCustomers = useMemo(() => 
-    filteredCustomers.slice(
-      (currentPage - 1) * itemsPerPage,
-      currentPage * itemsPerPage
-    ),
-    [filteredCustomers, currentPage, itemsPerPage]
+  const statusOptions = useMemo(
+    () => [
+      { value: "", label: "All Statuses" },
+      { value: "Not Started", label: "Not Started" },
+      { value: "Starting Soon", label: "Starting Soon" },
+      { value: "In Progress", label: "In Progress" },
+      { value: "Due Soon", label: "Due Soon" },
+      { value: "Overdue", label: "Overdue" },
+      { value: "Completed", label: "Completed" },
+      { value: "Unknown", label: "Unknown" },
+    ],
+    []
+  );
+
+  const showErrorsForCustomer = useCallback(
+    (customer = {}) => {
+      const customerErrors = [];
+      (customer.projects ?? []).forEach((project = {}) => {
+        const projectId = project.id ?? JSON.stringify(project.customerInfo ?? {});
+        if (projectErrors.has(projectId)) {
+          customerErrors.push(...projectErrors.get(projectId));
+        }
+      });
+      setSelectedErrors(customerErrors);
+      setShowErrorModal(true);
+    },
+    [projectErrors]
+  );
+
+  const totalPages = useMemo(
+    () => Math.ceil((filteredCustomers.length || 0) / itemsPerPage),
+    [filteredCustomers.length]
+  );
+
+  const paginatedCustomers = useMemo(
+    () =>
+      filteredCustomers.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      ),
+    [filteredCustomers, currentPage]
   );
 
   const handlePreviousPage = useCallback(() => {
-    setCurrentPage((p) => Math.max(p - 1, 1));
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
   }, []);
 
   const handleNextPage = useCallback(() => {
-    setCurrentPage((p) => Math.min(p + 1, totalPages));
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   }, [totalPages]);
 
   const handleClearSearch = useCallback(() => {
-    setSearchQuery("");
+    setSearchQuery?.("");
   }, [setSearchQuery]);
 
   const handleNotificationToggle = useCallback(() => {
-    setIsNotificationsOpen(!isNotificationsOpen);
-  }, [isNotificationsOpen, setIsNotificationsOpen]);
+    setIsNotificationsOpen?.((prev) => !prev);
+  }, [setIsNotificationsOpen]);
 
-  const handleKeyPress = useCallback((e, callback) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      callback();
-    }
-  }, []);
+
 
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Customers</h1>
-      
+
       <div className={styles.searchSection}>
         <div className={styles.searchWrapper}>
-          <FontAwesomeIcon icon={faSearch} className={styles.searchIcon} aria-hidden="true" />
+          <FontAwesomeIcon
+            icon={faSearch}
+            className={styles.searchIcon}
+            aria-hidden="true"
+          />
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => setSearchQuery?.(e.target.value)}
             placeholder="Search by name, phone, or status..."
             className={styles.searchInput}
             aria-label="Search customers by name, phone, or status"
@@ -191,7 +200,7 @@ export default function CustomersListCards({
             </button>
           )}
         </div>
-        
+
         <div className={styles.filterWrapper}>
           <label htmlFor="statusFilter" className={styles.visuallyHidden}>
             Filter by status
@@ -199,12 +208,12 @@ export default function CustomersListCards({
           <select
             id="statusFilter"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => setStatusFilter?.(e.target.value)}
             className={styles.statusFilter}
             aria-label="Filter customers by status"
           >
             {statusOptions.map((option) => (
-              <option key={option.value || 'all'} value={option.value}>
+              <option key={option.value || "all"} value={option.value}>
                 {option.label}
               </option>
             ))}
@@ -223,7 +232,10 @@ export default function CustomersListCards({
           >
             <h2 className={styles.notificationTitle}>
               Notifications
-              <span className={styles.notificationCountBadge} aria-label={`${notifications.length} notifications`}>
+              <span
+                className={styles.notificationCountBadge}
+                aria-label={`${notifications.length} notifications`}
+              >
                 ({notifications.length})
               </span>
             </h2>
@@ -235,12 +247,9 @@ export default function CustomersListCards({
               aria-hidden="true"
             />
           </button>
-          
+
           {isNotificationsOpen && (
-            <ul 
-              id="notification-list" 
-              className={styles.notificationList}
-            >
+            <ul id="notification-list" className={styles.notificationList}>
               {notifications.map((note, index) => (
                 <li
                   key={`notification-${index}`}
@@ -251,7 +260,6 @@ export default function CustomersListCards({
                       ? styles.warning
                       : styles.info
                   }`}
-                  // role="listitem" // <-- Removed redundant role
                 >
                   <FontAwesomeIcon
                     icon={
@@ -264,7 +272,7 @@ export default function CustomersListCards({
                     className={styles.notificationIcon}
                     aria-hidden="true"
                   />
-                  <span>{note.message}</span>
+                  <span>{note.message || "No message available"}</span>
                 </li>
               ))}
             </ul>
@@ -274,38 +282,44 @@ export default function CustomersListCards({
 
       {error && (
         <div className={styles.error} role="alert" aria-live="polite">
-          <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" /> {error}
+          <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" />{" "}
+          {error}
         </div>
       )}
 
       {isLoading ? (
         <div className={styles.loading} role="status" aria-live="polite">
-          <FontAwesomeIcon icon={faSpinner} spin aria-hidden="true" /> 
+          <FontAwesomeIcon icon={faSpinner} spin aria-hidden="true" />
           <span>Loading Customers...</span>
         </div>
       ) : paginatedCustomers.length > 0 ? (
         <>
           <div className={styles.cardsWrapper} role="list">
-            {paginatedCustomers.map((customer) => {
-              const hasMultipleProjects = customer.projects.length > 1;
+            {paginatedCustomers.map((customer = {}) => {
+              const customerInfo = customer.customerInfo ?? {};
+              const projects = customer.projects ?? [];
+              const hasMultipleProjects = projects.length > 1;
               const progress = getPaymentProgress(customer);
-              const customerKey = `${customer.customerInfo.lastName}-${customer.customerInfo.phone}`;
-              const hasErrors = customer.projects.some((project) => {
-                const projectId = project.id || JSON.stringify(project.customerInfo);
+              const customerKey = `${customerInfo.lastName ?? "unknown"}-${
+                customerInfo.phone ?? "unknown"
+              }`;
+              const hasErrors = projects.some((project = {}) => {
+                const projectId =
+                  project.id ?? JSON.stringify(project.customerInfo ?? {});
                 return projectErrors.has(projectId);
               });
-
-              const fullName = `${customer.customerInfo.firstName} ${customer.customerInfo.lastName}`;
+              const fullName = `${customerInfo.firstName ?? ""} ${
+                customerInfo.lastName ?? ""
+              }`.trim() || "Unknown Customer";
 
               return (
                 <article
                   key={customerKey}
                   className={styles.customerCard}
-                  onClick={() => handleDetails(customer.projects)}
-                  onKeyPress={(e) => handleKeyPress(e, () => handleDetails(customer.projects))}
-                  role="listitem"
                   tabIndex={0}
-                  aria-label={`Customer card for ${fullName}. Status: ${customer.status}. ${customer.projects.length} projects. Click to view details.`}
+                  aria-label={`Customer card for ${fullName}. Status: ${
+                    customer.status ?? "Unknown"
+                  }. ${projects.length} projects.`}
                 >
                   <div className={styles.cardHeader}>
                     <h3 className={styles.cardTitle}>
@@ -327,18 +341,25 @@ export default function CustomersListCards({
                             aria-label={`View calculation errors for ${fullName}`}
                             type="button"
                           >
-                            <FontAwesomeIcon icon={faExclamationCircle} aria-hidden="true" />
+                            <FontAwesomeIcon
+                              icon={faExclamationCircle}
+                              aria-hidden="true"
+                            />
                           </button>
                         )}
                       </span>
                     </h3>
                     <span
                       className={`${styles.statusBadge} ${
-                        styles[customer.status.toLowerCase().replace(/\s+/g, "")]
+                        styles[
+                          (customer.status ?? "Unknown")
+                            .toLowerCase()
+                            .replace(/\s+/g, "")
+                        ] || styles.unknown
                       }`}
-                      aria-label={`Status: ${customer.status}`}
+                      aria-label={`Status: ${customer.status ?? "Unknown"}`}
                     >
-                      {customer.status}
+                      {customer.status ?? "Unknown"}
                     </span>
                   </div>
 
@@ -346,13 +367,13 @@ export default function CustomersListCards({
                     <p>
                       <FontAwesomeIcon icon={faPhone} aria-hidden="true" />
                       <span className={styles.label}>Phone:</span>{" "}
-                      {formatPhoneNumber(customer.customerInfo.phone) || "N/A"}
+                      {formatPhoneNumber(customerInfo.phone)}
                     </p>
                     <p className={styles.projectCount}>
                       <FontAwesomeIcon icon={faTasks} aria-hidden="true" />
                       <span className={styles.label}>Projects:</span>{" "}
                       <span className={styles.projectBadge}>
-                        {customer.projects.length}
+                        {projects.length}
                       </span>
                     </p>
                     <p>
@@ -373,7 +394,9 @@ export default function CustomersListCards({
                         aria-valuenow={Math.round(progress)}
                         aria-valuemin="0"
                         aria-valuemax="100"
-                        aria-label={`Payment progress: ${Math.round(progress)} percent complete`}
+                        aria-label={`Payment progress: ${Math.round(
+                          progress
+                        )} percent complete`}
                       >
                         <div
                           className={styles.progressFill}
@@ -384,29 +407,45 @@ export default function CustomersListCards({
                           </span>
                         </div>
                       </div>
-                      
+
                       <div className={styles.amountDetails}>
                         <span className={styles.amountDue}>
-                          <FontAwesomeIcon icon={faDollarSign} aria-hidden="true" />
+                          <FontAwesomeIcon
+                            icon={faDollarSign}
+                            aria-hidden="true"
+                          />
                           <span className={styles.label}>Due:</span> $
-                          {customer.totalAmountRemaining.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })}
+                          {(customer.totalAmountRemaining ?? 0).toLocaleString(
+                            "en-US",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
                         </span>
                         <span className={styles.amountTotal}>
-                          <FontAwesomeIcon icon={faDollarSign} aria-hidden="true" />
+                          <FontAwesomeIcon
+                            icon={faDollarSign}
+                            aria-hidden="true"
+                          />
                           <span className={styles.label}>Total:</span> $
-                          {customer.totalGrandTotal.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })}
+                          {(customer.totalGrandTotal ?? 0).toLocaleString(
+                            "en-US",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className={styles.cardActions} role="group" aria-label="Customer actions">
+                  <div
+                    className={styles.cardActions}
+                    role="group"
+                    aria-label="Customer actions"
+                  >
                     <button
                       onClick={(e) => handleCardAction("view", customer, e)}
                       className={styles.actionButton}
@@ -477,12 +516,15 @@ export default function CustomersListCards({
               >
                 Previous
               </button>
-              <span aria-current="page" aria-label={`Page ${currentPage} of ${totalPages}`}>
+              <span
+                aria-current="page"
+                aria-label={`Page ${currentPage} of ${totalPages}`}
+              >
                 Page {currentPage} of {totalPages}
               </span>
               <button
                 onClick={handleNextPage}
-                disabled={currentPage === totalPages}
+                disabled={currentPage >= totalPages}
                 aria-label="Go to next page"
                 type="button"
               >
@@ -496,7 +538,7 @@ export default function CustomersListCards({
           <p>
             No customers found.{" "}
             <button
-              onClick={() => navigate("/home/customer")}
+              onClick={() => navigate?.("/home/customer")}
               className={styles.inlineButton}
               aria-label="Add a new customer"
               type="button"
@@ -510,43 +552,56 @@ export default function CustomersListCards({
       <aside className={styles.totalsSection} aria-label="Financial summary">
         <p>
           <span className={styles.label}>Total Grand Total:</span>{" "}
-          <span className={styles.grandTotal} aria-label={`Total grand total: $${totals.grandTotal.toFixed(2)}`}>
-            ${totals.grandTotal.toLocaleString('en-US', {
+          <span
+            className={styles.grandTotal}
+            aria-label={`Total grand total: $${(
+              totals.grandTotal ?? 0
+            ).toFixed(2)}`}
+          >
+            ${(totals.grandTotal ?? 0).toLocaleString("en-US", {
               minimumFractionDigits: 2,
-              maximumFractionDigits: 2
+              maximumFractionDigits: 2,
             })}
           </span>
         </p>
         <p>
           <span className={styles.label}>Total Amount Remaining:</span>{" "}
-          <span className={styles.remaining} aria-label={`Total amount remaining: $${totals.amountRemaining.toFixed(2)}`}>
-            ${totals.amountRemaining.toLocaleString('en-US', {
+          <span
+            className={styles.remaining}
+            aria-label={`Total amount remaining: $${(
+              totals.amountRemaining ?? 0
+            ).toFixed(2)}`}
+          >
+            ${(totals.amountRemaining ?? 0).toLocaleString("en-US", {
               minimumFractionDigits: 2,
-              maximumFractionDigits: 2
+              maximumFractionDigits: 2,
             })}
           </span>
         </p>
         <p className={styles.lastUpdated}>
-          Last Updated: <time dateTime={lastUpdated}>{formatDate(lastUpdated)}</time>
+          Last Updated:{" "}
+          <time dateTime={lastUpdated}>{formatDate(lastUpdated)}</time>
         </p>
       </aside>
 
       {showErrorModal && (
-        <div 
-          className={styles.errorModal} 
-          role="dialog" 
+        <div
+          className={styles.errorModal}
+          role="dialog"
           aria-labelledby="error-modal-title"
           aria-modal="true"
           onClick={() => setShowErrorModal(false)}
         >
-          <div 
+          <div
             className={styles.errorModalContent}
             onClick={(e) => e.stopPropagation()}
           >
             <h3 id="error-modal-title">Calculation Errors</h3>
             <ul>
               {selectedErrors.map((error, index) => (
-                <li key={`error-${index}`}>{error.message}</li>
+                <li key={`error-${index}`}>
+                  {error.message || "Unknown error"}
+                </li>
               ))}
             </ul>
             <button
