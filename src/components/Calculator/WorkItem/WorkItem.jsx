@@ -8,7 +8,6 @@ import CostInput from './CostInput';
 import styles from './WorkItem.module.css';
 import ErrorBoundary from '../../ErrorBoundary';
 
-// ENHANCED: Expanded cost options up to $5,000 with better coverage
 const DEFAULT_COST_OPTIONS = [
   '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
   '15', '20', '25', '30', '35', '40', '45', '50',
@@ -117,6 +116,11 @@ function WorkItemContent({
     return categoryKey.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '');
   }, [categoryKey]);
 
+  // Check if this is a custom category
+  const isCustomCategory = useMemo(() => {
+    return normalizedCategoryKey.startsWith('custom_');
+  }, [normalizedCategoryKey]);
+
   const availableWorkTypes = useMemo(() => {
     try {
       if (!normalizedCategoryKey || !isCategoryValid(normalizedCategoryKey)) return [];
@@ -151,11 +155,29 @@ function WorkItemContent({
   }, [workItem.type, getSubtypeOptions]);
 
   const derivedName = useMemo(() => {
+    // 1. Trust the database first if the name is valid and not a default placeholder.
+    if (workItem.name && workItem.name !== 'New Work Item' && workItem.name !== 'Unnamed Work Item') {
+        return workItem.name;
+    }
+
+    // 2. If it's a placeholder, try to derive the name from its parts.
+    // Logic for custom categories with a custom work type name.
+    if (isCustomCategory && workItem.type === 'custom-work-type' && workItem.customWorkTypeName) {
+        const subtypeLabel = subtypeOptions.find(opt => opt.value === workItem.subtype)?.label;
+        return subtypeLabel ? `${workItem.customWorkTypeName} (${subtypeLabel})` : workItem.customWorkTypeName;
+    }
+    
+    // Logic for standard work types.
     const workTypeLabel = workTypeOptions.find(opt => opt.value === workItem.type)?.label;
     const subtypeLabel = subtypeOptions.find(opt => opt.value === workItem.subtype)?.label;
-    if (!workTypeLabel) return 'Unnamed Work Item';
-    return subtypeLabel ? `${workTypeLabel} (${subtypeLabel})` : workTypeLabel;
-  }, [workItem.type, workItem.subtype, workTypeOptions, subtypeOptions]);
+
+    if (workTypeLabel) {
+        return subtypeLabel ? `${workTypeLabel} (${subtypeLabel})` : workTypeLabel;
+    }
+    
+    // 3. Fallback if no name can be determined.
+    return 'Unnamed Work Item';
+  }, [workItem.name, workItem.type, workItem.subtype, workItem.customWorkTypeName, workTypeOptions, subtypeOptions, isCustomCategory]);
 
   const updateWorkItem = useCallback((field, value) => {
     if (disabled) return;
@@ -168,14 +190,23 @@ function WorkItemContent({
       measurementType: workItem.measurementType || '',
       surfaces: Array.isArray(workItem.surfaces) ? workItem.surfaces : [],
       description: workItem.description || '',
+      customWorkTypeName: workItem.customWorkTypeName || '',
     };
 
     if (field === 'type') {
       updatedItem.type = value;
-      updatedItem.subtype = getDefaultSubtype(value) || '';
-      updatedItem.measurementType = getMeasurementType(normalizedCategoryKey, value);
+      if (value !== 'custom-work-type') {
+        updatedItem.customWorkTypeName = '';
+        updatedItem.subtype = getDefaultSubtype(value) || '';
+        updatedItem.measurementType = getMeasurementType(normalizedCategoryKey, value);
+      } else {
+        updatedItem.subtype = '';
+        updatedItem.measurementType = '';
+      }
       updatedItem.surfaces = [];
       setValidationErrors({});
+    } else if (field === 'customWorkTypeName') {
+      updatedItem.customWorkTypeName = value;
     } else if (field === 'measurementType') {
       updatedItem.measurementType = value;
       updatedItem.surfaces = [];
@@ -191,10 +222,15 @@ function WorkItemContent({
       updatedItem[field] = value;
     }
 
-    if (field === 'type' || field === 'subtype') {
-      const wtLabel = workTypeOptions.find(opt => opt.value === updatedItem.type)?.label;
-      const stLabel = subtypeOptions.find(opt => opt.value === updatedItem.subtype)?.label;
-      updatedItem.name = wtLabel ? (stLabel ? `${wtLabel} (${stLabel})` : wtLabel) : updatedItem.name;
+    if (field === 'type' || field === 'subtype' || field === 'customWorkTypeName') {
+      if (updatedItem.type === 'custom-work-type' && updatedItem.customWorkTypeName) {
+        const stLabel = subtypeOptions.find(opt => opt.value === updatedItem.subtype)?.label;
+        updatedItem.name = stLabel ? `${updatedItem.customWorkTypeName} (${stLabel})` : updatedItem.customWorkTypeName;
+      } else {
+        const wtLabel = workTypeOptions.find(opt => opt.value === updatedItem.type)?.label;
+        const stLabel = subtypeOptions.find(opt => opt.value === updatedItem.subtype)?.label;
+        updatedItem.name = wtLabel ? (stLabel ? `${wtLabel} (${stLabel})` : wtLabel) : updatedItem.name;
+      }
     }
 
     prevWorkItemRef.current = updatedItem;
@@ -232,6 +268,7 @@ function WorkItemContent({
     name: derivedName,
     surfaces: Array.isArray(workItem.surfaces) ? workItem.surfaces : [],
     description: workItem.description || '',
+    customWorkTypeName: workItem.customWorkTypeName || '',
   }), [workItem, normalizedCategoryKey, derivedName]);
 
   const calculationResults = useMemo(() => {
@@ -363,8 +400,31 @@ function WorkItemContent({
                 {workTypeOptions.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
+                {isCustomCategory && (
+                  <option value="custom-work-type">Custom Work Type</option>
+                )}
               </select>
             </div>
+            
+            {/* Show custom work type input for custom categories */}
+            {isCustomCategory && sanitizedWorkItem.type === 'custom-work-type' && (
+              <div className={styles.field}>
+                <label htmlFor={`custom-work-name-${catIndex}-${workIndex}`}>
+                  <i className="fas fa-pencil-alt" /> Custom Work Name *
+                </label>
+                <input
+                  id={`custom-work-name-${catIndex}-${workIndex}`}
+                  type="text"
+                  value={sanitizedWorkItem.customWorkTypeName || ''}
+                  onChange={e => updateWorkItem('customWorkTypeName', e.target.value)}
+                  disabled={disabled}
+                  className={styles.input}
+                  placeholder="Enter custom work type name"
+                  required
+                />
+              </div>
+            )}
+            
             {subtypeOptions.length > 0 && (
               <div className={styles.field}>
                 <label htmlFor={`subtype-${catIndex}-${workIndex}`}>
@@ -386,7 +446,7 @@ function WorkItemContent({
             )}
           </div>
 
-          {sanitizedWorkItem.type && (
+          {sanitizedWorkItem.type && (sanitizedWorkItem.type !== 'custom-work-type' || sanitizedWorkItem.customWorkTypeName) && (
             <div className={styles.field}>
               <label htmlFor={`measurement-${catIndex}-${workIndex}`}>
                 <i className="fas fa-ruler-combined" /> How to Measure *
@@ -412,7 +472,7 @@ function WorkItemContent({
             </div>
           )}
 
-          {sanitizedWorkItem.type && sanitizedWorkItem.measurementType && (
+          {sanitizedWorkItem.type && sanitizedWorkItem.measurementType && (sanitizedWorkItem.type !== 'custom-work-type' || sanitizedWorkItem.customWorkTypeName) && (
             <SurfaceManager 
               workItem={sanitizedWorkItem} 
               onChange={handleSurfaceUpdate} 
@@ -424,7 +484,7 @@ function WorkItemContent({
             />
           )}
 
-          {sanitizedWorkItem.type && sanitizedWorkItem.measurementType && (
+          {sanitizedWorkItem.type && sanitizedWorkItem.measurementType && (sanitizedWorkItem.type !== 'custom-work-type' || sanitizedWorkItem.customWorkTypeName) && (
             <>
               <div className={styles.field}>
                 <label htmlFor={`description-${catIndex}-${workIndex}`}>
@@ -470,25 +530,25 @@ function WorkItemContent({
             </>
           )}
 
-         {calculationResults.canCalculate && showCostBreakdown && (
-  <div className={styles.costDisplay}>
-    <h4><i className="fas fa-calculator" /> Summary</h4>
-    <div className={styles.costSummary}>
-      <span className={styles.costItem}>
-        <i className="fas fa-cube" /> {calculationResults.totalUnits.toFixed(2)} {calculationResults.unitLabel}
-      </span>
-      <span className={styles.costItem}>
-        <i className="fas fa-box" /> ${calculationResults.totalMaterialCost.toFixed(2)}
-      </span>
-      <span className={styles.costItem}>
-        <i className="fas fa-hammer" /> ${calculationResults.totalLaborCost.toFixed(2)}
-      </span>
-      <span className={`${styles.costItem} ${styles.totalCost}`}>
-        <i className="fas fa-dollar-sign" /> ${calculationResults.totalCost.toFixed(2)}
-      </span>
-    </div>
-  </div>
-)}
+          {calculationResults.canCalculate && showCostBreakdown && (
+            <div className={styles.costDisplay}>
+              <h4><i className="fas fa-calculator" /> Summary</h4>
+              <div className={styles.costSummary}>
+                <span className={styles.costItem}>
+                  <i className="fas fa-cube" /> {calculationResults.totalUnits.toFixed(2)} {calculationResults.unitLabel}
+                </span>
+                <span className={styles.costItem}>
+                  <i className="fas fa-box" /> ${calculationResults.totalMaterialCost.toFixed(2)}
+                </span>
+                <span className={styles.costItem}>
+                  <i className="fas fa-hammer" /> ${calculationResults.totalLaborCost.toFixed(2)}
+                </span>
+                <span className={`${styles.costItem} ${styles.totalCost}`}>
+                  <i className="fas fa-dollar-sign" /> ${calculationResults.totalCost.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
 
           {calculationResults.warnings.length > 0 && (
             <div className={styles.warningSection} role="alert">

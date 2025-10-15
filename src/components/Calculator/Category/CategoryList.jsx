@@ -49,6 +49,7 @@ class SafeBoundary extends React.Component {
 const createBasicWorkItem = (categoryName, categoryKey) => {
   return {
     name: 'New Work Item',
+    customWorkTypeName: '', // <-- ADDED THIS LINE
     category: categoryName,
     categoryKey,
     type: '',
