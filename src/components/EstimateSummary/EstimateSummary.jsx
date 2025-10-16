@@ -14,7 +14,6 @@ import logoImage from '../../assets/CompanyLogo.png';
 export default function EstimateSummary() {
   const componentRef = useRef(null);
   const [isPrinting, setIsPrinting] = useState(false);
-  // REMOVED: setIsSendingEmail is not used
   const [customer, setCustomer] = useState(null);
   const [categories, setCategories] = useState([]);
   const [settings, setSettings] = useState(null);
@@ -177,7 +176,6 @@ export default function EstimateSummary() {
               materialItems.push({
                 item: item.name,
                 category: category.name,
-                description: item.description || '',
                 quantity: units,
                 unitType: unitLabel,
                 costPerUnit: parseFloat(item.materialCost) || 0,
@@ -274,7 +272,6 @@ export default function EstimateSummary() {
   const baseMaterialCost = parseFloat(totals.materialCost) || 0;
   const baseLaborCost = parseFloat(totals.laborCost) || 0;
   const laborDiscount = parseFloat(totals.laborDiscount) || 0;
-  // REMOVED: preDiscountLaborCost is not used
   const baseSubtotal = parseFloat(totals.subtotal) || 0;
   const taxAmount = parseFloat(totals.taxAmount) || 0;
   const markupAmount = parseFloat(totals.markupAmount) || 0;
@@ -514,7 +511,6 @@ export default function EstimateSummary() {
                       <tr>
                         <th className={styles.tableHeader}>Item</th>
                         <th className={styles.tableHeader}>Category</th>
-                        <th className={styles.tableHeader}>Description</th>
                         <th className={styles.tableHeader}>Quantity</th>
                         <th className={styles.tableHeader}>Unit Cost</th>
                         <th className={styles.tableHeader}>Total</th>
@@ -525,24 +521,6 @@ export default function EstimateSummary() {
                         <tr key={index} className={styles.tableRow}>
                           <td className={styles.tableCell}>{item.item}</td>
                           <td className={styles.tableCell}>{item.category}</td>
-                          <td className={styles.descriptionCell}>
-                            <span 
-                              className={styles.descriptionText} 
-                              title={item.description || 'No description'}
-                            >
-                              {expandedDescriptions[`material-${index}`] || item.description.length <= 50 
-                                ? item.description || '-' 
-                                : `${item.description.slice(0, 50)}...`}
-                            </span>
-                            {item.description.length > 50 && (
-                              <button
-                                className={styles.toggleDescriptionButton}
-                                onClick={() => toggleDescription(index, 'material')}
-                              >
-                                {expandedDescriptions[`material-${index}`] ? 'Less' : 'More'}
-                              </button>
-                            )}
-                          </td>
                           <td className={styles.tableCell}>
                             {(item.quantity || 0).toFixed(2)} {item.unitType}
                           </td>

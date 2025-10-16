@@ -28,16 +28,25 @@ export default function SquareFootageInput({
   const [widthInputValue, setWidthInputValue] = useState('');
   const [heightInputValue, setHeightInputValue] = useState('');
   const [sqftInputValue, setSqftInputValue] = useState('');
-  const [isManual, setIsManual] = useState(!!(surface.sqft && (!surface.width && !surface.height)));
+  // FIXED: Use manualSqft flag from surface if it exists, otherwise detect from data structure
+  const [isManual, setIsManual] = useState(
+    surface.manualSqft !== undefined 
+      ? surface.manualSqft 
+      : !!(surface.sqft && (!surface.width && !surface.height))
+  );
   const [errors, setErrors] = useState({ width: null, height: null, sqft: null });
   const [selectedSubtype, setSelectedSubtype] = useState(surface.subtype || defaultSubtype || '');
 
+  // FIXED: Only update input values, don't change isManual from external updates
   useEffect(() => {
     if (surface?.width !== undefined) setWidthInputValue(surface.width.toString());
     if (surface?.height !== undefined) setHeightInputValue(surface.height.toString());
     if (surface?.sqft !== undefined) setSqftInputValue(surface.sqft.toString());
-    setIsManual(!!(surface?.sqft && (!surface?.width && !surface?.height)));
-  }, [surface?.width, surface?.height, surface?.sqft]);
+    // FIXED: Only set isManual if manualSqft flag exists in surface
+    if (surface?.manualSqft !== undefined) {
+      setIsManual(surface.manualSqft);
+    }
+  }, [surface?.width, surface?.height, surface?.sqft, surface?.manualSqft]);
 
   const validateDimension = useCallback((value, field) => {
     const config = field === 'sqft' 
@@ -51,7 +60,7 @@ export default function SquareFootageInput({
     };
   }, []);
 
-  const updateSurfaceInContext = useCallback((updates) => {
+  const updateSurfaceInContext = useCallback((updates, manualMode) => {
     if (disabled) return;
 
     try {
@@ -73,7 +82,8 @@ export default function SquareFootageInput({
           subtype: selectedSubtype
         };
 
-        newSurfaces[surfIndex] = isManual ? {
+        // FIXED: Always set manualSqft flag so we know the mode
+        newSurfaces[surfIndex] = manualMode ? {
           ...baseFields,
           sqft: updates.sqft,
           manualSqft: true
@@ -96,7 +106,7 @@ export default function SquareFootageInput({
       console.error('Error updating surface:', error);
       onError?.(`Failed to update surface: ${error.message}`);
     }
-  }, [catIndex, workIndex, surfIndex, setCategories, disabled, isManual, selectedSubtype, onError]);
+  }, [catIndex, workIndex, surfIndex, setCategories, disabled, selectedSubtype, onError]);
 
   const handleDimensionChange = useCallback((field, value) => {
     if (!value) {
@@ -113,7 +123,7 @@ export default function SquareFootageInput({
 
     const parsedValue = parseFloat(value);
     if (isManual) {
-      updateSurfaceInContext({ sqft: parsedValue });
+      updateSurfaceInContext({ sqft: parsedValue }, true);
     } else {
       const currentSurface = {
         width: field === 'width' ? parsedValue : parseFloat(surface?.width) || DEFAULT_DIMENSION,
@@ -124,9 +134,28 @@ export default function SquareFootageInput({
         width: currentSurface.width,
         height: currentSurface.height,
         sqft: parseFloat((currentSurface.width * currentSurface.height).toFixed(2))
-      });
+      }, false);
     }
   }, [validateDimension, isManual, updateSurfaceInContext, surface?.width, surface?.height, onError]);
+
+  // FIXED: When toggling, immediately update the surface with the correct structure
+  const handleToggleChange = useCallback(() => {
+    const newManualMode = !isManual;
+    setIsManual(newManualMode);
+    
+    // Immediately update the surface structure to match the new mode
+    if (newManualMode) {
+      // Switching to manual mode - keep sqft, clear dimensions
+      const currentSqft = parseFloat(surface?.sqft) || (parseFloat(surface?.width || 0) * parseFloat(surface?.height || 0)) || 25;
+      updateSurfaceInContext({ sqft: currentSqft }, true);
+    } else {
+      // Switching to dimension mode - set default dimensions if needed
+      const width = parseFloat(surface?.width) || DEFAULT_DIMENSION;
+      const height = parseFloat(surface?.height) || DEFAULT_DIMENSION;
+      const sqft = parseFloat((width * height).toFixed(2));
+      updateSurfaceInContext({ width, height, sqft }, false);
+    }
+  }, [isManual, surface, updateSurfaceInContext]);
 
   const handleSubtypeChange = useCallback((e) => {
     const newSubtype = e.target.value;
@@ -223,7 +252,7 @@ export default function SquareFootageInput({
           <input
             type="checkbox"
             checked={isManual}
-            onChange={() => setIsManual(!isManual)}
+            onChange={handleToggleChange}
             disabled={disabled}
             id={`toggle-${catIndex}-${workIndex}-${surfIndex}`}
             className={styles.toggleInput}
@@ -320,6 +349,7 @@ SquareFootageInput.propTypes = {
     sqft: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     measurementType: PropTypes.string,
     subtype: PropTypes.string,
+    manualSqft: PropTypes.bool,
   }).isRequired,
   disabled: PropTypes.bool,
   categoryKey: PropTypes.string.isRequired,

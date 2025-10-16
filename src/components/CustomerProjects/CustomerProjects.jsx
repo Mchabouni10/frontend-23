@@ -1,4 +1,4 @@
-//src/components/CustomerProjects/CustomerProjects.jsx
+// src/components/CustomerProjects/CustomerProjects.jsx
 import React, { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -14,7 +14,6 @@ import {
   faChevronUp,
   faStickyNote,
   faDownload,
-  faSync,
 } from "@fortawesome/free-solid-svg-icons";
 import { deleteProject } from "../../services/projectService";
 import { CalculatorEngine } from "../Calculator/engine/CalculatorEngine";
@@ -26,54 +25,24 @@ import styles from "./CustomerProjects.module.css";
 export default function CustomerProjects() {
   const location = useLocation();
   const navigate = useNavigate();
-  // Removed unused: const params = useParams();
   
   const [projects, setProjects] = useState(location.state?.projects || []);
   const [expandedProject, setExpandedProject] = useState(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefresh, setLastRefresh] = useState(Date.now());
   
   const { getMeasurementType, isValidSubtype, getWorkTypeDetails } = useWorkType();
 
-  // Fetch projects from server to ensure fresh data
-  const fetchProjects = async (phoneNumber) => {
-    if (!phoneNumber) return;
-    
-    setIsRefreshing(true);
-    try {
-      const response = await fetch(`/api/projects/customer/${phoneNumber}`);
-      if (response.ok) {
-        const data = await response.json();
-        setProjects(data);
-        setLastRefresh(Date.now());
-      } else {
-        console.error("Failed to fetch projects");
-      }
-    } catch (error) {
-      console.error("Error fetching projects:", error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
-
-  // Refresh projects when component mounts or when returning from edit
+  // Initialize from location state only - don't fetch from backend
   useEffect(() => {
-    const customerPhone = location.state?.projects?.[0]?.customerInfo?.phone;
-    // If we have a phone number, fetch fresh data
-    if (customerPhone) {
-      fetchProjects(customerPhone);
-    } else if (location.state?.projects) {
-      // Fallback to location state if available
+    if (location.state?.projects && location.state.projects.length > 0) {
       setProjects(location.state.projects);
     }
-  }, [location.state?.refreshKey, location.state?.projects]); // Fixed: added missing dependency
+  }, [location.state?.projects]);
 
   const handleBack = () => navigate("/home/customers");
   
   const handleDetails = (projectId) => navigate(`/home/customer/${projectId}`);
   
   const handleEdit = (projectId) => {
-    // Pass a refresh key so we know to refresh when returning
     navigate(`/home/edit/${projectId}`, {
       state: { 
         returnPath: location.pathname,
@@ -87,25 +56,11 @@ export default function CustomerProjects() {
       try {
         await deleteProject(projectId);
         alert("Project deleted successfully!");
-        
-        // Refresh the projects list after deletion
-        const customerPhone = projects[0]?.customerInfo?.phone;
-        if (customerPhone) {
-          await fetchProjects(customerPhone);
-        } else {
-          navigate("/home/customers");
-        }
+        setProjects(projects.filter(p => p._id !== projectId));
       } catch (err) {
         console.error("Error deleting project:", err);
         alert("Failed to delete project.");
       }
-    }
-  };
-
-  const handleRefresh = () => {
-    const customerPhone = projects[0]?.customerInfo?.phone;
-    if (customerPhone) {
-      fetchProjects(customerPhone);
     }
   };
 
@@ -118,16 +73,10 @@ export default function CustomerProjects() {
         })
       : "N/A";
 
-  // Recalculate whenever projects or lastRefresh changes
+  // Recalculate whenever projects changes
   const projectCalculations = useMemo(() => {
-    console.log("Recalculating project totals...", { 
-      projectCount: projects.length,
-      lastRefresh: new Date(lastRefresh).toISOString()
-    });
-    
     return projects.reduce((acc, project) => {
       try {
-        // Always recalculate from scratch to ensure fresh data
         const engine = new CalculatorEngine(
           project.categories || [],
           project.settings || {},
@@ -137,7 +86,6 @@ export default function CustomerProjects() {
         const totalsResult = engine.calculateTotals();
         const paymentsResult = engine.calculatePaymentDetails();
         
-        // Log any calculation errors
         if (totalsResult.errors?.length > 0 || paymentsResult.errors?.length > 0) {
           console.warn(`Calculation errors for project ${project._id}:`, {
             totalsErrors: totalsResult.errors,
@@ -147,25 +95,13 @@ export default function CustomerProjects() {
         
         const grandTotal = parseFloat(totalsResult.total) || 0;
         const totalPaid = parseFloat(paymentsResult.totalPaid) || 0;
-        const totalDue = parseFloat(paymentsResult.totalDue) || 0;
-        const overduePayments = parseFloat(paymentsResult.overduePayments) || 0;
-        const deposit = parseFloat(project.settings?.deposit) || 0;
-        
-        console.log(`Project ${project._id} calculations:`, {
-          grandTotal,
-          totalPaid,
-          totalDue,
-          deposit,
-          categoriesCount: project.categories?.length || 0,
-          itemsCount: project.categories?.reduce((sum, cat) => sum + (cat.workItems?.length || 0), 0) || 0
-        });
         
         acc[project._id] = {
           grandTotal,
           totalPaid,
-          totalDue,
-          overduePayments,
-          deposit,
+          totalDue: parseFloat(paymentsResult.totalDue) || 0,
+          overduePayments: parseFloat(paymentsResult.overduePayments) || 0,
+          deposit: parseFloat(project.settings?.deposit) || 0,
         };
       } catch (error) {
         console.error(`Failed to calculate for project ${project._id}:`, error);
@@ -179,7 +115,7 @@ export default function CustomerProjects() {
       }
       return acc;
     }, {});
-  }, [projects, lastRefresh, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
+  }, [projects, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
 
   const getProjectStatus = (project) => {
     const today = new Date();
@@ -247,7 +183,7 @@ Status: ${getProjectStatus(project)}
     return { totalGrandTotal, totalAmountRemaining };
   }, [projectCalculations]);
 
-  if (projects.length === 0 && !isRefreshing) {
+  if (projects.length === 0) {
     return (
       <main className={styles.mainContent}>
         <div className={styles.container}>
@@ -277,14 +213,6 @@ Status: ${getProjectStatus(project)}
             } Projects`}</div>
             <div>Phone Number: {formatPhoneNumber(customerInfo.phone)}</div>
           </h1>
-          <button
-            onClick={handleRefresh}
-            className={`${styles.refreshButton} ${isRefreshing ? styles.spinning : ''}`}
-            title="Refresh Projects"
-            disabled={isRefreshing}
-          >
-            <FontAwesomeIcon icon={faSync} /> {isRefreshing ? 'Refreshing...' : 'Refresh'}
-          </button>
         </div>
         
         <button
@@ -411,6 +339,7 @@ Status: ${getProjectStatus(project)}
                           onClick={() => handleDetails(project._id)}
                           className={styles.actionButton}
                           title="View Details"
+                          aria-label="View Details"
                         >
                           <FontAwesomeIcon icon={faEye} />
                         </button>
@@ -418,6 +347,7 @@ Status: ${getProjectStatus(project)}
                           onClick={() => handleEdit(project._id)}
                           className={`${styles.actionButton} ${styles.editButton}`}
                           title="Edit"
+                          aria-label="Edit Project"
                         >
                           <FontAwesomeIcon icon={faEdit} />
                         </button>
@@ -425,6 +355,7 @@ Status: ${getProjectStatus(project)}
                           onClick={() => exportProjectSummary(project)}
                           className={`${styles.actionButton} ${styles.downloadButton}`}
                           title="Download Summary"
+                          aria-label="Download Summary"
                         >
                           <FontAwesomeIcon icon={faDownload} />
                         </button>
@@ -432,6 +363,7 @@ Status: ${getProjectStatus(project)}
                           onClick={() => handleDelete(project._id)}
                           className={`${styles.actionButton} ${styles.deleteButton}`}
                           title="Delete"
+                          aria-label="Delete Project"
                         >
                           <FontAwesomeIcon icon={faTrashAlt} />
                         </button>
@@ -464,7 +396,7 @@ Status: ${getProjectStatus(project)}
                             </div>
                             <div className={styles.detailSection}>
                               <CostBreakdown
-                                key={`${project._id}-${lastRefresh}`}
+                                key={project._id}
                                 categories={project.categories}
                                 settings={project.settings}
                               />

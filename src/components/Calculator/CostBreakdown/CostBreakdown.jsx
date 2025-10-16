@@ -72,7 +72,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     }
   }, [categories, settings, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
 
-  // FIX: Remove 'categories' from dependency array
   const calculations = useMemo(() => {
     if (!calculatorEngine) {
       const errorMessage = 'Calculator engine not available';
@@ -174,7 +173,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                   category: category.name,
                   type: item.type,
                   subtype: item.subtype || '',
-                  description: item.description || '',
                   quantity: units,
                   unitType: unitLabel,
                   costPerUnit: (parseFloat(item.materialCost) || 0).toFixed(4),
@@ -339,7 +337,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                             <th>Item</th>
                             <th>Category</th>
                             <th>Type</th>
-                            <th>Description</th>
                             <th>Qty</th>
                             <th>Unit Cost</th>
                             <th>Total</th>
@@ -351,24 +348,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
                               <td>{item.item}</td>
                               <td>{item.category}</td>
                               <td>{item.type}{item.subtype ? ` - ${item.subtype}` : ''}</td>
-                              <td className={styles.descriptionCell}>
-                                <span 
-                                  className={styles.descriptionText} 
-                                  title={item.description || 'No description'}
-                                >
-                                  {expandedDescriptions[`material-${index}`] || item.description.length <= 50 
-                                    ? item.description || '-' 
-                                    : `${item.description.slice(0, 50)}...`}
-                                </span>
-                                {item.description.length > 50 && (
-                                  <button
-                                    className={styles.toggleDescriptionButton}
-                                    onClick={() => toggleDescription(index, 'material')}
-                                  >
-                                    {expandedDescriptions[`material-${index}`] ? 'Less' : 'More'}
-                                  </button>
-                                )}
-                              </td>
                               <td>{(item.quantity || 0).toFixed(2)} {item.unitType || 'units'}</td>
                               <td>{formatCurrency(item.costPerUnit || 0)}</td>
                               <td>{formatCurrency(item.total || 0)}</td>

@@ -17,7 +17,6 @@ const validateSurface = (surface, measurementType) => {
     return { isValid: false, error: 'Surface must be an object' };
   }
 
-  // FIXED: Use normalized measurement type
   const normalizedType = normalizeMeasurementType(measurementType);
   
   if (normalizedType === MEASUREMENT_TYPES.SQUARE_FOOT) {
@@ -53,7 +52,7 @@ const getSurfaceName = (measurementType, index) => {
   }
 };
 
-// FIXED: Create clean surface with normalized measurement type
+// FIXED: Preserve manualSqft flag when creating clean surfaces
 const createCleanSurface = (measurementType, index, existingSurface = {}) => {
   const normalizedType = normalizeMeasurementType(measurementType);
   const surfaceId = existingSurface.id || `surface_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -69,23 +68,32 @@ const createCleanSurface = (measurementType, index, existingSurface = {}) => {
   const baseSurface = {
     id: surfaceId,
     name: safeName,
-    measurementType: normalizedType, // FIXED: Store normalized type
+    measurementType: normalizedType,
     subtype: safeSubtype
   };
 
   if (normalizedType === MEASUREMENT_TYPES.SQUARE_FOOT) {
-    const width = typeof existingSurface.width === 'number' ? existingSurface.width : 5;
-    const height = typeof existingSurface.height === 'number' ? existingSurface.height : 5;
-    const sqft = typeof existingSurface.sqft === 'number' ? existingSurface.sqft : (width * height);
+    // FIXED: Preserve manualSqft flag
+    const manualSqft = existingSurface.manualSqft || false;
     
-    return { ...baseSurface, width, height, sqft };
+    if (manualSqft) {
+      // Manual mode - only sqft is needed
+      const sqft = typeof existingSurface.sqft === 'number' ? existingSurface.sqft : 25;
+      return { ...baseSurface, sqft, manualSqft: true };
+    } else {
+      // Dimension mode - width, height, and calculated sqft
+      const width = typeof existingSurface.width === 'number' ? existingSurface.width : 5;
+      const height = typeof existingSurface.height === 'number' ? existingSurface.height : 5;
+      const sqft = typeof existingSurface.sqft === 'number' ? existingSurface.sqft : (width * height);
+      return { ...baseSurface, width, height, sqft, manualSqft: false };
+    }
   } else if (normalizedType === MEASUREMENT_TYPES.LINEAR_FOOT) {
     return { ...baseSurface, linearFt: typeof existingSurface.linearFt === 'number' ? existingSurface.linearFt : 10 };
   } else if (normalizedType === MEASUREMENT_TYPES.BY_UNIT) {
     return { ...baseSurface, units: typeof existingSurface.units === 'number' ? existingSurface.units : 1 };
   }
 
-  return { ...baseSurface, width: 5, height: 5, sqft: 25 };
+  return { ...baseSurface, width: 5, height: 5, sqft: 25, manualSqft: false };
 };
 
 export default function SurfaceManager({ 
@@ -102,7 +110,6 @@ export default function SurfaceManager({
 
   const surfaces = useMemo(() => Array.isArray(workItem.surfaces) ? workItem.surfaces : [], [workItem.surfaces]);
 
-  // FIXED: Sanitize with normalized measurement types
   const sanitizeSurfaces = useCallback((surfaces, measurementType) => {
     if (!Array.isArray(surfaces)) {
       console.warn('Surfaces is not an array, creating empty array');
@@ -158,7 +165,6 @@ export default function SurfaceManager({
     }
   }, [workItem, disabled, sanitizeSurfaces, onChange, onError]);
 
-  // FIXED: Use helper function from constants
   const getMeasurementUnit = useCallback(() => {
     return getMeasurementTypeUnit(workItem.measurementType);
   }, [workItem.measurementType]);
