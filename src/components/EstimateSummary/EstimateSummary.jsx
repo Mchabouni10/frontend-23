@@ -1,10 +1,10 @@
-//src/components/EstimateSummary/EstimateSummary.jsx
+// src/components/EstimateSummary/EstimateSummary.jsx
 import { useRef, useState, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPrint, faArrowLeft, faEnvelope, faPhone } from '@fortawesome/free-solid-svg-icons';
 import { useParams, useNavigate } from 'react-router-dom';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { CalculatorEngine } from '../Calculator/engine/CalculatorEngine';
 import { getProject } from '../../services/projectService';
 import { useWorkType } from '../../context/WorkTypeContext';
@@ -21,7 +21,6 @@ export default function EstimateSummary() {
   const [error, setError] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
-  const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
   const { getMeasurementType, isValidSubtype, getWorkTypeDetails } = useWorkType();
 
@@ -178,7 +177,6 @@ export default function EstimateSummary() {
                 category: category.name,
                 quantity: units,
                 unitType: unitLabel,
-                costPerUnit: parseFloat(item.materialCost) || 0,
                 total: materialCost,
               });
             }
@@ -190,7 +188,6 @@ export default function EstimateSummary() {
                 description: item.description || '',
                 quantity: units,
                 unitType: unitLabel,
-                costPerUnit: parseFloat(item.laborCost) || 0,
                 total: laborCost,
               });
             }
@@ -285,46 +282,452 @@ export default function EstimateSummary() {
 
   const wasteEntries = settings?.wasteEntries || [];
 
-  const toggleDescription = (index, type) => {
-    setExpandedDescriptions(prev => ({
-      ...prev,
-      [`${type}-${index}`]: !prev[`${type}-${index}`]
-    }));
-  };
-
   const handlePrint = async () => {
     setIsPrinting(true);
     try {
-      const canvas = await html2canvas(componentRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-      });
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
       });
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 15;
+      let yPosition = margin;
 
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      const primaryColor = [0, 95, 115];
+      const lightGray = [240, 240, 240];
+      const darkGray = [51, 51, 51];
+
+      const checkAddPage = (requiredSpace) => {
+        if (yPosition + requiredSpace > pageHeight - margin) {
+          pdf.addPage();
+          yPosition = margin;
+          return true;
+        }
+        return false;
+      };
+
+      try {
+        pdf.addImage(logoImage, 'PNG', margin, yPosition, 20, 20);
+      } catch (err) {
+        console.warn('Logo not added to PDF:', err);
       }
+
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(margin + 25, yPosition, pageWidth - 2 * margin - 25, 20, 'F');
+      
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFontSize(16);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('RAWDAH REMODELING COMPANY', margin + 30, yPosition + 7);
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('1234 Example St, Suite 567, Chicago, IL 60601', margin + 30, yPosition + 12);
+      pdf.text('(224) 817-3264 | info@rawdahremodeling.com', margin + 30, yPosition + 16);
+
+      yPosition += 25;
+
+      pdf.setFillColor(...lightGray);
+      pdf.rect(margin, yPosition, pageWidth - 2 * margin, 15, 'F');
+      
+      pdf.setTextColor(...darkGray);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(customer.projectName || 'Project Estimate', pageWidth / 2, yPosition + 6, { align: 'center' });
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`Estimate #${id}`, pageWidth / 2, yPosition + 11, { align: 'center' });
+
+      yPosition += 20;
+
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...primaryColor);
+      pdf.text('CUSTOMER INFORMATION', margin, yPosition);
+      yPosition += 7;
+
+      autoTable(pdf, {
+        startY: yPosition,
+        head: [['Customer Details', 'Project Details']],
+        body: [
+          [
+            `Name: ${customer.firstName} ${customer.lastName}\nPhone: ${formatPhoneNumber(customer.phone)}\nEmail: ${customer.email || 'N/A'}`,
+            `Address: ${customer.street}${customer.unit ? `, ${customer.unit}` : ''}, ${customer.state} ${customer.zipCode}\nType: ${customer.type}\nPayment: ${customer.paymentType}\nStart: ${customer.startDate || 'TBD'}\nFinish: ${customer.finishDate || 'TBD'}`
+          ]
+        ],
+        theme: 'grid',
+        styles: { fontSize: 8, cellPadding: 3 },
+        headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
+        margin: { left: margin, right: margin }
+      });
+
+      yPosition = pdf.lastAutoTable.finalY + 10;
+
+      if (categoryBreakdowns.length > 0) {
+        checkAddPage(40);
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...primaryColor);
+        pdf.text('CATEGORY SUMMARY', margin, yPosition);
+        yPosition += 7;
+
+        const categoryData = categoryBreakdowns.map(cat => [
+          cat.name,
+          cat.itemCount.toString(),
+          formatCurrency(cat.materialCost),
+          formatCurrency(cat.laborCost),
+          formatCurrency(cat.subtotal)
+        ]);
+
+        categoryData.push([
+          { content: 'TOTAL', styles: { fontStyle: 'bold' } },
+          { content: categoryBreakdowns.reduce((sum, cat) => sum + cat.itemCount, 0).toString(), styles: { fontStyle: 'bold' } },
+          { content: formatCurrency(baseMaterialCost), styles: { fontStyle: 'bold' } },
+          { content: formatCurrency(baseLaborCost), styles: { fontStyle: 'bold' } },
+          { content: formatCurrency(baseSubtotal), styles: { fontStyle: 'bold' } }
+        ]);
+
+        autoTable(pdf, {
+          startY: yPosition,
+          head: [['Category', 'Items', 'Material Cost', 'Labor Cost', 'Subtotal']],
+          body: categoryData,
+          theme: 'striped',
+          styles: { fontSize: 8, cellPadding: 2 },
+          headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', halign: 'center' },
+          columnStyles: {
+            0: { cellWidth: 50 },
+            1: { halign: 'center', cellWidth: 20 },
+            2: { halign: 'right', cellWidth: 30 },
+            3: { halign: 'right', cellWidth: 30 },
+            4: { halign: 'right', cellWidth: 30 }
+          },
+          margin: { left: margin, right: margin }
+        });
+
+        yPosition = pdf.lastAutoTable.finalY + 10;
+      }
+
+      if (materialBreakdown.length > 0) {
+        checkAddPage(40);
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...primaryColor);
+        pdf.text('MATERIAL COSTS', margin, yPosition);
+        yPosition += 7;
+
+        const materialData = materialBreakdown.map(item => [
+          item.item,
+          item.category,
+          `${item.quantity.toFixed(2)} ${item.unitType}`,
+          formatCurrency(item.total)
+        ]);
+
+        autoTable(pdf, {
+          startY: yPosition,
+          head: [['Item', 'Category', 'Quantity', 'Total']],
+          body: materialData,
+          theme: 'striped',
+          styles: { fontSize: 8, cellPadding: 2 },
+          headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
+          columnStyles: {
+            0: { cellWidth: 60 },
+            1: { cellWidth: 40 },
+            2: { halign: 'center', cellWidth: 35 },
+            3: { halign: 'right', cellWidth: 35 }
+          },
+          margin: { left: margin, right: margin }
+        });
+
+        yPosition = pdf.lastAutoTable.finalY + 10;
+      }
+
+      if (laborBreakdown.length > 0) {
+        checkAddPage(40);
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...primaryColor);
+        pdf.text('LABOR COSTS', margin, yPosition);
+        yPosition += 7;
+
+        const laborData = laborBreakdown.map(item => [
+          item.item,
+          item.category,
+          item.description || '-',
+          `${item.quantity.toFixed(2)} ${item.unitType}`,
+          formatCurrency(item.total)
+        ]);
+
+        autoTable(pdf, {
+          startY: yPosition,
+          head: [['Item', 'Category', 'Description', 'Quantity', 'Total']],
+          body: laborData,
+          theme: 'striped',
+          styles: { fontSize: 8, cellPadding: 2 },
+          headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
+          columnStyles: {
+            0: { cellWidth: 40 },
+            1: { cellWidth: 30 },
+            2: { cellWidth: 50 },
+            3: { halign: 'center', cellWidth: 25 },
+            4: { halign: 'right', cellWidth: 25 }
+          },
+          margin: { left: margin, right: margin }
+        });
+
+        yPosition = pdf.lastAutoTable.finalY + 10;
+      }
+
+      checkAddPage(60);
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...primaryColor);
+      pdf.text('COST CALCULATION', margin, yPosition);
+      yPosition += 7;
+
+      const calculationData = [
+        ['Base Material Cost', formatCurrency(baseMaterialCost)],
+        ['Base Labor Cost', formatCurrency(baseLaborCost)]
+      ];
+
+      if (laborDiscount > 0) {
+        calculationData.push(['Less: Labor Discount', `-${formatCurrency(laborDiscount)}`]);
+      }
+
+      calculationData.push([
+        { content: 'Base Subtotal', styles: { fontStyle: 'bold' } },
+        { content: formatCurrency(baseSubtotal), styles: { fontStyle: 'bold' } }
+      ]);
+
+      if (wasteEntriesTotal > 0) {
+        calculationData.push(['Waste Factor by Surface', formatCurrency(wasteEntriesTotal)]);
+        wasteEntries.forEach(entry => {
+          const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+          const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+          const wasteCost = surfaceCost * wasteFactor;
+          calculationData.push([
+            `  • ${entry.surfaceName} ($${surfaceCost.toFixed(2)} × ${(wasteFactor * 100).toFixed(0)}%)`,
+            formatCurrency(wasteCost)
+          ]);
+        });
+      }
+
+      if (taxAmount > 0) {
+        calculationData.push([`Sales Tax (${((settings?.taxRate || 0) * 100).toFixed(1)}%)`, formatCurrency(taxAmount)]);
+      }
+
+      if (markupAmount > 0) {
+        calculationData.push([`Profit Markup (${((settings?.markup || 0) * 100).toFixed(1)}%)`, formatCurrency(markupAmount)]);
+      }
+
+      if (transportationFee > 0) {
+        calculationData.push(['Transportation Fee', formatCurrency(transportationFee)]);
+      }
+
+      if (miscFeesTotal > 0) {
+        calculationData.push(['Miscellaneous Fees', formatCurrency(miscFeesTotal)]);
+      }
+
+      calculationData.push([
+        { content: 'PROJECT TOTAL', styles: { fontStyle: 'bold', fontSize: 10, fillColor: lightGray } },
+        { content: formatCurrency(grandTotal), styles: { fontStyle: 'bold', fontSize: 10, fillColor: lightGray } }
+      ]);
+
+      autoTable(pdf, {
+        startY: yPosition,
+        body: calculationData,
+        theme: 'plain',
+        styles: { fontSize: 9, cellPadding: 3 },
+        columnStyles: {
+          0: { cellWidth: 120 },
+          1: { halign: 'right', cellWidth: 50 }
+        },
+        margin: { left: margin, right: margin }
+      });
+
+      yPosition = pdf.lastAutoTable.finalY + 10;
+
+      checkAddPage(40);
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...primaryColor);
+      pdf.text('PAYMENT SUMMARY', margin, yPosition);
+      yPosition += 7;
+
+      const paymentData = [
+        ['Project Total', formatCurrency(grandTotal)]
+      ];
+
+      if (depositAmount > 0) {
+        paymentData.push(['Less: Deposit', `-${formatCurrency(depositAmount)}`]);
+      }
+
+      paymentData.push([
+        { content: 'Amount Due', styles: { fontStyle: 'bold' } },
+        { content: formatCurrency(adjustedGrandTotal), styles: { fontStyle: 'bold' } }
+      ]);
+
+      if (paymentDetails.totalPaid > 0) {
+        paymentData.push(['Less: Payments Made', `-${formatCurrency(paymentDetails.totalPaid)}`]);
+      }
+
+      paymentData.push([
+        { content: 'BALANCE DUE', styles: { fontStyle: 'bold', fontSize: 10, fillColor: lightGray } },
+        { content: formatCurrency(remainingBalance), styles: { fontStyle: 'bold', fontSize: 10, fillColor: lightGray, textColor: remainingBalance > 0 ? [208, 0, 0] : [43, 147, 72] } }
+      ]);
+
+      if (overpayment > 0) {
+        paymentData.push([
+          { content: 'CREDIT BALANCE', styles: { fontStyle: 'bold' } },
+          { content: formatCurrency(overpayment), styles: { fontStyle: 'bold', textColor: [43, 147, 72] } }
+        ]);
+      }
+
+      autoTable(pdf, {
+        startY: yPosition,
+        body: paymentData,
+        theme: 'plain',
+        styles: { fontSize: 9, cellPadding: 3 },
+        columnStyles: {
+          0: { cellWidth: 120 },
+          1: { halign: 'right', cellWidth: 50 }
+        },
+        margin: { left: margin, right: margin }
+      });
+
+      yPosition = pdf.lastAutoTable.finalY + 10;
+
+      checkAddPage(90);
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...primaryColor);
+      pdf.text('TERMS & CONDITIONS', margin, yPosition);
+      yPosition += 7;
+
+      const terms = [
+        { 
+          title: 'Payment Schedule:', 
+          text: 'A 50% deposit is required upon contract signing to initiate the project. An additional 30% is due upon delivery of materials to the project site. The remaining 20% is payable upon satisfactory completion.' 
+        },
+        { 
+          title: 'Payment Policy:', 
+          text: 'We accept checks, QuickPay, Zelle, and all major cards. A 4% processing fee applies to card transactions. Materials will not be released until payment has cleared.' 
+        },
+        { 
+          title: 'Materials:', 
+          text: 'All materials subject to availability and price changes. Substitutions may be made with customer approval.' 
+        },
+        { 
+          title: 'Warranty:', 
+          text: '1-year workmanship warranty. Material warranties per manufacturer specifications.' 
+        },
+        { 
+          title: 'Changes:', 
+          text: 'Any changes to scope of work may result in additional charges. Written change orders required.' 
+        },
+        { 
+          title: 'Acceptance:', 
+          text: 'This estimate is valid for 30 days. Work to commence upon receipt of signed contract and deposit.' 
+        }
+      ];
+
+      pdf.setFontSize(7.5);
+      
+      terms.forEach((term) => {
+        if (checkAddPage(18)) {
+          yPosition += 3;
+        }
+        
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...darkGray);
+        const titleWidth = pdf.getTextWidth(term.title);
+        pdf.text(term.title, margin, yPosition);
+        
+        pdf.setFont('helvetica', 'normal');
+        const textX = margin + titleWidth + 2;
+        const maxWidth = pageWidth - textX - margin;
+        const lines = pdf.splitTextToSize(term.text, maxWidth);
+        pdf.text(lines, textX, yPosition);
+        
+        yPosition += Math.max(lines.length * 2.8, 4) + 2;
+      });
+
+      yPosition += 5;
+
+      if (customer.notes) {
+        checkAddPage(25);
+        
+        pdf.setFontSize(11);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...primaryColor);
+        pdf.text('SPECIAL INSTRUCTIONS', margin, yPosition);
+        yPosition += 5;
+
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(...darkGray);
+        const noteLines = pdf.splitTextToSize(customer.notes, pageWidth - 2 * margin);
+        pdf.text(noteLines, margin, yPosition);
+        yPosition += noteLines.length * 4 + 10;
+      }
+
+      checkAddPage(50);
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...primaryColor);
+      pdf.text('AUTHORIZATION & ACCEPTANCE', margin, yPosition);
+      yPosition += 7;
+
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...darkGray);
+      const authText = `By signing below, I/We acknowledge that I/We have read and agree to the terms and conditions outlined above. I/We authorize Rawdah Remodeling Company to proceed with the work described at the total contract price of ${formatCurrency(grandTotal)}.`;
+      const authLines = pdf.splitTextToSize(authText, pageWidth - 2 * margin);
+      pdf.text(authLines, margin, yPosition);
+      yPosition += authLines.length * 4 + 10;
+
+      const sigWidth = (pageWidth - 3 * margin) / 2;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Customer Signature:', margin, yPosition);
+      pdf.text('Contractor Signature:', margin + sigWidth + margin, yPosition);
+      yPosition += 3;
+
+      pdf.line(margin, yPosition + 10, margin + sigWidth, yPosition + 10);
+      pdf.line(margin + sigWidth + margin, yPosition + 10, pageWidth - margin, yPosition + 10);
+      yPosition += 15;
+
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Printed Name: _____________________', margin, yPosition);
+      pdf.text('Printed Name: _____________________', margin + sigWidth + margin, yPosition);
+      yPosition += 4;
+      pdf.text('Date: _____________', margin, yPosition);
+      pdf.text('Date: _____________', margin + sigWidth + margin, yPosition);
+
+      const footerY = pageHeight - 15;
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...darkGray);
+      pdf.text('Thank you for choosing Rawdah Remodeling Company', pageWidth / 2, footerY, { align: 'center' });
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('For questions, contact us at (224) 817-3264', pageWidth / 2, footerY + 4, { align: 'center' });
 
       pdf.save(`Estimate_${id}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
     } finally {
       setIsPrinting(false);
     }
@@ -502,85 +905,66 @@ export default function EstimateSummary() {
             <div className={styles.sectionHeader}>
               <h3 className={styles.sectionTitle}>Detailed Cost Breakdown</h3>
             </div>
-            <div className={styles.tableContainer}>
-              {materialBreakdown.length > 0 && (
-                <>
-                  <h4 className={styles.sectionTitle}>Material Costs</h4>
-                  <table className={styles.detailTable} aria-label="Material Cost Breakdown">
-                    <thead>
-                      <tr>
-                        <th className={styles.tableHeader}>Item</th>
-                        <th className={styles.tableHeader}>Category</th>
-                        <th className={styles.tableHeader}>Quantity</th>
-                        <th className={styles.tableHeader}>Unit Cost</th>
-                        <th className={styles.tableHeader}>Total</th>
+            
+            {materialBreakdown.length > 0 && (
+              <div className={styles.tableContainer}>
+                <h4 className={styles.subsectionTitle}>Material Costs</h4>
+                <table className={styles.detailTable} aria-label="Material Cost Breakdown">
+                  <thead>
+                    <tr>
+                      <th className={styles.tableHeader}>Item</th>
+                      <th className={styles.tableHeader}>Category</th>
+                      <th className={styles.tableHeader}>Quantity</th>
+                      <th className={styles.tableHeader}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {materialBreakdown.map((item, index) => (
+                      <tr key={index} className={styles.tableRow}>
+                        <td className={styles.tableCell}>{item.item}</td>
+                        <td className={styles.tableCell}>{item.category}</td>
+                        <td className={styles.tableCell}>
+                          {(item.quantity || 0).toFixed(2)} {item.unitType}
+                        </td>
+                        <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {materialBreakdown.map((item, index) => (
-                        <tr key={index} className={styles.tableRow}>
-                          <td className={styles.tableCell}>{item.item}</td>
-                          <td className={styles.tableCell}>{item.category}</td>
-                          <td className={styles.tableCell}>
-                            {(item.quantity || 0).toFixed(2)} {item.unitType}
-                          </td>
-                          <td className={styles.tableCell}>{formatCurrency(item.costPerUnit)}</td>
-                          <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
-              {laborBreakdown.length > 0 && (
-                <>
-                  <h4 className={styles.sectionTitle}>Labor Costs</h4>
-                  <table className={styles.detailTable} aria-label="Labor Cost Breakdown">
-                    <thead>
-                      <tr>
-                        <th className={styles.tableHeader}>Item</th>
-                        <th className={styles.tableHeader}>Category</th>
-                        <th className={styles.tableHeader}>Description</th>
-                        <th className={styles.tableHeader}>Quantity</th>
-                        <th className={styles.tableHeader}>Unit Cost</th>
-                        <th className={styles.tableHeader}>Total</th>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            {laborBreakdown.length > 0 && (
+              <div className={styles.tableContainer}>
+                <h4 className={styles.subsectionTitle}>Labor Costs</h4>
+                <table className={styles.detailTable} aria-label="Labor Cost Breakdown">
+                  <thead>
+                    <tr>
+                      <th className={styles.tableHeader}>Item</th>
+                      <th className={styles.tableHeader}>Category</th>
+                      <th className={styles.tableHeader}>Description</th>
+                      <th className={styles.tableHeader}>Quantity</th>
+                      <th className={styles.tableHeader}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {laborBreakdown.map((item, index) => (
+                      <tr key={index} className={styles.tableRow}>
+                        <td className={styles.tableCell}>{item.item}</td>
+                        <td className={styles.tableCell}>{item.category}</td>
+                        <td className={styles.descriptionCell} title={item.description || 'No description'}>
+                          {item.description || '-'}
+                        </td>
+                        <td className={styles.tableCell}>
+                          {(item.quantity || 0).toFixed(2)} {item.unitType}
+                        </td>
+                        <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {laborBreakdown.map((item, index) => (
-                        <tr key={index} className={styles.tableRow}>
-                          <td className={styles.tableCell}>{item.item}</td>
-                          <td className={styles.tableCell}>{item.category}</td>
-                          <td className={styles.descriptionCell}>
-                            <span 
-                              className={styles.descriptionText} 
-                              title={item.description || 'No description'}
-                            >
-                              {expandedDescriptions[`labor-${index}`] || item.description.length <= 50 
-                                ? item.description || '-' 
-                                : `${item.description.slice(0, 50)}...`}
-                            </span>
-                            {item.description.length > 50 && (
-                              <button
-                                className={styles.toggleDescriptionButton}
-                                onClick={() => toggleDescription(index, 'labor')}
-                              >
-                                {expandedDescriptions[`labor-${index}`] ? 'Less' : 'More'}
-                              </button>
-                            )}
-                          </td>
-                          <td className={styles.tableCell}>
-                            {(item.quantity || 0).toFixed(2)} {item.unitType}
-                          </td>
-                          <td className={styles.tableCell}>{formatCurrency(item.costPerUnit)}</td>
-                          <td className={styles.tableCellRight}>{formatCurrency(item.total)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              )}
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
 
           <section className={styles.calculationSection}>

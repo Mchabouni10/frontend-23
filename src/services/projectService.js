@@ -16,11 +16,18 @@ function validateProjectData(projectData) {
       errors.push(`Category at index ${catIndex} has no valid work items.`);
       return;
     }
+    
     cat.workItems.forEach((item, itemIndex) => {
+      // CRITICAL: Validate custom work types have customWorkTypeName
+      if (item.type === 'custom-work-type' && (!item.customWorkTypeName || item.customWorkTypeName.trim() === '')) {
+        errors.push(`Custom work item at category ${catIndex}, item ${itemIndex} is missing customWorkTypeName.`);
+      }
+
       if (!item.surfaces || !Array.isArray(item.surfaces)) {
         errors.push(`Item at category ${catIndex}, item ${itemIndex} has no valid surfaces.`);
         return;
       }
+      
       item.surfaces.forEach((surf, surfIndex) => {
         if (surf.measurementType === 'linear-foot') {
           const linearFt = parseFloat(surf.linearFt);
@@ -46,20 +53,55 @@ function validateProjectData(projectData) {
 }
 
 export function saveProject(projectData) {
+  // DEBUG: Log what we're about to send
+  console.log('📤 saveProject called with data:', {
+    categoriesCount: projectData.categories?.length,
+    categories: projectData.categories?.map((cat, i) => ({
+      name: cat.name,
+      key: cat.key,
+      workItemsCount: cat.workItems?.length,
+      workItems: cat.workItems?.map(item => ({
+        name: item.name,
+        type: item.type,
+        customWorkTypeName: item.customWorkTypeName,
+      }))
+    }))
+  });
+
   const errors = validateProjectData(projectData);
   if (errors.length > 0) {
-    console.error('Validation errors in saveProject:', errors);
-    // Proceed with data as-is, relying on sanitizeSurface
+    console.error('❌ Validation errors in saveProject:', errors);
+    // Return the errors instead of proceeding
+    return Promise.reject({ error: 'Validation failed', details: errors });
   }
+  
   return sendRequest(BASE_URL, 'POST', projectData);
 }
 
 export function updateProject(id, projectData) {
+  // DEBUG: Log what we're about to send
+  console.log('📤 updateProject called with data:', {
+    id,
+    categoriesCount: projectData.categories?.length,
+    categories: projectData.categories?.map((cat, i) => ({
+      name: cat.name,
+      key: cat.key,
+      workItemsCount: cat.workItems?.length,
+      workItems: cat.workItems?.map(item => ({
+        name: item.name,
+        type: item.type,
+        customWorkTypeName: item.customWorkTypeName,
+        hasCustomName: !!item.customWorkTypeName,
+      }))
+    }))
+  });
+
   const errors = validateProjectData(projectData);
   if (errors.length > 0) {
-    console.error('Validation errors in updateProject:', errors);
-    // Proceed with data as-is
+    console.error('❌ Validation errors in updateProject:', errors);
+    return Promise.reject({ error: 'Validation failed', details: errors });
   }
+  
   return sendRequest(`${BASE_URL}${id}`, 'PUT', projectData);
 }
 
@@ -68,7 +110,25 @@ export function getProjects() {
 }
 
 export function getProject(id) {
-  return sendRequest(`${BASE_URL}${id}`, 'GET');
+  return sendRequest(`${BASE_URL}${id}`, 'GET').then(project => {
+    // DEBUG: Log what we received
+    console.log('📥 getProject received:', {
+      id,
+      categoriesCount: project.categories?.length,
+      categories: project.categories?.map((cat, i) => ({
+        name: cat.name,
+        key: cat.key,
+        workItemsCount: cat.workItems?.length,
+        workItems: cat.workItems?.map(item => ({
+          name: item.name,
+          type: item.type,
+          customWorkTypeName: item.customWorkTypeName,
+          hasCustomName: !!item.customWorkTypeName,
+        }))
+      }))
+    });
+    return project;
+  });
 }
 
 export function deleteProject(id) {

@@ -1,4 +1,3 @@
-
 // src/components/CustomerInfo/CustomerInfo.jsx
 import React, { useState, useEffect } from 'react';
 import PhoneInput from 'react-phone-input-2';
@@ -294,15 +293,12 @@ export default function CustomerInfo({ customer, setCustomer, disabled = false }
     setAddressComponents(updatedComponents);
     
     // Update the combined street field
-    const street = constructStreetAddress({
-      ...updatedComponents,
-      city: customer.city // Include city in the update
-    });
+    const street = constructStreetAddress(updatedComponents);
     
     setCustomer({ 
       ...customer, 
       street,
-      [component]: updatedComponents[component] // Also update individual component if needed
+      [component]: updatedComponents[component]
     });
   };
 
@@ -409,126 +405,133 @@ export default function CustomerInfo({ customer, setCustomer, disabled = false }
           isOpen={openSections.address}
           toggleOpen={() => toggleSection('address')}
         >
-          <div className={styles.field}>
-            <label className={styles.label}>
-              <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Address Number{' '}
-              <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              value={addressComponents.addressNumber || ''}
-              onChange={(e) => handleAddressComponentChange('addressNumber', e.target.value)}
-              className={`${styles.input} ${!addressComponents.addressNumber && !disabled && styles.error}`}
-              disabled={disabled}
-              placeholder="Enter address number"
-            />
+          {/* Street Address Line - Professional Layout */}
+          <div className={styles.addressRow}>
+            <div className={styles.addressFieldSmall}>
+              <label className={styles.label}>
+                <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Number{' '}
+                <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                value={addressComponents.addressNumber || ''}
+                onChange={(e) => handleAddressComponentChange('addressNumber', e.target.value)}
+                className={`${styles.input} ${!addressComponents.addressNumber && !disabled && styles.error}`}
+                disabled={disabled}
+                placeholder="123"
+              />
+            </div>
+            <div className={styles.addressFieldSmall}>
+              <label className={styles.label}>
+                <FontAwesomeIcon icon={faMapMarkerAlt} className={styles.icon} /> Direction
+              </label>
+              <select
+                value={addressComponents.direction || ''}
+                onChange={(e) => handleAddressComponentChange('direction', e.target.value)}
+                className={styles.input}
+                disabled={disabled}
+              >
+                {DIRECTIONS.map((dir) => (
+                  <option key={dir.value} value={dir.value}>
+                    {dir.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className={styles.addressFieldLarge}>
+              <label className={styles.label}>
+                <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Street Name{' '}
+                <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                value={addressComponents.streetName || ''}
+                onChange={(e) => handleAddressComponentChange('streetName', e.target.value)}
+                className={`${styles.input} ${!addressComponents.streetName && !disabled && styles.error}`}
+                disabled={disabled}
+                placeholder="Main"
+              />
+            </div>
+            <div className={styles.addressFieldMedium}>
+              <label className={styles.label}>
+                <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Type{' '}
+                <span className={styles.required}>*</span>
+              </label>
+              <select
+                value={addressComponents.streetType || ''}
+                onChange={(e) => handleAddressComponentChange('streetType', e.target.value)}
+                className={`${styles.input} ${!addressComponents.streetType && !disabled && styles.error}`}
+                disabled={disabled}
+              >
+                {STREET_TYPES.map((type) => (
+                  <option key={type.value} value={type.value}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              <FontAwesomeIcon icon={faMapMarkerAlt} className={styles.icon} /> Direction
-            </label>
-            <select
-              value={addressComponents.direction || ''}
-              onChange={(e) => handleAddressComponentChange('direction', e.target.value)}
-              className={styles.input}
-              disabled={disabled}
-            >
-              {DIRECTIONS.map((dir) => (
-                <option key={dir.value} value={dir.value}>
-                  {dir.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Street Name{' '}
-              <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              value={addressComponents.streetName || ''}
-              onChange={(e) => handleAddressComponentChange('streetName', e.target.value)}
-              className={`${styles.input} ${!addressComponents.streetName && !disabled && styles.error}`}
-              disabled={disabled}
-              placeholder="Enter street name"
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Street Type{' '}
-              <span className={styles.required}>*</span>
-            </label>
-            <select
-              value={addressComponents.streetType || ''}
-              onChange={(e) => handleAddressComponentChange('streetType', e.target.value)}
-              className={`${styles.input} ${!addressComponents.streetType && !disabled && styles.error}`}
-              disabled={disabled}
-            >
-              {STREET_TYPES.map((type) => (
-                <option key={type.value} value={type.value}>
-                  {type.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              <FontAwesomeIcon icon={faCity} className={styles.icon} /> City{' '}
-              <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              value={customer.city || ''}
-              onChange={(e) => handleCityChange(e.target.value)}
-              className={`${styles.input} ${!customer.city && !disabled && styles.error}`}
-              disabled={disabled}
-              placeholder="Enter city name"
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              <FontAwesomeIcon icon={faHome} className={styles.icon} /> Unit
-            </label>
-            <input
-              type="text"
-              value={customer.unit || ''}
-              onChange={(e) => setCustomer({ ...customer, unit: e.target.value })}
-              className={styles.input}
-              disabled={disabled}
-              placeholder="Enter unit (if any)"
-            />
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              <FontAwesomeIcon icon={faMapMarkerAlt} className={styles.icon} /> State
-            </label>
-            <select
-              value={customer.state || 'IL'}
-              onChange={(e) => setCustomer({ ...customer, state: e.target.value })}
-              className={styles.input}
-              disabled={disabled}
-            >
-              <option value="IL">Illinois</option>
-              <option value="IN">Indiana</option>
-              <option value="WI">Wisconsin</option>
-            </select>
-          </div>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              <FontAwesomeIcon icon={faMapMarkerAlt} className={styles.icon} /> ZIP Code{' '}
-              <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              value={customer.zipCode || ''}
-              onChange={(e) => handleZipChange(e.target.value)}
-              onBlur={handleZipBlur}
-              className={`${styles.input} ${!customer.zipCode && !disabled && styles.error}`}
-              maxLength="5"
-              disabled={disabled}
-              placeholder="Enter 5-digit ZIP"
-            />
+
+          {/* City, Unit, State, ZIP Row */}
+          <div className={styles.addressRow}>
+            <div className={styles.addressFieldLarge}>
+              <label className={styles.label}>
+                <FontAwesomeIcon icon={faCity} className={styles.icon} /> City{' '}
+                <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                value={customer.city || ''}
+                onChange={(e) => handleCityChange(e.target.value)}
+                className={`${styles.input} ${!customer.city && !disabled && styles.error}`}
+                disabled={disabled}
+                placeholder="Chicago"
+              />
+            </div>
+            <div className={styles.addressFieldSmall}>
+              <label className={styles.label}>
+                <FontAwesomeIcon icon={faHome} className={styles.icon} /> Unit
+              </label>
+              <input
+                type="text"
+                value={customer.unit || ''}
+                onChange={(e) => setCustomer({ ...customer, unit: e.target.value })}
+                className={styles.input}
+                disabled={disabled}
+                placeholder="Apt 4B"
+              />
+            </div>
+            <div className={styles.addressFieldSmall}>
+              <label className={styles.label}>
+                <FontAwesomeIcon icon={faMapMarkerAlt} className={styles.icon} /> State
+              </label>
+              <select
+                value={customer.state || 'IL'}
+                onChange={(e) => setCustomer({ ...customer, state: e.target.value })}
+                className={styles.input}
+                disabled={disabled}
+              >
+                <option value="IL">Illinois</option>
+                <option value="IN">Indiana</option>
+                <option value="WI">Wisconsin</option>
+              </select>
+            </div>
+            <div className={styles.addressFieldSmall}>
+              <label className={styles.label}>
+                <FontAwesomeIcon icon={faMapMarkerAlt} className={styles.icon} /> ZIP{' '}
+                <span className={styles.required}>*</span>
+              </label>
+              <input
+                type="text"
+                value={customer.zipCode || ''}
+                onChange={(e) => handleZipChange(e.target.value)}
+                onBlur={handleZipBlur}
+                className={`${styles.input} ${!customer.zipCode && !disabled && styles.error}`}
+                maxLength="5"
+                disabled={disabled}
+                placeholder="60601"
+              />
+            </div>
           </div>
         </CollapsibleSection>
 

@@ -17,10 +17,13 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "@types/react-datepicker": "^7.0.0",
+    "canvg": "^4.0.3",
     "chart": "^0.1.2",
     "chart.js": "^4.4.9",
+    "dompurify": "^3.3.0",
     "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "print-js": "^1.6.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.3.0",
@@ -36,13 +39,12 @@
     "web-vitals": "^2.1.4",
     "zipcodes": "^8.0.0"
   },
- "scripts": {
-  "start": "react-app-rewired start",
-  "build": "react-app-rewired build",
-  "test": "react-app-rewired test",
-  "eject": "react-scripts eject"
-},
-
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-scripts eject"
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
