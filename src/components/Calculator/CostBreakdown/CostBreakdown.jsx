@@ -40,7 +40,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
   const [materialBreakdown, setMaterialBreakdown] = useState([]);
   const [laborBreakdown, setLaborBreakdown] = useState([]);
   const [isProcessingBreakdowns, setIsProcessingBreakdowns] = useState(false);
-  const [expandedDescriptions, setExpandedDescriptions] = useState({});
 
   const wasteEntriesTotal = useMemo(() => {
     const wasteEntries = settings.wasteEntries || [];
@@ -144,6 +143,23 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     }
   }, [calculatorEngine, addError]);
 
+  const getWorkTypeDisplayName = (item) => {
+    if (item.type === 'custom-work-type') {
+      return item.customWorkName || item.name || 'Custom Work';
+    }
+    
+    const typeDisplay = item.type
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+    
+    if (item.subtype) {
+      return `${typeDisplay} (${item.subtype})`;
+    }
+    
+    return typeDisplay;
+  };
+
   useEffect(() => {
     const processBreakdowns = async () => {
       if (!categories || categories.length === 0 || !calculatorEngine) {
@@ -157,6 +173,7 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
       try {
         const materialItems = [];
         const laborItems = [];
+        let itemCounter = 1;
 
         categories.forEach((category) => {
           (category.workItems || []).forEach((item) => {
@@ -164,18 +181,19 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
               const { units } = calculatorEngine.calculateWorkUnits(item);
               const { materialCost, laborCost } = calculatorEngine.calculateWorkCost(item);
 
-              const unitLabel = item.measurementType === 'linear-foot' ? 'linear ft' :
-                               item.measurementType === 'by-unit' ? 'units' : 'sqft';
+              const unitLabel = item.measurementType === 'linear-foot' ? 'LF' :
+                               item.measurementType === 'by-unit' ? 'unit' : 'SF';
+
+              const workTypeDisplay = getWorkTypeDisplayName(item);
 
               if (parseFloat(materialCost) > 0) {
                 materialItems.push({
-                  item: item.name,
+                  itemNumber: itemCounter,
                   category: category.name,
-                  type: item.type,
-                  subtype: item.subtype || '',
+                  workType: workTypeDisplay,
                   quantity: units,
                   unitType: unitLabel,
-                  costPerUnit: (parseFloat(item.materialCost) || 0).toFixed(4),
+                  costPerUnit: (parseFloat(item.materialCost) || 0),
                   total: materialCost,
                   units
                 });
@@ -183,21 +201,22 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
 
               if (parseFloat(laborCost) > 0) {
                 laborItems.push({
-                  item: item.name,
+                  itemNumber: itemCounter,
                   category: category.name,
-                  type: item.type,
-                  subtype: item.subtype || '',
+                  workType: workTypeDisplay,
                   description: item.description || '',
                   quantity: units,
                   unitType: unitLabel,
-                  costPerUnit: (parseFloat(item.laborCost) || 0).toFixed(4),
+                  costPerUnit: (parseFloat(item.laborCost) || 0),
                   total: laborCost,
                   units
                 });
               }
+              
+              itemCounter++;
             } catch (error) {
               console.error('Error processing item for breakdown:', error);
-              addError(`Error processing item ${item.name}: ${error.message}`);
+              addError(`Error processing item: ${error.message}`);
             }
           });
         });
@@ -227,13 +246,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
     }).format(numValue);
   };
 
-  const toggleDescription = (index, type) => {
-    setExpandedDescriptions(prev => ({
-      ...prev,
-      [`${type}-${index}`]: !prev[`${type}-${index}`]
-    }));
-  };
-
   if (!categories || !Array.isArray(categories)) {
     return (
       <div className={styles.error}>
@@ -249,13 +261,6 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
   return (
     <div className={styles.costBreakdown}>
       <h3 className={styles.sectionTitle}>Comprehensive Cost Analysis</h3>
-
-      <div style={{ marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#f0f0f0', fontSize: '0.8rem' }}>
-        <strong>Debug Info:</strong> Categories: {categories.length}, 
-        Total Items: {categories.reduce((sum, cat) => sum + (cat.workItems?.length || 0), 0)}, 
-        Has Data: {hasData ? 'Yes' : 'No'},
-        Engine Available: {calculatorEngine ? 'Yes' : 'No'}
-      </div>
 
       {!hasData && (
         <div className={styles.noDataMessage}>
@@ -277,33 +282,33 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
 
       {calculations.categoryBreakdowns.length > 0 && (
         <section className={styles.categorySection}>
-          <h4 className={styles.subSectionTitle}>Category Breakdown</h4>
+          <h4 className={styles.subSectionTitle}>Category Summary</h4>
           <table className={styles.breakdownTable}>
             <thead>
               <tr>
                 <th>Category</th>
-                <th>Items</th>
-                <th>Material Cost</th>
-                <th>Labor Cost</th>
-                <th>Subtotal</th>
+                <th className={styles.centerAlign}>Items</th>
+                <th className={styles.rightAlign}>Material</th>
+                <th className={styles.rightAlign}>Labor</th>
+                <th className={styles.rightAlign}>Subtotal</th>
               </tr>
             </thead>
             <tbody>
               {calculations.categoryBreakdowns.map((cat, index) => (
                 <tr key={index} className={styles.categoryRow}>
                   <td>{cat.name}</td>
-                  <td>{cat.itemCount}</td>
-                  <td>{formatCurrency(cat.materialCost)}</td>
-                  <td>{formatCurrency(cat.laborCost)}</td>
-                  <td className={styles.subtotal}>{formatCurrency(cat.subtotal)}</td>
+                  <td className={styles.centerAlign}>{cat.itemCount}</td>
+                  <td className={styles.rightAlign}>{formatCurrency(cat.materialCost)}</td>
+                  <td className={styles.rightAlign}>{formatCurrency(cat.laborCost)}</td>
+                  <td className={`${styles.rightAlign} ${styles.subtotal}`}>{formatCurrency(cat.subtotal)}</td>
                 </tr>
               ))}
               <tr className={styles.totalRow}>
-                <td>Total</td>
-                <td>{calculations.categoryBreakdowns.reduce((sum, cat) => sum + cat.itemCount, 0)}</td>
-                <td>{formatCurrency(calculations.totals.materialCost)}</td>
-                <td>{formatCurrency(calculations.totals.laborCost)}</td>
-                <td className={styles.subtotal}>{formatCurrency(calculations.totals.subtotal)}</td>
+                <td><strong>Total</strong></td>
+                <td className={styles.centerAlign}><strong>{calculations.categoryBreakdowns.reduce((sum, cat) => sum + cat.itemCount, 0)}</strong></td>
+                <td className={styles.rightAlign}><strong>{formatCurrency(calculations.totals.materialCost)}</strong></td>
+                <td className={styles.rightAlign}><strong>{formatCurrency(calculations.totals.laborCost)}</strong></td>
+                <td className={`${styles.rightAlign} ${styles.subtotal}`}><strong>{formatCurrency(calculations.totals.subtotal)}</strong></td>
               </tr>
             </tbody>
           </table>
@@ -311,231 +316,267 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
       )}
 
       <section className={styles.totalSection}>
-        <h4 className={styles.subSectionTitle}>Cost Calculation</h4>
+        <h4 className={styles.subSectionTitle}>Detailed Cost Breakdown</h4>
         <table className={styles.breakdownTable}>
           <tbody>
             <tr className={styles.detailRow}>
               <td>
-                Base Material Cost
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => setShowMaterialDetails(!showMaterialDetails)}
-                >
-                  {showMaterialDetails ? 'Hide' : 'Show'} Details
-                </button>
+                <div className={styles.labelWithButton}>
+                  <span>Material Costs</span>
+                  <button
+                    className={styles.toggleButton}
+                    onClick={() => setShowMaterialDetails(!showMaterialDetails)}
+                  >
+                    {showMaterialDetails ? '▼ Hide' : '▶ Show'} Details
+                  </button>
+                </div>
               </td>
-              <td>
+              <td className={styles.rightAlign}>
                 <span className={styles.totalValue}>{formatCurrency(calculations.totals.materialCost)}</span>
-                {showMaterialDetails && (
+              </td>
+            </tr>
+            {showMaterialDetails && (
+              <tr>
+                <td colSpan="2">
                   <div className={styles.detailBreakdown}>
                     {isProcessingBreakdowns ? (
-                      <p>Loading material details...</p>
+                      <p className={styles.loadingText}>Loading material details...</p>
                     ) : materialBreakdown.length > 0 ? (
                       <table className={styles.innerTable}>
                         <thead>
                           <tr>
-                            <th>Item</th>
+                            <th>Item #</th>
                             <th>Category</th>
-                            <th>Type</th>
-                            <th>Qty</th>
-                            <th>Unit Cost</th>
-                            <th>Total</th>
+                            <th>Work Type</th>
+                            <th className={styles.rightAlign}>Quantity</th>
+                            <th className={styles.rightAlign}>Rate</th>
+                            <th className={styles.rightAlign}>Total</th>
                           </tr>
                         </thead>
                         <tbody>
                           {materialBreakdown.map((item, index) => (
                             <tr key={index}>
-                              <td>{item.item}</td>
+                              <td className={styles.itemNumber}>#{item.itemNumber}</td>
                               <td>{item.category}</td>
-                              <td>{item.type}{item.subtype ? ` - ${item.subtype}` : ''}</td>
-                              <td>{(item.quantity || 0).toFixed(2)} {item.unitType || 'units'}</td>
-                              <td>{formatCurrency(item.costPerUnit || 0)}</td>
-                              <td>{formatCurrency(item.total || 0)}</td>
+                              <td className={styles.workTypeCell}>{item.workType}</td>
+                              <td className={styles.rightAlign}>{(item.quantity || 0).toFixed(2)} {item.unitType}</td>
+                              <td className={styles.rightAlign}>{formatCurrency(item.costPerUnit || 0)}/{item.unitType}</td>
+                              <td className={styles.rightAlign}><strong>{formatCurrency(item.total || 0)}</strong></td>
                             </tr>
                           ))}
+                          <tr className={styles.subtotalRow}>
+                            <td colSpan="5" className={styles.rightAlign}><strong>Total Materials:</strong></td>
+                            <td className={styles.rightAlign}><strong>{formatCurrency(calculations.totals.materialCost)}</strong></td>
+                          </tr>
                         </tbody>
                       </table>
                     ) : (
-                      <p>No material cost details available.</p>
+                      <p className={styles.emptyText}>No material costs recorded.</p>
                     )}
                   </div>
-                )}
-              </td>
-            </tr>
+                </td>
+              </tr>
+            )}
+            
             <tr className={styles.detailRow}>
               <td>
-                Base Labor Cost
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => setShowLaborDetails(!showLaborDetails)}
-                >
-                  {showLaborDetails ? 'Hide' : 'Show'} Details
-                </button>
+                <div className={styles.labelWithButton}>
+                  <span>Labor Costs</span>
+                  <button
+                    className={styles.toggleButton}
+                    onClick={() => setShowLaborDetails(!showLaborDetails)}
+                  >
+                    {showLaborDetails ? '▼ Hide' : '▶ Show'} Details
+                  </button>
+                </div>
               </td>
-              <td>
+              <td className={styles.rightAlign}>
                 <span className={styles.totalValue}>{formatCurrency(calculations.totals.laborCostBeforeDiscount)}</span>
-                {showLaborDetails && (
+              </td>
+            </tr>
+            {showLaborDetails && (
+              <tr>
+                <td colSpan="2">
                   <div className={styles.detailBreakdown}>
                     {isProcessingBreakdowns ? (
-                      <p>Loading labor details...</p>
+                      <p className={styles.loadingText}>Loading labor details...</p>
                     ) : laborBreakdown.length > 0 ? (
                       <table className={styles.innerTable}>
                         <thead>
                           <tr>
-                            <th>Item</th>
+                            <th>Item #</th>
                             <th>Category</th>
-                            <th>Type</th>
+                            <th>Work Type</th>
                             <th>Description</th>
-                            <th>Qty</th>
-                            <th>Unit Cost</th>
-                            <th>Total</th>
+                            <th className={styles.rightAlign}>Quantity</th>
+                            <th className={styles.rightAlign}>Rate</th>
+                            <th className={styles.rightAlign}>Total</th>
                           </tr>
                         </thead>
                         <tbody>
                           {laborBreakdown.map((item, index) => (
                             <tr key={index}>
-                              <td>{item.item}</td>
+                              <td className={styles.itemNumber}>#{item.itemNumber}</td>
                               <td>{item.category}</td>
-                              <td>{item.type}{item.subtype ? ` - ${item.subtype}` : ''}</td>
+                              <td className={styles.workTypeCell}>{item.workType}</td>
                               <td className={styles.descriptionCell}>
-                                <span 
-                                  className={styles.descriptionText} 
-                                  title={item.description || 'No description'}
-                                >
-                                  {expandedDescriptions[`labor-${index}`] || item.description.length <= 50 
-                                    ? item.description || '-' 
-                                    : `${item.description.slice(0, 50)}...`}
-                                </span>
-                                {item.description.length > 50 && (
-                                  <button
-                                    className={styles.toggleDescriptionButton}
-                                    onClick={() => toggleDescription(index, 'labor')}
-                                  >
-                                    {expandedDescriptions[`labor-${index}`] ? 'Less' : 'More'}
-                                  </button>
-                                )}
+                                {item.description || <span className={styles.emptyText}>—</span>}
                               </td>
-                              <td>{(item.quantity || 0).toFixed(2)} {item.unitType || 'units'}</td>
-                              <td>{formatCurrency(item.costPerUnit || 0)}</td>
-                              <td>{formatCurrency(item.total || 0)}</td>
+                              <td className={styles.rightAlign}>{(item.quantity || 0).toFixed(2)} {item.unitType}</td>
+                              <td className={styles.rightAlign}>{formatCurrency(item.costPerUnit || 0)}/{item.unitType}</td>
+                              <td className={styles.rightAlign}><strong>{formatCurrency(item.total || 0)}</strong></td>
                             </tr>
                           ))}
+                          <tr className={styles.subtotalRow}>
+                            <td colSpan="6" className={styles.rightAlign}><strong>Total Labor:</strong></td>
+                            <td className={styles.rightAlign}><strong>{formatCurrency(calculations.totals.laborCostBeforeDiscount)}</strong></td>
+                          </tr>
                         </tbody>
                       </table>
                     ) : (
-                      <p>No labor cost details available.</p>
+                      <p className={styles.emptyText}>No labor costs recorded.</p>
                     )}
                   </div>
-                )}
-              </td>
-            </tr>
+                </td>
+              </tr>
+            )}
+            
             {parseFloat(calculations.totals.laborDiscount) > 0 && (
               <tr className={styles.discountRow}>
                 <td>Labor Discount ({((settings?.laborDiscount || 0) * 100).toFixed(1)}%)</td>
-                <td>-{formatCurrency(calculations.totals.laborDiscount)}</td>
+                <td className={styles.rightAlign}>-{formatCurrency(calculations.totals.laborDiscount)}</td>
               </tr>
             )}
+            
             <tr className={styles.subtotalRow}>
-              <td>Base Subtotal</td>
-              <td>{formatCurrency(calculations.totals.subtotal)}</td>
+              <td><strong>Base Subtotal</strong></td>
+              <td className={styles.rightAlign}><strong>{formatCurrency(calculations.totals.subtotal)}</strong></td>
             </tr>
+            
             {wasteEntries.length > 0 && (
-              <tr className={styles.detailRow}>
-                <td>
-                  Waste Factor by Surface
-                  <button
-                    className={styles.toggleButton}
-                    onClick={() => setShowWasteDetails(!showWasteDetails)}
-                  >
-                    {showWasteDetails ? 'Hide' : 'Show'} Details
-                  </button>
-                </td>
-                <td>
-                  <span className={styles.totalValue}>{formatCurrency(wasteEntriesTotal)}</span>
-                  {showWasteDetails && (
-                    <div className={styles.detailBreakdown}>
-                      <table className={styles.innerTable}>
-                        <thead>
-                          <tr>
-                            <th>Surface</th>
-                            <th>Material Cost</th>
-                            <th>Waste %</th>
-                            <th>Waste Cost</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {wasteEntries.map((entry, index) => {
-                            const surfaceCost = parseFloat(entry.surfaceCost) || 0;
-                            const wasteFactor = parseFloat(entry.wasteFactor) || 0;
-                            const wasteCost = surfaceCost * wasteFactor;
-                            
-                            return (
-                              <tr key={index}>
-                                <td>{entry.surfaceName || `Surface ${index + 1}`}</td>
-                                <td>{formatCurrency(surfaceCost)}</td>
-                                <td>{(wasteFactor * 100).toFixed(0)}%</td>
-                                <td>{formatCurrency(wasteCost)}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+              <>
+                <tr className={styles.detailRow}>
+                  <td>
+                    <div className={styles.labelWithButton}>
+                      <span>Waste Factor by Surface</span>
+                      <button
+                        className={styles.toggleButton}
+                        onClick={() => setShowWasteDetails(!showWasteDetails)}
+                      >
+                        {showWasteDetails ? '▼ Hide' : '▶ Show'} Details
+                      </button>
                     </div>
-                  )}
-                </td>
-              </tr>
+                  </td>
+                  <td className={styles.rightAlign}>
+                    <span className={styles.totalValue}>{formatCurrency(wasteEntriesTotal)}</span>
+                  </td>
+                </tr>
+                {showWasteDetails && (
+                  <tr>
+                    <td colSpan="2">
+                      <div className={styles.detailBreakdown}>
+                        <table className={styles.innerTable}>
+                          <thead>
+                            <tr>
+                              <th>Surface Name</th>
+                              <th className={styles.rightAlign}>Material Cost</th>
+                              <th className={styles.rightAlign}>Waste %</th>
+                              <th className={styles.rightAlign}>Waste Cost</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {wasteEntries.map((entry, index) => {
+                              const surfaceCost = parseFloat(entry.surfaceCost) || 0;
+                              const wasteFactor = parseFloat(entry.wasteFactor) || 0;
+                              const wasteCost = surfaceCost * wasteFactor;
+                              
+                              return (
+                                <tr key={index}>
+                                  <td><strong>{entry.surfaceName || `Surface ${index + 1}`}</strong></td>
+                                  <td className={styles.rightAlign}>{formatCurrency(surfaceCost)}</td>
+                                  <td className={styles.rightAlign}>{(wasteFactor * 100).toFixed(1)}%</td>
+                                  <td className={styles.rightAlign}><strong>{formatCurrency(wasteCost)}</strong></td>
+                                </tr>
+                              );
+                            })}
+                            <tr className={styles.subtotalRow}>
+                              <td colSpan="3" className={styles.rightAlign}><strong>Total Waste:</strong></td>
+                              <td className={styles.rightAlign}><strong>{formatCurrency(wasteEntriesTotal)}</strong></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
             )}
+            
             <tr>
               <td>Tax ({((settings?.taxRate || 0) * 100).toFixed(1)}%)</td>
-              <td>{formatCurrency(calculations.totals.taxAmount)}</td>
+              <td className={styles.rightAlign}>{formatCurrency(calculations.totals.taxAmount)}</td>
             </tr>
             <tr>
               <td>Markup ({((settings?.markup || 0) * 100).toFixed(1)}%)</td>
-              <td>{formatCurrency(calculations.totals.markupAmount)}</td>
+              <td className={styles.rightAlign}>{formatCurrency(calculations.totals.markupAmount)}</td>
             </tr>
             <tr>
               <td>Transportation Fee</td>
-              <td>{formatCurrency(calculations.totals.transportationFee)}</td>
+              <td className={styles.rightAlign}>{formatCurrency(calculations.totals.transportationFee)}</td>
             </tr>
+            
             {parseFloat(calculations.totals.miscFeesTotal) > 0 && (
-              <tr className={styles.detailRow}>
-                <td>
-                  Miscellaneous Fees
-                  <button
-                    className={styles.toggleButton}
-                    onClick={() => setShowMiscDetails(!showMiscDetails)}
-                  >
-                    {showMiscDetails ? 'Hide' : 'Show'} Details
-                  </button>
-                </td>
-                <td>
-                  <span className={styles.totalValue}>{formatCurrency(calculations.totals.miscFeesTotal)}</span>
-                  {showMiscDetails && (
-                    <div className={styles.detailBreakdown}>
-                      <table className={styles.innerTable}>
-                        <thead>
-                          <tr>
-                            <th>Description</th>
-                            <th>Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {(settings?.miscFees || []).map((fee, i) => (
-                            <tr key={i}>
-                              <td>{fee.name || 'Unnamed Fee'}</td>
-                              <td>{formatCurrency(fee.amount)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+              <>
+                <tr className={styles.detailRow}>
+                  <td>
+                    <div className={styles.labelWithButton}>
+                      <span>Miscellaneous Fees</span>
+                      <button
+                        className={styles.toggleButton}
+                        onClick={() => setShowMiscDetails(!showMiscDetails)}
+                      >
+                        {showMiscDetails ? '▼ Hide' : '▶ Show'} Details
+                      </button>
                     </div>
-                  )}
-                </td>
-              </tr>
+                  </td>
+                  <td className={styles.rightAlign}>
+                    <span className={styles.totalValue}>{formatCurrency(calculations.totals.miscFeesTotal)}</span>
+                  </td>
+                </tr>
+                {showMiscDetails && (
+                  <tr>
+                    <td colSpan="2">
+                      <div className={styles.detailBreakdown}>
+                        <table className={styles.innerTable}>
+                          <thead>
+                            <tr>
+                              <th>Description</th>
+                              <th className={styles.rightAlign}>Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(settings?.miscFees || []).map((fee, i) => (
+                              <tr key={i}>
+                                <td><strong>{fee.name || 'Unnamed Fee'}</strong></td>
+                                <td className={styles.rightAlign}>{formatCurrency(fee.amount)}</td>
+                              </tr>
+                            ))}
+                            <tr className={styles.subtotalRow}>
+                              <td className={styles.rightAlign}><strong>Total Misc Fees:</strong></td>
+                              <td className={styles.rightAlign}><strong>{formatCurrency(calculations.totals.miscFeesTotal)}</strong></td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
             )}
+            
             <tr className={styles.grandTotalRow}>
-              <td>Grand Total</td>
-              <td>{formatCurrency(calculations.totals.total)}</td>
+              <td><strong>Grand Total</strong></td>
+              <td className={styles.rightAlign}><strong>{formatCurrency(calculations.totals.total)}</strong></td>
             </tr>
           </tbody>
         </table>
@@ -543,71 +584,81 @@ export default function CostBreakdown({ categories: propCategories, settings: pr
 
       <section className={styles.paymentSection}>
         <h4 className={styles.subSectionTitle}>
-          Payment Summary
+          <span>Payment Summary</span>
           <button
             className={styles.toggleButton}
             onClick={() => setShowPaymentDetails(!showPaymentDetails)}
           >
-            {showPaymentDetails ? 'Hide' : 'Show'} Details
+            {showPaymentDetails ? '▼ Hide' : '▶ Show'} Details
           </button>
         </h4>
         <table className={styles.breakdownTable}>
           <tbody>
             <tr>
-              <td>Grand Total</td>
-              <td>{formatCurrency(calculations.totals.total)}</td>
+              <td>Project Total</td>
+              <td className={styles.rightAlign}>{formatCurrency(calculations.totals.total)}</td>
             </tr>
-            <tr>
+            <tr className={styles.paidRow}>
               <td>Total Paid</td>
-              <td>-{formatCurrency(calculations.payments.totalPaid)}</td>
+              <td className={styles.rightAlign}>-{formatCurrency(calculations.payments.totalPaid)}</td>
             </tr>
             <tr className={styles.grandTotalRow}>
-              <td>Remaining Balance</td>
-              <td className={parseFloat(calculations.payments.totalDue) > 0 ? styles.remaining : styles.paid}>
-                {formatCurrency(calculations.payments.totalDue)}
+              <td><strong>Remaining Balance</strong></td>
+              <td className={`${styles.rightAlign} ${parseFloat(calculations.payments.totalDue) > 0 ? styles.remaining : styles.paid}`}>
+                <strong>{formatCurrency(calculations.payments.totalDue)}</strong>
               </td>
             </tr>
             {parseFloat(calculations.payments.overduePayments) > 0 && (
-              <tr>
-                <td>Overdue Payments</td>
-                <td>{formatCurrency(calculations.payments.overduePayments)}</td>
+              <tr className={styles.overdueRow}>
+                <td>⚠ Overdue Payments</td>
+                <td className={styles.rightAlign}>{formatCurrency(calculations.payments.overduePayments)}</td>
               </tr>
             )}
           </tbody>
         </table>
+        
         {showPaymentDetails && (
           <div className={styles.detailBreakdown}>
-            <h5>Payment Details</h5>
+            <h5 className={styles.paymentDetailsTitle}>Payment History</h5>
             {(!settings?.payments?.length && !settings?.deposit) ? (
-              <p>No payments recorded yet.</p>
+              <p className={styles.emptyText}>No payments recorded yet.</p>
             ) : (
               <table className={styles.innerTable}>
                 <thead>
                   <tr>
                     <th>Date</th>
-                    <th>Amount</th>
+                    <th>Type</th>
+                    <th className={styles.rightAlign}>Amount</th>
                     <th>Method</th>
                     <th>Note</th>
-                    <th>Status</th>
+                    <th className={styles.centerAlign}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {settings?.deposit > 0 && (
                     <tr className={styles.depositRow}>
-                      <td>{settings.depositDate ? new Date(settings.depositDate).toLocaleDateString() : 'N/A'}</td>
-                      <td>{formatCurrency(settings.deposit)}</td>
-                      <td>Deposit</td>
-                      <td>Initial Deposit</td>
-                      <td>Paid</td>
+                      <td>{settings.depositDate ? new Date(settings.depositDate).toLocaleDateString() : '—'}</td>
+                      <td><strong>Deposit</strong></td>
+                      <td className={styles.rightAlign}><strong>{formatCurrency(settings.deposit)}</strong></td>
+                      <td>—</td>
+                      <td>Initial Project Deposit</td>
+                      <td className={styles.centerAlign}><span className={styles.paidBadge}>✓ Paid</span></td>
                     </tr>
                   )}
                   {(settings?.payments || []).map((payment, index) => (
                     <tr key={index}>
-                      <td>{payment.date ? new Date(payment.date).toLocaleDateString() : 'N/A'}</td>
-                      <td>{formatCurrency(payment.amount)}</td>
-                      <td>{payment.method || 'N/A'}</td>
-                      <td>{payment.note || '-'}</td>
-                      <td>{payment.isPaid ? 'Paid' : 'Due'}</td>
+                      <td>{payment.date ? new Date(payment.date).toLocaleDateString() : '—'}</td>
+                      <td>Payment</td>
+                      <td className={styles.rightAlign}><strong>{formatCurrency(payment.amount)}</strong></td>
+                      <td>{payment.method || '—'}</td>
+                      <td>{payment.note || '—'}</td>
+                      <td className={styles.centerAlign}>
+                        {payment.isPaid ? (
+                          <span className={styles.paidBadge}>✓ Paid</span>
+                        ) : (
+                          <span className={styles.dueBadge}>⏳ Due</span>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

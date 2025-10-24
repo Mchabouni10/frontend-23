@@ -275,12 +275,18 @@ export default function EstimateSummary() {
   const transportationFee = parseFloat(totals.transportationFee) || 0;
   const grandTotal = parseFloat(totals.total) || 0;
   
-  const depositAmount = settings?.deposit || 0;
+  // Separate deposit from other payments
+  const depositPayment = settings?.payments?.find(p => p.method === 'Deposit') || null;
+  const depositAmount = depositPayment ? parseFloat(depositPayment.amount) : 0;
+  const otherPayments = settings?.payments?.filter(p => p.method !== 'Deposit' && p.isPaid) || [];
+  const otherPaymentsTotal = otherPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+  
   const adjustedGrandTotal = Math.max(0, grandTotal - depositAmount);
-  const remainingBalance = Math.max(0, adjustedGrandTotal - paymentDetails.totalPaid);
-  const overpayment = paymentDetails.totalPaid > adjustedGrandTotal ? paymentDetails.totalPaid - adjustedGrandTotal : 0;
+  const remainingBalance = Math.max(0, adjustedGrandTotal - otherPaymentsTotal);
+  const overpayment = (depositAmount + otherPaymentsTotal) > grandTotal ? (depositAmount + otherPaymentsTotal - grandTotal) : 0;
 
   const wasteEntries = settings?.wasteEntries || [];
+  const miscFees = settings?.miscFees || [];
 
   const handlePrint = async () => {
     setIsPrinting(true);
@@ -360,7 +366,7 @@ export default function EstimateSummary() {
           ]
         ],
         theme: 'grid',
-        styles: { fontSize: 8, cellPadding: 3 },
+        styles: { fontSize: 8, cellPadding: 3, lineColor: [200, 200, 200], lineWidth: 0.1 },
         headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
         margin: { left: margin, right: margin }
       });
@@ -397,7 +403,7 @@ export default function EstimateSummary() {
           head: [['Category', 'Items', 'Material Cost', 'Labor Cost', 'Subtotal']],
           body: categoryData,
           theme: 'striped',
-          styles: { fontSize: 8, cellPadding: 2 },
+          styles: { fontSize: 8, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
           headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold', halign: 'center' },
           columnStyles: {
             0: { cellWidth: 50 },
@@ -433,7 +439,7 @@ export default function EstimateSummary() {
           head: [['Item', 'Category', 'Quantity', 'Total']],
           body: materialData,
           theme: 'striped',
-          styles: { fontSize: 8, cellPadding: 2 },
+          styles: { fontSize: 8, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
           headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
           columnStyles: {
             0: { cellWidth: 60 },
@@ -469,7 +475,7 @@ export default function EstimateSummary() {
           head: [['Item', 'Category', 'Description', 'Quantity', 'Total']],
           body: laborData,
           theme: 'striped',
-          styles: { fontSize: 8, cellPadding: 2 },
+          styles: { fontSize: 8, cellPadding: 2, lineColor: [200, 200, 200], lineWidth: 0.1 },
           headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
           columnStyles: {
             0: { cellWidth: 40 },
@@ -533,6 +539,15 @@ export default function EstimateSummary() {
 
       if (miscFeesTotal > 0) {
         calculationData.push(['Miscellaneous Fees', formatCurrency(miscFeesTotal)]);
+        // Add individual misc fee details
+        miscFees.forEach(fee => {
+          if (fee.amount > 0) {
+            calculationData.push([
+              `  • ${fee.name}`,
+              formatCurrency(fee.amount)
+            ]);
+          }
+        });
       }
 
       calculationData.push([
@@ -544,17 +559,25 @@ export default function EstimateSummary() {
         startY: yPosition,
         body: calculationData,
         theme: 'plain',
-        styles: { fontSize: 9, cellPadding: 3 },
+        styles: { fontSize: 9, cellPadding: 3, lineColor: [220, 220, 220], lineWidth: 0.1 },
         columnStyles: {
           0: { cellWidth: 120 },
           1: { halign: 'right', cellWidth: 50 }
         },
-        margin: { left: margin, right: margin }
+        margin: { left: margin, right: margin },
+        didDrawCell: (data) => {
+          // Add subtle borders to all cells
+          if (data.section === 'body') {
+            pdf.setDrawColor(220, 220, 220);
+            pdf.setLineWidth(0.1);
+            pdf.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height);
+          }
+        }
       });
 
       yPosition = pdf.lastAutoTable.finalY + 10;
 
-      checkAddPage(40);
+      checkAddPage(60);
       
       pdf.setFontSize(11);
       pdf.setFont('helvetica', 'bold');
@@ -567,16 +590,36 @@ export default function EstimateSummary() {
       ];
 
       if (depositAmount > 0) {
-        paymentData.push(['Less: Deposit', `-${formatCurrency(depositAmount)}`]);
+        paymentData.push([
+          `Less: Deposit (${depositPayment.date ? new Date(depositPayment.date).toLocaleDateString() : 'N/A'})`,
+          `-${formatCurrency(depositAmount)}`
+        ]);
       }
 
       paymentData.push([
-        { content: 'Amount Due', styles: { fontStyle: 'bold' } },
+        { content: 'Amount Due After Deposit', styles: { fontStyle: 'bold' } },
         { content: formatCurrency(adjustedGrandTotal), styles: { fontStyle: 'bold' } }
       ]);
 
-      if (paymentDetails.totalPaid > 0) {
-        paymentData.push(['Less: Payments Made', `-${formatCurrency(paymentDetails.totalPaid)}`]);
+      if (otherPayments.length > 0) {
+        paymentData.push([
+          { content: 'Payments Made:', styles: { fontStyle: 'bold', fillColor: [250, 250, 250] } },
+          { content: '', styles: { fillColor: [250, 250, 250] } }
+        ]);
+        
+        otherPayments.forEach(payment => {
+          const paymentDate = new Date(payment.date).toLocaleDateString();
+          const paymentNote = payment.note ? ` - ${payment.note}` : '';
+          paymentData.push([
+            `  • ${paymentDate} (${payment.method})${paymentNote}`,
+            `-${formatCurrency(payment.amount)}`
+          ]);
+        });
+        
+        paymentData.push([
+          { content: 'Total Payments', styles: { fontStyle: 'bold' } },
+          { content: `-${formatCurrency(otherPaymentsTotal)}`, styles: { fontStyle: 'bold' } }
+        ]);
       }
 
       paymentData.push([
@@ -595,12 +638,20 @@ export default function EstimateSummary() {
         startY: yPosition,
         body: paymentData,
         theme: 'plain',
-        styles: { fontSize: 9, cellPadding: 3 },
+        styles: { fontSize: 9, cellPadding: 3, lineColor: [220, 220, 220], lineWidth: 0.1 },
         columnStyles: {
           0: { cellWidth: 120 },
           1: { halign: 'right', cellWidth: 50 }
         },
-        margin: { left: margin, right: margin }
+        margin: { left: margin, right: margin },
+        didDrawCell: (data) => {
+          // Add borders
+          if (data.section === 'body') {
+            pdf.setDrawColor(220, 220, 220);
+            pdf.setLineWidth(0.1);
+            pdf.rect(data.cell.x, data.cell.y, data.cell.width, data.cell.height);
+          }
+        }
       });
 
       yPosition = pdf.lastAutoTable.finalY + 10;
@@ -640,25 +691,25 @@ export default function EstimateSummary() {
         }
       ];
 
-      pdf.setFontSize(7.5);
+      pdf.setFontSize(8);
       
-      terms.forEach((term) => {
-        if (checkAddPage(18)) {
+      terms.forEach((term, index) => {
+        if (checkAddPage(20)) {
           yPosition += 3;
         }
         
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(...darkGray);
-        const titleWidth = pdf.getTextWidth(term.title);
         pdf.text(term.title, margin, yPosition);
         
-        pdf.setFont('helvetica', 'normal');
-        const textX = margin + titleWidth + 2;
-        const maxWidth = pageWidth - textX - margin;
-        const lines = pdf.splitTextToSize(term.text, maxWidth);
-        pdf.text(lines, textX, yPosition);
+        yPosition += 4;
         
-        yPosition += Math.max(lines.length * 2.8, 4) + 2;
+        pdf.setFont('helvetica', 'normal');
+        const maxWidth = pageWidth - 2 * margin;
+        const lines = pdf.splitTextToSize(term.text, maxWidth);
+        pdf.text(lines, margin, yPosition);
+        
+        yPosition += lines.length * 3.5 + 3;
       });
 
       yPosition += 5;
@@ -1037,10 +1088,25 @@ export default function EstimateSummary() {
                     </tr>
                   )}
                   {miscFeesTotal > 0 && (
-                    <tr className={styles.calculationRow}>
-                      <td className={styles.calculationLabel}>Miscellaneous Fees</td>
-                      <td className={styles.calculationValue}>{formatCurrency(miscFeesTotal)}</td>
-                    </tr>
+                    <>
+                      <tr className={styles.calculationRow}>
+                        <td className={styles.calculationLabel}>Miscellaneous Fees</td>
+                        <td className={styles.calculationValue}>{formatCurrency(miscFeesTotal)}</td>
+                      </tr>
+                      {miscFees.map((fee, index) => {
+                        if (fee.amount > 0) {
+                          return (
+                            <tr key={index} className={styles.calculationSubRow}>
+                              <td className={styles.calculationSubLabel}>
+                                • {fee.name}
+                              </td>
+                              <td className={styles.calculationSubValue}>{formatCurrency(fee.amount)}</td>
+                            </tr>
+                          );
+                        }
+                        return null;
+                      })}
+                    </>
                   )}
                   <tr className={styles.grandTotalRow}>
                     <td className={styles.calculationLabel}><strong>PROJECT TOTAL</strong></td>
@@ -1064,19 +1130,38 @@ export default function EstimateSummary() {
                   </tr>
                   {depositAmount > 0 && (
                     <tr className={styles.paymentRow}>
-                      <td className={styles.paymentLabel}>Less: Deposit</td>
+                      <td className={styles.paymentLabel}>
+                        Less: Deposit {depositPayment.date && `(${new Date(depositPayment.date).toLocaleDateString()})`}
+                      </td>
                       <td className={styles.paymentValueNegative}>-{formatCurrency(depositAmount)}</td>
                     </tr>
                   )}
                   <tr className={styles.paymentRow}>
-                    <td className={styles.paymentLabel}><strong>Amount Due</strong></td>
+                    <td className={styles.paymentLabel}><strong>Amount Due After Deposit</strong></td>
                     <td className={styles.paymentValue}><strong>{formatCurrency(adjustedGrandTotal)}</strong></td>
                   </tr>
-                  {paymentDetails.totalPaid > 0 && (
-                    <tr className={styles.paymentRow}>
-                      <td className={styles.paymentLabel}>Less: Payments Made</td>
-                      <td className={styles.paymentValueNegative}>-{formatCurrency(paymentDetails.totalPaid)}</td>
-                    </tr>
+                  {otherPayments.length > 0 && (
+                    <>
+                      <tr className={styles.paymentHeaderRow}>
+                        <td className={styles.paymentLabel} colSpan="2"><strong>Payments Made:</strong></td>
+                      </tr>
+                      {otherPayments.map((payment, index) => {
+                        const paymentDate = new Date(payment.date).toLocaleDateString();
+                        const paymentNote = payment.note ? ` - ${payment.note}` : '';
+                        return (
+                          <tr key={index} className={styles.paymentDetailRow}>
+                            <td className={styles.paymentLabel}>
+                              • {paymentDate} ({payment.method}){paymentNote}
+                            </td>
+                            <td className={styles.paymentValueNegative}>-{formatCurrency(payment.amount)}</td>
+                          </tr>
+                        );
+                      })}
+                      <tr className={styles.paymentRow}>
+                        <td className={styles.paymentLabel}><strong>Total Payments</strong></td>
+                        <td className={styles.paymentValueNegative}><strong>-{formatCurrency(otherPaymentsTotal)}</strong></td>
+                      </tr>
+                    </>
                   )}
                   <tr className={styles.balanceRow}>
                     <td className={styles.paymentLabel}><strong>BALANCE DUE</strong></td>
@@ -1103,10 +1188,10 @@ export default function EstimateSummary() {
             </div>
             <div className={styles.termsContent}>
               <div className={styles.termsItem}>
-                <strong>Payment Schedule:</strong> A 50% deposit is required upon contract signing to initiate the project. An additional 30% is due upon delivery of materials to the project site, as confirmed by the project manager. The remaining 20% is payable upon satisfactory completion of the project, subject to final inspection and client approval. Payments align with the agreed project schedule, and material delivery will be coordinated to minimize delays, subject to supplier availability.
+                <strong>Payment Schedule:</strong> A 50% deposit is required upon contract signing to initiate the project. An additional 30% is due upon delivery of materials to the project site, as confirmed by the project manager. The remaining 20% is payable upon satisfactory completion of the project, subject to final inspection and client approval.
               </div>
               <div className={styles.termsItem}>
-                <strong>Payment Policy:</strong> We accept payments via checks, QuickPay, Zelle, and all major credit and debit cards. A 4% processing fee will be applied to all credit and debit card transactions. Materials will not be released or delivered to the project site until the corresponding payment has been fully cleared, without exception. All payments must be made in accordance with the agreed payment schedule to ensure timely project progression.
+                <strong>Payment Policy:</strong> We accept payments via checks, QuickPay, Zelle, and all major credit and debit cards. A 4% processing fee will be applied to all credit and debit card transactions. Materials will not be released or delivered to the project site until the corresponding payment has been fully cleared, without exception.
               </div>
               <div className={styles.termsItem}>
                 <strong>Materials:</strong> All materials subject to availability and price changes. Substitutions may be made with customer approval.

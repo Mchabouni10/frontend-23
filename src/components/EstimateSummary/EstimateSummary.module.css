@@ -1,4 +1,4 @@
-/* EstimateSummary.module.css - EXACT PRINT MATCH WITH AUTO PDF TABLES */
+/* EstimateSummary.module.css - Professional with proper borders */
 
 /* ============================================================================ */
 /* SCREEN STYLES */
@@ -253,7 +253,7 @@
   overflow-wrap: break-word;
 }
 
-/* ENHANCED TABLE STYLES */
+/* TABLE STYLES - WITH PROPER BORDERS */
 .tableContainer {
   overflow-x: auto;
   margin-bottom: 20px;
@@ -291,7 +291,7 @@
   border-right: none;
 }
 
-/* Table Cells */
+/* Table Cells - SOLID BORDERS */
 .tableCell,
 .tableCellRight {
   padding: 12px 10px;
@@ -368,50 +368,16 @@
   border-bottom: 1px solid #e0e0e0;
 }
 
-/* TERMS SECTION */
-.termsSection {
-  background: #fafafa;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  padding: 15px;
+/* CALCULATION TABLE - WITH BORDERS */
+.calculationSection,
+.paymentSection,
+.categorySection,
+.detailSection {
   margin-bottom: 20px;
 }
 
-.termsContent {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.termsItem {
-  padding: 15px;
-  background: white;
-  border-left: 4px solid #005f73;
-  margin-bottom: 10px;
-  border-radius: 0 4px 4px 0;
-  border-right: 1px solid #e0e0e0;
-  border-bottom: 1px solid #e0e0e0;
-  font-size: 10.5px;
-  line-height: 1.6;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-.termsItem:last-child {
-  border-bottom: 1px solid #e0e0e0;
-  margin-bottom: 0;
-}
-
-.termsItem strong {
-  display: inline;
-  margin-right: 5px;
-  color: #005f73;
-  font-size: 10.5px;
-}
-
-/* CALCULATION TABLE */
 .calculationRow {
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .calculationLabel {
@@ -421,6 +387,7 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   border-right: 1px solid #d8d8d8;
+  border-bottom: 1px solid #d8d8d8;
 }
 
 .calculationValue,
@@ -446,6 +413,8 @@
   font-size: 10px;
   width: 65%;
   border-right: 1px solid #d8d8d8;
+  border-bottom: 1px solid #d8d8d8;
+  color: #555;
 }
 
 .calculationSubValue {
@@ -455,6 +424,7 @@
   font-size: 10px;
   font-family: 'Courier New', monospace;
   border-bottom: 1px solid #d8d8d8;
+  color: #555;
 }
 
 .subtotalRow {
@@ -468,6 +438,7 @@
   font-size: 12px;
   font-weight: 700;
   padding: 14px 10px;
+  border-bottom: 2px solid #005f73;
 }
 
 .grandTotalRow {
@@ -481,11 +452,12 @@
   font-weight: 700;
   color: #005f73;
   padding: 16px 10px;
+  border-bottom: 3px double #005f73;
 }
 
-/* PAYMENT TABLE */
+/* PAYMENT TABLE - WITH BORDERS */
 .paymentRow {
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .paymentLabel {
@@ -494,6 +466,7 @@
   word-wrap: break-word;
   overflow-wrap: break-word;
   border-right: 1px solid #d8d8d8;
+  border-bottom: 1px solid #d8d8d8;
 }
 
 .paymentValue,
@@ -515,15 +488,43 @@
   color: #2b9348;
 }
 
+.paymentHeaderRow {
+  background: #f5f5f5;
+  border-top: 2px solid #005f73;
+}
+
+.paymentHeaderRow .paymentLabel {
+  padding: 10px;
+  font-weight: 700;
+  border-bottom: 1px solid #d8d8d8;
+}
+
+.paymentDetailRow {
+  background: #fafbfb;
+}
+
+.paymentDetailRow .paymentLabel {
+  padding-left: 20px;
+  font-size: 10px;
+  color: #555;
+}
+
 .balanceRow {
   border-top: 2px solid #005f73;
   background: #f0f8ff;
+}
+
+.balanceRow .paymentLabel {
+  font-weight: 700;
+  padding: 14px 10px;
+  border-bottom: 2px solid #005f73;
 }
 
 .balanceValue {
   padding: 14px 10px;
   text-align: right;
   font-family: 'Courier New', monospace;
+  border-bottom: 2px solid #005f73;
 }
 
 .balanceDue {
@@ -536,6 +537,42 @@
   color: #2b9348;
   font-size: 14px;
   font-weight: 700;
+}
+
+/* TERMS SECTION - PROPER FORMATTING */
+.termsSection {
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.termsContent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.termsItem {
+  padding: 15px;
+  background: white;
+  border-left: 4px solid #005f73;
+  border-radius: 0 4px 4px 0;
+  border-right: 1px solid #e0e0e0;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 10.5px;
+  line-height: 1.7;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  text-align: justify;
+}
+
+.termsItem strong {
+  color: #005f73;
+  font-size: 10.5px;
+  margin-right: 5px;
 }
 
 /* Notes Section */
@@ -551,6 +588,7 @@
   background: white;
   padding: 15px;
   border-radius: 4px;
+  border: 1px solid #e0dda0;
 }
 
 .notesContent p {
@@ -679,7 +717,7 @@
 }
 
 /* ============================================================================ */
-/* PRINT STYLES - EXACT SCREEN REPLICA */
+/* PRINT STYLES - EXACT SCREEN MATCH WITH BORDERS */
 /* ============================================================================ */
 
 @media print {
@@ -688,18 +726,18 @@
     margin: 8mm;
   }
 
-  /* CRITICAL: Reset everything to match screen */
+  /* Force color printing */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Hide ONLY the header section */
+  /* Hide header section */
   .headerSection {
     display: none !important;
   }
 
-  /* Container - Full width, no padding */
+  /* Container */
   .mainContent,
   .container {
     max-width: none !important;
@@ -711,7 +749,7 @@
     box-shadow: none !important;
   }
 
-  /* Document - EXACT screen font & line-height */
+  /* Document */
   .document {
     font-size: 11px !important;
     line-height: 1.4 !important;
@@ -719,7 +757,7 @@
     padding: 0 !important;
   }
 
-  /* HEADER - Exact gradient & colors */
+  /* Header - preserve colors */
   .documentHeader {
     background: linear-gradient(135deg, #005f73 0%, #003d4c 100%) !important;
     color: white !important;
@@ -728,18 +766,8 @@
     border-radius: 4px !important;
   }
 
-  .companyHeader {
-    display: grid !important;
-    grid-template-columns: 60px 1fr !important;
-    gap: 15px !important;
-    align-items: center !important;
-    margin-bottom: 15px !important;
-  }
-
   .logo {
     filter: brightness(0) invert(1) !important;
-    width: 50px !important;
-    height: 50px !important;
   }
 
   .companyName,
@@ -749,23 +777,7 @@
     color: white !important;
   }
 
-  .companyName {
-    text-transform: uppercase !important;
-    font-size: 16px !important;
-  }
-
-  .projectTitle {
-    text-transform: uppercase !important;
-    font-size: 18px !important;
-  }
-
-  .projectHeader {
-    text-align: center !important;
-    padding-top: 15px !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.3) !important;
-  }
-
-  /* SECTIONS - Exact spacing & borders */
+  /* Sections */
   .customerSection,
   .categorySection,
   .detailSection,
@@ -774,15 +786,12 @@
   .termsSection,
   .notesSection,
   .authorizationSection {
-    margin-bottom: 20px !important;
-    padding: 15px !important;
     page-break-inside: avoid !important;
+    margin-bottom: 20px !important;
   }
 
   .customerSection {
-    background: white !important;
     border: 1px solid #e0e0e0 !important;
-    border-radius: 4px !important;
   }
 
   .termsSection {
@@ -800,25 +809,9 @@
     border: 2px solid #005f73 !important;
   }
 
-  /* SECTION HEADERS - Exact */
-  .sectionHeader {
-    margin: 15px 0 10px 0 !important;
-    padding-bottom: 5px !important;
-    border-bottom: 2px solid #005f73 !important;
-  }
-
-  .sectionTitle {
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    color: #005f73 !important;
-    text-transform: uppercase !important;
-  }
-
-  /* TABLES - EXACT LINE STYLES & COLORS */
+  /* TABLE BORDERS - CRITICAL FOR PDF */
   .tableContainer {
     border: 1px solid #d0d0d0 !important;
-    border-radius: 6px !important;
-    overflow: visible !important;
     margin-bottom: 20px !important;
   }
 
@@ -826,42 +819,30 @@
   .detailTable,
   .calculationTable,
   .paymentTable {
-    width: 100% !important;
     border-collapse: collapse !important;
-    font-size: 11px !important;
-    background: white !important;
+    width: 100% !important;
   }
 
-  /* TABLE HEADERS - Exact gradient */
+  /* Table headers with borders */
   .tableHeader {
     background: linear-gradient(135deg, #005f73 0%, #004d60 100%) !important;
     color: white !important;
-    padding: 12px 10px !important;
-    text-align: left !important;
-    font-weight: 600 !important;
-    font-size: 11px !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
     border-right: 1px solid #006d88 !important;
     border-bottom: 2px solid #003d4c !important;
+    padding: 12px 10px !important;
   }
 
   .tableHeader:last-child {
     border-right: none !important;
   }
 
-  /* TABLE CELLS - Exact borders */
+  /* Table cells with borders */
   .tableCell,
   .tableCellRight,
   .descriptionCell {
-    padding: 12px 10px !important;
     border-right: 1px solid #d8d8d8 !important;
     border-bottom: 1px solid #d8d8d8 !important;
-    word-wrap: break-word !important;
-    white-space: normal !important;
-    vertical-align: top !important;
-    font-size: 11px !important;
-    color: #333 !important;
+    padding: 12px 10px !important;
   }
 
   .tableCell:last-child,
@@ -870,130 +851,75 @@
     border-right: none !important;
   }
 
-  .tableCellRight {
-    text-align: right !important;
-    font-weight: 500 !important;
-    font-family: 'Courier New', monospace !important;
-  }
-
-  .tableRow:nth-child(even) {
-    background: #fafbfb !important;
-  }
-
-  /* TOTAL ROWS - Exact styling */
-  .tableTotalRow {
-    background: linear-gradient(135deg, #005f73 0%, #004d60 100%) !important;
-  }
-
-  .tableTotalRow .tableCell,
-  .tableTotalRow .tableCellRight {
-    border-bottom: 2px solid #003d4c !important;
-    border-right: 1px solid #006d88 !important;
-    padding: 14px 10px !important;
-    font-weight: 700 !important;
-    color: white !important;
-  }
-
-  .tableTotalRow .tableCell:last-child,
-  .tableTotalRow .tableCellRight:last-child {
-    border-right: none !important;
-  }
-
-  /* CALCULATION TABLE - Exact */
+  /* Calculation table borders */
   .calculationLabel {
-    padding: 12px 10px !important;
-    width: 65% !important;
     border-right: 1px solid #d8d8d8 !important;
-    color: #333 !important;
+    border-bottom: 1px solid #d8d8d8 !important;
   }
 
   .calculationValue,
   .calculationValueNegative {
-    padding: 12px 10px !important;
-    text-align: right !important;
-    width: 35% !important;
-    font-weight: 600 !important;
-    font-family: 'Courier New', monospace !important;
     border-bottom: 1px solid #d8d8d8 !important;
-    color: #333 !important;
-  }
-
-  .calculationValueNegative {
-    color: #d00000 !important;
-  }
-
-  .calculationSubRow {
-    background: #fafbfb !important;
   }
 
   .calculationSubLabel {
-    padding: 8px 10px 8px 20px !important;
-    font-size: 10px !important;
-    width: 65% !important;
     border-right: 1px solid #d8d8d8 !important;
-    color: #333 !important;
+    border-bottom: 1px solid #d8d8d8 !important;
   }
 
   .calculationSubValue {
-    padding: 8px 10px !important;
-    text-align: right !important;
-    width: 35% !important;
-    font-size: 10px !important;
-    font-family: 'Courier New', monospace !important;
     border-bottom: 1px solid #d8d8d8 !important;
-    color: #333 !important;
-  }
-
-  .subtotalRow {
-    border-top: 2px solid #005f73 !important;
-    border-bottom: 2px solid #005f73 !important;
-    background: #f0f8ff !important;
   }
 
   .subtotalRow .calculationLabel,
   .subtotalRow .calculationValue {
-    font-size: 12px !important;
-    font-weight: 700 !important;
-    padding: 14px 10px !important;
-    color: #333 !important;
-  }
-
-  .grandTotalRow {
-    border-top: 3px double #005f73 !important;
-    background: linear-gradient(135deg, #e8f4f8 0%, #d1ecf1 100%) !important;
+    border-bottom: 2px solid #005f73 !important;
   }
 
   .grandTotalRow .calculationLabel,
   .grandTotalValue {
-    font-size: 14px !important;
-    font-weight: 700 !important;
-    color: #005f73 !important;
-    padding: 16px 10px !important;
+    border-bottom: 3px double #005f73 !important;
   }
 
-  /* PAYMENT TABLE - Exact */
+  /* Payment table borders */
   .paymentLabel {
-    padding: 12px 10px !important;
-    width: 65% !important;
     border-right: 1px solid #d8d8d8 !important;
-    color: #333 !important;
+    border-bottom: 1px solid #d8d8d8 !important;
   }
 
   .paymentValue,
   .paymentValueNegative,
   .paymentValuePositive {
-    padding: 12px 10px !important;
-    text-align: right !important;
-    width: 35% !important;
-    font-weight: 600 !important;
-    font-family: 'Courier New', monospace !important;
     border-bottom: 1px solid #d8d8d8 !important;
   }
 
-  .paymentValue {
-    color: #333 !important;
+  .balanceRow .paymentLabel,
+  .balanceValue {
+    border-bottom: 2px solid #005f73 !important;
   }
 
+  /* Terms - maintain formatting */
+  .termsItem {
+    background: white !important;
+    border-left: 4px solid #005f73 !important;
+    border-right: 1px solid #e0e0e0 !important;
+    border-top: 1px solid #e0e0e0 !important;
+    border-bottom: 1px solid #e0e0e0 !important;
+    padding: 15px !important;
+    margin-bottom: 10px !important;
+    page-break-inside: avoid !important;
+  }
+
+  .termsItem strong {
+    color: #005f73 !important;
+  }
+
+  /* Colors */
+  .sectionTitle {
+    color: #005f73 !important;
+  }
+
+  .calculationValueNegative,
   .paymentValueNegative {
     color: #d00000 !important;
   }
@@ -1002,155 +928,29 @@
     color: #2b9348 !important;
   }
 
-  .balanceRow {
-    border-top: 2px solid #005f73 !important;
-    background: #f0f8ff !important;
-  }
-
-  .balanceValue {
-    padding: 14px 10px !important;
-    text-align: right !important;
-    font-family: 'Courier New', monospace !important;
-  }
-
   .balanceDue {
     color: #d00000 !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
   }
 
   .balancePaid {
     color: #2b9348 !important;
-    font-size: 14px !important;
-    font-weight: 700 !important;
-  }
-
-  /* TERMS - Exact spacing and inline layout */
-  .termsContent {
-    gap: 0 !important;
-  }
-
-  .termsItem {
-    padding: 15px !important;
-    margin-bottom: 10px !important;
-    border-left: 4px solid #005f73 !important;
-    border-right: 1px solid #e0e0e0 !important;
-    border-bottom: 1px solid #e0e0e0 !important;
-    border-top: none !important;
-    background: white !important;
-    font-size: 10.5px !important;
-    line-height: 1.6 !important;
-    color: #333 !important;
-  }
-
-  .termsItem:last-child {
-    margin-bottom: 0 !important;
-    border-bottom: 1px solid #e0e0e0 !important;
-  }
-
-  .termsItem strong {
-    display: inline !important;
-    margin-right: 5px !important;
-    color: #005f73 !important;
-    font-size: 10.5px !important;
-    font-weight: 700 !important;
-  }
-
-  /* INFO GROUPS */
-  .infoGroup {
-    background: #fafafa !important;
-    padding: 12px !important;
-    border: 1px solid #e0e0e0 !important;
-  }
-
-  .infoHeader {
-    color: #005f73 !important;
-    border-bottom: 1px solid #ddd !important;
-  }
-
-  .label {
-    color: #666 !important;
-  }
-
-  .value {
-    color: #333 !important;
-  }
-
-  /* NOTES SECTION */
-  .notesContent {
-    background: white !important;
-    padding: 15px !important;
-  }
-
-  .notesContent p {
-    color: #333 !important;
-  }
-
-  /* AUTHORIZATION SECTION */
-  .authorizationContent {
-    background: white !important;
-    padding: 15px !important;
-  }
-
-  .authorizationText {
-    color: #333 !important;
   }
 
   .contractAmount {
     color: #d00000 !important;
   }
 
-  /* SIGNATURES - Exact */
-  .signatureContainer {
-    gap: 30px !important;
-  }
-
-  .signatureLabel {
-    color: #005f73 !important;
-  }
-
-  .signatureLine {
-    height: 40px !important;
-    border-bottom: 2px solid #333 !important;
-  }
-
-  .signatureInfo {
-    color: #666 !important;
-  }
-
-  .contractorName {
-    color: #333 !important;
-  }
-
-  /* FOOTER - Exact */
-  .documentFooter {
-    border-top: 2px solid #005f73 !important;
-    padding: 15px !important;
-  }
-
-  .footerText {
-    color: #333 !important;
-  }
-
-  .footerTextSmall {
-    color: #666 !important;
-  }
-
-  /* PAGE BREAKS - Smart */
+  /* Page breaks */
   .documentHeader,
   .customerSection,
   .authorizationSection,
   .documentFooter {
     page-break-inside: avoid !important;
   }
-
-  .tableContainer {
-    page-break-inside: auto !important;
-  }
 }
 
 /* ============================================================================ */
-/* RESPONSIVE DESIGN - Screen Only */
+/* RESPONSIVE DESIGN */
 /* ============================================================================ */
 
 @media screen and (max-width: 768px) {
@@ -1164,56 +964,20 @@
 
   .infoGrid {
     grid-template-columns: 1fr;
-    gap: 10px;
   }
 
   .companyHeader {
     grid-template-columns: 1fr;
     text-align: center;
-    gap: 10px;
-  }
-
-  .companyInfo {
-    text-align: center;
-  }
-
-  .actionButtons {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .actionButton {
-    width: 100%;
-    max-width: 200px;
-  }
-
-  .tableContainer {
-    font-size: 9px;
-  }
-
-  .calculationLabel,
-  .paymentLabel {
-    width: 60%;
-  }
-
-  .calculationValue,
-  .calculationValueNegative,
-  .paymentValue,
-  .paymentValueNegative,
-  .paymentValuePositive {
-    width: 40%;
-  }
-
-  .descriptionCell {
-    max-width: 120px;
   }
 
   .signatureContainer {
+    grid-template-columns: 1fr;
     gap: 20px;
   }
 
-  .termsItem {
-    padding: 12px !important;
+  .tableContainer {
+    overflow-x: auto;
   }
 }
 
@@ -1222,62 +986,11 @@
     font-size: 18px;
   }
 
-  .companyName {
-    font-size: 14px;
-  }
-
-  .projectTitle {
-    font-size: 16px;
-  }
-
   .document {
     font-size: 9px;
   }
 
-  .tableHeader,
-  .tableCell,
-  .tableCellRight {
-    padding: 8px;
-    font-size: 9px;
+  .actionButtons {
+    flex-direction: column;
   }
-
-  .calculationLabel,
-  .calculationValue,
-  .paymentLabel,
-  .paymentValue {
-    font-size: 9px;
-    padding: 8px;
-  }
-
-  .termsItem {
-    font-size: 9.5px;
-    padding: 12px !important;
-  }
-
-  .descriptionCell {
-    max-width: 100px;
-  }
-
-  .signatureContainer {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-
-  .infoGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* High DPI displays */
-@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-  .logo {
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-  }
-}
-
-/* Focus styles for accessibility */
-.actionButton:focus {
-  outline: 2px solid #0a9396;
-  outline-offset: 2px;
 }

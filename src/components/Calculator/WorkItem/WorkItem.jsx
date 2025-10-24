@@ -89,13 +89,59 @@ function WorkItemContent({
   const [isExpanded, setIsExpanded] = useState(true);
   const [validationErrors, setValidationErrors] = useState({});
   
+  // ✅ FIX #1: Store previous custom work type name to restore if needed
+  const [customWorkTypeHistory, setCustomWorkTypeHistory] = useState({});
+  
   const prevWorkItemRef = useRef(workItem);
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
 
-  // CRITICAL DEBUG: Log the incoming workItem to see if customWorkTypeName is present
+  // ✅ FIX #2: Real-time validation effect for custom work types
   useEffect(() => {
-    console.log('WorkItem received props:', {
+    const errors = {};
+    
+    // Validate custom work type name is present when type is custom
+    if (workItem.type === 'custom-work-type') {
+      if (!workItem.customWorkTypeName?.trim()) {
+        errors.customWorkTypeName = 'Custom work type name is required';
+      }
+    }
+    
+    // Validate measurement type is selected
+    if (workItem.type && workItem.type !== 'custom-work-type' && !workItem.measurementType) {
+      errors.measurementType = 'Please select a measurement method';
+    }
+    
+    // Update validation errors
+    setValidationErrors(prev => {
+      // Remove old errors that are now fixed
+      const newErrors = { ...prev };
+      
+      // Remove errors that are no longer relevant
+      if (workItem.type !== 'custom-work-type') {
+        delete newErrors.customWorkTypeName;
+      }
+      if (workItem.measurementType) {
+        delete newErrors.measurementType;
+      }
+      
+      // Add new errors
+      return { ...newErrors, ...errors };
+    });
+  }, [workItem.type, workItem.customWorkTypeName, workItem.measurementType]);
+
+  // ✅ FIX #3: Save custom work type name to history when it changes
+  useEffect(() => {
+    if (workItem.type === 'custom-work-type' && workItem.customWorkTypeName?.trim()) {
+      setCustomWorkTypeHistory(prev => ({
+        ...prev,
+        [workItem.type]: workItem.customWorkTypeName
+      }));
+    }
+  }, [workItem.type, workItem.customWorkTypeName]);
+
+  useEffect(() => {
+    console.log('📊 WorkItem received props:', {
       catIndex,
       workIndex,
       name: workItem.name,
@@ -108,7 +154,7 @@ function WorkItemContent({
   const calculatorEngine = useMemo(() => {
     try {
       if (!getMeasurementType || !isValidSubtype || !getWorkTypeDetails) {
-        console.warn('Calculator engine dependencies not ready');
+        console.warn('⚠️ Calculator engine dependencies not ready');
         return null;
       }
       return new CalculatorEngine([], settingsRef.current || {}, {
@@ -117,7 +163,7 @@ function WorkItemContent({
         getWorkTypeDetails,
       });
     } catch (err) {
-      console.warn('Calculator engine init error:', err.message);
+      console.warn('⚠️ Calculator engine init error:', err.message);
       return null;
     }
   }, [getMeasurementType, isValidSubtype, getWorkTypeDetails]);
@@ -128,16 +174,12 @@ function WorkItemContent({
     return categoryKey.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '');
   }, [categoryKey]);
 
-  const isCustomCategory = useMemo(() => {
-    return normalizedCategoryKey.startsWith('custom_');
-  }, [normalizedCategoryKey]);
-
   const availableWorkTypes = useMemo(() => {
     try {
       if (!normalizedCategoryKey || !isCategoryValid(normalizedCategoryKey)) return [];
       return getCategoryWorkTypes(normalizedCategoryKey);
     } catch (err) {
-      console.warn(`Failed to get work types: ${err.message}`);
+      console.warn(`⚠️ Failed to get work types: ${err.message}`);
       return [];
     }
   }, [normalizedCategoryKey, getCategoryWorkTypes, isCategoryValid]);
@@ -160,37 +202,41 @@ function WorkItemContent({
       const opts = getSubtypeOptions(workItem.type);
       return (opts || []).map(opt => ({ value: opt, label: opt }));
     } catch (err) {
-      console.warn(`Failed subtype options: ${err.message}`);
+      console.warn(`⚠️ Failed subtype options: ${err.message}`);
       return [];
     }
   }, [workItem.type, getSubtypeOptions]);
 
+  // ✅ ENHANCED: Derived name with better handling
   const derivedName = useMemo(() => {
     if (workItem.name && workItem.name !== 'New Work Item' && workItem.name !== 'Unnamed Work Item') {
-        return workItem.name;
+      return workItem.name;
     }
 
-    if (isCustomCategory && workItem.type === 'custom-work-type' && workItem.customWorkTypeName) {
+    if (workItem.type === 'custom-work-type') {
+      if (workItem.customWorkTypeName) {
         const subtypeLabel = subtypeOptions.find(opt => opt.value === workItem.subtype)?.label;
         return subtypeLabel ? `${workItem.customWorkTypeName} (${subtypeLabel})` : workItem.customWorkTypeName;
+      }
+      return 'Unnamed Custom Work';
     }
     
     const workTypeLabel = workTypeOptions.find(opt => opt.value === workItem.type)?.label;
     const subtypeLabel = subtypeOptions.find(opt => opt.value === workItem.subtype)?.label;
 
     if (workTypeLabel) {
-        return subtypeLabel ? `${workTypeLabel} (${subtypeLabel})` : workTypeLabel;
+      return subtypeLabel ? `${workTypeLabel} (${subtypeLabel})` : workTypeLabel;
     }
     
     return 'Unnamed Work Item';
-  }, [workItem.name, workItem.type, workItem.subtype, workItem.customWorkTypeName, workTypeOptions, subtypeOptions, isCustomCategory]);
+  }, [workItem.name, workItem.type, workItem.subtype, workItem.customWorkTypeName, workTypeOptions, subtypeOptions]);
 
+  // ✅ FIX #4: Enhanced updateWorkItem with better state management
   const updateWorkItem = useCallback((field, value) => {
     if (disabled) return;
     
-    // CRITICAL FIX: Always start with ALL fields from workItem
     const updatedItem = {
-      ...workItem, // Spread FIRST to get all existing fields
+      ...workItem,
       categoryKey: normalizedCategoryKey,
     };
 
@@ -203,44 +249,85 @@ function WorkItemContent({
       }
     });
 
-    // Now update the specific field
     if (field === 'type') {
+      const previousType = updatedItem.type;
       updatedItem.type = value;
+      
       if (value !== 'custom-work-type') {
-        // Switching away from custom work type - clear custom name
+        // ✅ FIX: Store custom work type name before clearing
+        if (previousType === 'custom-work-type' && updatedItem.customWorkTypeName) {
+          console.log(`💾 Storing custom work type name: "${updatedItem.customWorkTypeName}"`);
+          setCustomWorkTypeHistory(prev => ({
+            ...prev,
+            lastCustom: updatedItem.customWorkTypeName
+          }));
+        }
+        
         updatedItem.customWorkTypeName = '';
         updatedItem.subtype = getDefaultSubtype(value) || '';
         updatedItem.measurementType = getMeasurementType(normalizedCategoryKey, value);
       } else {
-        // Switching TO custom work type - keep existing customWorkTypeName if it exists
+        // ✅ FIX: Restore custom work type name if switching back
+        const restoredName = customWorkTypeHistory.lastCustom || '';
+        if (restoredName) {
+          console.log(`🔄 Restoring custom work type name: "${restoredName}"`);
+          updatedItem.customWorkTypeName = restoredName;
+        } else {
+          updatedItem.customWorkTypeName = '';
+        }
+        
         updatedItem.subtype = '';
         updatedItem.measurementType = '';
       }
+      
       updatedItem.surfaces = [];
       setValidationErrors({});
+      
     } else if (field === 'customWorkTypeName') {
       updatedItem.customWorkTypeName = value;
+      
+      // Clear error when user types
+      if (value.trim()) {
+        setValidationErrors(prev => {
+          const { customWorkTypeName, ...rest } = prev;
+          return rest;
+        });
+      }
+      
     } else if (field === 'measurementType') {
       updatedItem.measurementType = value;
       updatedItem.surfaces = [];
+      
+      // Clear error when user selects measurement type
+      if (value) {
+        setValidationErrors(prev => {
+          const { measurementType, ...rest } = prev;
+          return rest;
+        });
+      }
+      
     } else if (field === 'subtype') {
       updatedItem.subtype = value;
+      
     } else if (field === 'surfaces') {
       updatedItem.surfaces = value;
+      
     } else if (field === 'materialCost' || field === 'laborCost') {
       updatedItem[field] = typeof value === 'number' ? value : parseFloat(value) || 0;
+      
     } else if (field === 'description') {
       updatedItem.description = value;
+      
     } else {
       updatedItem[field] = value;
     }
 
-    // Update the name if needed
+    // ✅ Update name based on type and subtype changes
     if (field === 'type' || field === 'subtype' || field === 'customWorkTypeName') {
       if (updatedItem.type === 'custom-work-type' && updatedItem.customWorkTypeName) {
         const stLabel = subtypeOptions.find(opt => opt.value === updatedItem.subtype)?.label;
         updatedItem.name = stLabel ? `${updatedItem.customWorkTypeName} (${stLabel})` : updatedItem.customWorkTypeName;
-      } else {
+      } else if (updatedItem.type) {
         const wtLabel = workTypeOptions.find(opt => opt.value === updatedItem.type)?.label;
         const stLabel = subtypeOptions.find(opt => opt.value === updatedItem.subtype)?.label;
         updatedItem.name = wtLabel ? (stLabel ? `${wtLabel} (${stLabel})` : wtLabel) : updatedItem.name;
@@ -251,6 +338,7 @@ function WorkItemContent({
       name: updatedItem.name,
       type: updatedItem.type,
       customWorkTypeName: updatedItem.customWorkTypeName,
+      measurementType: updatedItem.measurementType,
     });
 
     prevWorkItemRef.current = updatedItem;
@@ -265,7 +353,8 @@ function WorkItemContent({
     getMeasurementType, 
     onItemChange, 
     workTypeOptions, 
-    subtypeOptions
+    subtypeOptions,
+    customWorkTypeHistory
   ]);
 
   const handleRemoveWorkItem = useCallback(() => {
@@ -296,7 +385,8 @@ function WorkItemContent({
       name: sanitized.name,
       type: sanitized.type,
       customWorkTypeName: sanitized.customWorkTypeName,
-      hasCustomName: !!sanitized.customWorkTypeName
+      hasCustomName: !!sanitized.customWorkTypeName,
+      measurementType: sanitized.measurementType,
     });
     
     return sanitized;
@@ -378,16 +468,25 @@ function WorkItemContent({
     return getMeasurementType && isValidSubtype && getWorkTypeDetails && getAllMeasurementTypes;
   }, [getMeasurementType, isValidSubtype, getWorkTypeDetails, getAllMeasurementTypes]);
 
+  // ✅ FIX #5: Check if work item is complete enough to save
+  const isWorkItemComplete = useMemo(() => {
+    if (!sanitizedWorkItem.type) return false;
+    if (sanitizedWorkItem.type === 'custom-work-type' && !sanitizedWorkItem.customWorkTypeName?.trim()) return false;
+    return true;
+  }, [sanitizedWorkItem.type, sanitizedWorkItem.customWorkTypeName]);
+
   if (!isContextReady) {
     return (
       <div className={styles.workItem}>
-        <div className={styles.loading}>Loading work type data...</div>
+        <div className={styles.loading}>
+          <i className="fas fa-spinner fa-spin"></i> Loading work type data...
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={`${styles.workItem} ${disabled ? styles.disabled : ''}`}>
+    <div className={`${styles.workItem} ${disabled ? styles.disabled : ''} ${!isWorkItemComplete ? styles.incomplete : ''}`}>
       <div className={styles.header}>
         <button 
           className={styles.toggleButton} 
@@ -399,6 +498,11 @@ function WorkItemContent({
         </button>
         <h3 className={styles.workTitle}>
           <i className="fas fa-tools" /> {sanitizedWorkItem.name}
+          {!isWorkItemComplete && (
+            <span className={styles.incompleteBadge} title="Work item is incomplete">
+              <i className="fas fa-exclamation-circle"></i> Incomplete
+            </span>
+          )}
         </h3>
         {!disabled && (
           <button 
@@ -424,20 +528,24 @@ function WorkItemContent({
                 value={sanitizedWorkItem.type} 
                 onChange={e => updateWorkItem('type', e.target.value)} 
                 disabled={disabled} 
-                className={styles.select} 
+                className={`${styles.select} ${!sanitizedWorkItem.type ? styles.required : ''}`}
                 required
               >
                 <option value="">Select Work Type</option>
                 {workTypeOptions.map(opt => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
-                {isCustomCategory && (
-                  <option value="custom-work-type">Custom Work Type</option>
-                )}
+                <option value="custom-work-type">Custom Work Type</option>
               </select>
+              {!sanitizedWorkItem.type && (
+                <small className={styles.errorText}>
+                  <i className="fas fa-exclamation-circle"></i> Please select a work type
+                </small>
+              )}
             </div>
             
-            {isCustomCategory && sanitizedWorkItem.type === 'custom-work-type' && (
+            {/* ✅ Custom Work Type Name Input */}
+            {sanitizedWorkItem.type === 'custom-work-type' && (
               <div className={styles.field}>
                 <label htmlFor={`custom-work-name-${catIndex}-${workIndex}`}>
                   <i className="fas fa-pencil-alt" /> Custom Work Name *
@@ -448,13 +556,24 @@ function WorkItemContent({
                   value={sanitizedWorkItem.customWorkTypeName || ''}
                   onChange={e => updateWorkItem('customWorkTypeName', e.target.value)}
                   disabled={disabled}
-                  className={styles.input}
+                  className={`${styles.input} ${validationErrors.customWorkTypeName ? styles.invalid : ''}`}
                   placeholder="Enter custom work type name"
                   required
                 />
+                {validationErrors.customWorkTypeName && (
+                  <small className={styles.errorText}>
+                    <i className="fas fa-exclamation-circle"></i> {validationErrors.customWorkTypeName}
+                  </small>
+                )}
+                {!validationErrors.customWorkTypeName && (
+                  <small className={styles.helpText}>
+                    Give your custom work type a descriptive name (e.g., "Decorative Ceiling Treatment")
+                  </small>
+                )}
               </div>
             )}
             
+            {/* ✅ Subtype Selection */}
             {subtypeOptions.length > 0 && (
               <div className={styles.field}>
                 <label htmlFor={`subtype-${catIndex}-${workIndex}`}>
@@ -476,6 +595,7 @@ function WorkItemContent({
             )}
           </div>
 
+          {/* ✅ Measurement Type Selection */}
           {sanitizedWorkItem.type && (sanitizedWorkItem.type !== 'custom-work-type' || sanitizedWorkItem.customWorkTypeName) && (
             <div className={styles.field}>
               <label htmlFor={`measurement-${catIndex}-${workIndex}`}>
@@ -486,7 +606,7 @@ function WorkItemContent({
                 value={sanitizedWorkItem.measurementType} 
                 onChange={e => updateWorkItem('measurementType', e.target.value)} 
                 disabled={disabled} 
-                className={styles.select} 
+                className={`${styles.select} ${!sanitizedWorkItem.measurementType ? styles.required : ''}`}
                 required
               >
                 <option value="">Select Measurement Method</option>
@@ -496,12 +616,20 @@ function WorkItemContent({
                   </option>
                 ))}
               </select>
-              <small className={styles.helpText}>
-                Choose the measurement method that best fits your work
-              </small>
+              {validationErrors.measurementType && (
+                <small className={styles.errorText}>
+                  <i className="fas fa-exclamation-circle"></i> {validationErrors.measurementType}
+                </small>
+              )}
+              {!validationErrors.measurementType && (
+                <small className={styles.helpText}>
+                  Choose the measurement method that best fits your work
+                </small>
+              )}
             </div>
           )}
 
+          {/* ✅ Surface Manager */}
           {sanitizedWorkItem.type && sanitizedWorkItem.measurementType && (sanitizedWorkItem.type !== 'custom-work-type' || sanitizedWorkItem.customWorkTypeName) && (
             <SurfaceManager 
               workItem={sanitizedWorkItem} 
@@ -514,6 +642,7 @@ function WorkItemContent({
             />
           )}
 
+          {/* ✅ Description and Costs */}
           {sanitizedWorkItem.type && sanitizedWorkItem.measurementType && (sanitizedWorkItem.type !== 'custom-work-type' || sanitizedWorkItem.customWorkTypeName) && (
             <>
               <div className={styles.field}>
@@ -560,6 +689,7 @@ function WorkItemContent({
             </>
           )}
 
+          {/* ✅ Cost Summary */}
           {calculationResults.canCalculate && showCostBreakdown && (
             <div className={styles.costDisplay}>
               <h4><i className="fas fa-calculator" /> Summary</h4>
@@ -580,6 +710,7 @@ function WorkItemContent({
             </div>
           )}
 
+          {/* ✅ Warnings */}
           {calculationResults.warnings.length > 0 && (
             <div className={styles.warningSection} role="alert">
               <h4><i className="fas fa-exclamation-triangle" /> Calculation Warnings:</h4>
@@ -591,6 +722,7 @@ function WorkItemContent({
             </div>
           )}
 
+          {/* ✅ Validation Errors */}
           {validationErrorList.length > 0 && (
             <div className={styles.validationErrors} role="alert">
               <h4><i className="fas fa-exclamation-triangle" /> Please fix these issues:</h4>

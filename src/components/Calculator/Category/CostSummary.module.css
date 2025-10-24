@@ -36,10 +36,11 @@
 }
 
 .headerTotal {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-bold);
   color: var(--surface);
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 .headerStats {
@@ -47,7 +48,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   color: var(--surface);
-  opacity: 0.8;
+  opacity: 0.95;
   white-space: nowrap;
 }
 
@@ -88,6 +89,7 @@
   align-items: center;
   gap: var(--spacing-sm);
   font-family: var(--font-family);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
 /* Summary Content */
@@ -236,6 +238,7 @@
   font-size: var(--font-size-base);
   color: var(--text);
   flex: 1;
+  font-weight: var(--font-weight-medium);
 }
 
 .wasteDetailLabel i {
@@ -378,39 +381,64 @@
   margin-right: var(--spacing-sm);
 }
 
-/* Summary Grid - Flexible Layout */
+/* Summary Grid - Enhanced Visual Hierarchy */
 .summaryGrid {
   display: flex;
   flex-direction: column;
-  max-width: 1000px;
+  min-width: 650px; /* Slightly wider */
   margin: 0 auto;
   font-size: var(--font-size-base);
   color: var(--text);
   background: var(--surface);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  border: 1px solid var(--border-light);
 }
 
+/* Enhanced Sticky Header */
 .stickyHeader {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
   font-weight: var(--font-weight-bold);
   color: var(--surface);
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  /* Updated background: deeper, modern gradient */
+  background: linear-gradient(135deg, #4a6cf7, #6d5dfc); /* Example: indigo-to-purple */
   padding: var(--spacing-md) var(--spacing-xl);
+  font-size: var(--font-size-sm);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
+/* Enhanced Summary Items */
 .summaryItem {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: var(--spacing-md);
+  gap: var(--spacing-lg);
   align-items: center;
   padding: var(--spacing-md) var(--spacing-xl);
   border-bottom: 1px solid var(--border-light);
-  transition: all var(--transition-duration);
-  position: relative;
+  transition: all var(--transition-duration) ease;
+  background: var(--surface);
+}
+
+.summaryItem:hover {
+  background-color: var(--surface-hover); /* Assumes you have this var; fallback below */
+  transform: translateX(4px);
+}
+
+/* Optional fallback if --surface-hover isn't defined */
+.summaryItem:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.summaryItem:nth-child(even) {
+  background: rgba(var(--primary-rgb), 0.02);
 }
 
 .summaryItem:last-child {
@@ -419,6 +447,7 @@
 
 .summaryItem:hover {
   background: var(--hover-bg);
+  transform: translateX(2px);
 }
 
 .summaryItem::before {
@@ -427,8 +456,8 @@
   left: 0;
   top: 0;
   height: 100%;
-  width: 3px;
-  background: var(--primary);
+  width: 4px;
+  background: linear-gradient(to bottom, var(--primary), var(--secondary));
   opacity: 0;
   transition: opacity var(--transition-duration);
 }
@@ -437,43 +466,72 @@
   opacity: 1;
 }
 
+/* Enhanced Labels with Better Contrast */
 .summaryLabel {
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   color: var(--text);
   text-align: left;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  transition: color var(--transition-duration);
+  transition: all var(--transition-duration);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
 }
 
-.summaryLabel:hover {
+.summaryLabel i {
   color: var(--primary);
+  font-size: var(--font-size-lg);
+  width: 24px;
+  text-align: center;
+  transition: all var(--transition-duration);
 }
 
+.summaryItem:hover .summaryLabel {
+  color: var(--primary);
+  transform: translateX(2px);
+}
+
+.summaryItem:hover .summaryLabel i {
+  color: var(--secondary);
+  transform: scale(1.15) rotate(5deg);
+}
+
+/* Enhanced Values with Better Visibility */
 .summaryValue {
-  font-weight: var(--font-weight-medium);
-  color: var(--text);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
   text-align: right;
   white-space: nowrap;
   transition: all var(--transition-duration);
-  min-width: 120px;
+  min-width: 140px;
+  font-size: var(--font-size-lg);
+  letter-spacing: 0.5px;
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 .summaryItem:hover .summaryValue {
-  color: var(--primary);
+  color: var(--secondary);
   font-weight: var(--font-weight-bold);
-  transform: translateX(-2px);
+  transform: scale(1.05);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-/* Highlighted Rows */
+/* Highlighted Rows - Enhanced */
 .total, .balance {
-  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), rgba(var(--secondary-rgb), 0.05));
+  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.15), rgba(var(--secondary-rgb), 0.08)) !important;
   font-size: var(--font-size-lg);
   padding: var(--spacing-lg) var(--spacing-xl) !important;
-  border-left: 4px solid var(--primary);
+  border-left: 6px solid var(--primary) !important;
   margin: var(--spacing-sm) 0;
   border-radius: var(--radius-sm);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.total::before,
+.balance::before {
+  opacity: 1 !important;
+  width: 6px;
 }
 
 .total .summaryLabel,
@@ -481,29 +539,37 @@
   color: var(--primary);
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-lg);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.total .summaryLabel i,
+.balance .summaryLabel i {
+  font-size: var(--font-size-xl);
 }
 
 .total .summaryValue,
 .balance .summaryValue {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-xxl);
   font-weight: var(--font-weight-bold);
   color: var(--primary);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .paid {
-  color: var(--success);
+  color: var(--success) !important;
   font-weight: var(--font-weight-bold);
 }
 
 /* Payment Progress Styles */
 .paymentProgress {
   width: 100%;
-  max-width: 300px;
+  max-width: 320px;
 }
 
 .progressBar {
   width: 100%;
-  height: 8px;
+  height: 10px;
   background: var(--border-light);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -552,7 +618,7 @@
 
 .progressLabel {
   color: var(--text);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
 }
 
 .overdueLabel {
@@ -691,6 +757,7 @@
 
   .summaryItem {
     padding: var(--spacing-sm) var(--spacing-md);
+    gap: var(--spacing-md);
   }
 
   .summaryLabel {
@@ -699,6 +766,7 @@
 
   .summaryValue {
     font-size: var(--font-size-base);
+    min-width: 100px;
   }
 
   .total .summaryLabel,
@@ -708,7 +776,7 @@
 
   .total .summaryValue,
   .balance .summaryValue {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-xl);
   }
 
   .overpaymentNotice,
@@ -768,9 +836,13 @@
     font-size: var(--font-size-sm);
   }
 
+  .summaryItem {
+    padding: var(--spacing-sm);
+  }
+
   .total .summaryValue,
   .balance .summaryValue {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-lg);
   }
 
   .headerInline {
@@ -778,7 +850,7 @@
   }
 
   .headerTotal {
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
 
   .headerStats {
@@ -808,6 +880,23 @@
 
 .dark .summaryGrid {
   background: var(--surface-dark);
+  border-color: var(--border-dark);
+}
+
+.dark .summaryItem {
+  background: var(--surface-dark);
+}
+
+.dark .summaryItem:nth-child(even) {
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+.dark .summaryLabel {
+  color: var(--text-dark);
+}
+
+.dark .summaryValue {
+  color: var(--primary);
 }
 
 .dark .emptyState {
