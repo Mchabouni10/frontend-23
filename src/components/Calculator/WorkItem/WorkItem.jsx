@@ -565,11 +565,7 @@ function WorkItemContent({
                     <i className="fas fa-exclamation-circle"></i> {validationErrors.customWorkTypeName}
                   </small>
                 )}
-                {!validationErrors.customWorkTypeName && (
-                  <small className={styles.helpText}>
-                    Give your custom work type a descriptive name (e.g., "Decorative Ceiling Treatment")
-                  </small>
-                )}
+                {/* help text removed per request */}
               </div>
             )}
             
@@ -621,11 +617,7 @@ function WorkItemContent({
                   <i className="fas fa-exclamation-circle"></i> {validationErrors.measurementType}
                 </small>
               )}
-              {!validationErrors.measurementType && (
-                <small className={styles.helpText}>
-                  Choose the measurement method that best fits your work
-                </small>
-              )}
+              {/* help text removed per request */}
             </div>
           )}
 
