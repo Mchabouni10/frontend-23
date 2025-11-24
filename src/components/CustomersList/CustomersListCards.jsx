@@ -1,52 +1,31 @@
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faSearch,
   faEye,
   faEdit,
   faTrashAlt,
   faPlusCircle,
-  faSpinner,
-  faExclamationTriangle,
-  faClock,
-  faInfoCircle,
-  faChevronDown,
+  faExclamationCircle,
   faPhone,
   faTasks,
   faCalendarAlt,
   faDollarSign,
   faUser,
-  faTimes,
-  faExclamationCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "./CustomersListCards.module.css";
 
 export default function CustomersListCards({
-  searchQuery = "",
-  setSearchQuery,
-  filteredCustomers = [],
-  isLoading = false,
-  error = "",
+  paginatedCustomers,
   projectErrors = new Map(),
-  lastUpdated = "",
-  totals = { grandTotal: 0, amountRemaining: 0 },
-  notifications = [],
-  isNotificationsOpen = false,
-  setIsNotificationsOpen,
   handleDetails,
   handleEdit,
   handleDelete,
   handleNewProject,
   formatPhoneNumber = (phone) => phone || "N/A",
-  formatDate = (date) => date || "N/A",
   navigate,
-  statusFilter = "",
-  setStatusFilter,
 }) {
-  const [currentPage, setCurrentPage] = useState(1);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [selectedErrors, setSelectedErrors] = useState([]);
-  const itemsPerPage = 6;
 
   const getPaymentProgress = useCallback((customer = {}) => {
     const total = customer.totalGrandTotal ?? 0;
@@ -109,20 +88,6 @@ export default function CustomersListCards({
     [handleDetails, handleEdit, handleDelete, handleNewProject]
   );
 
-  const statusOptions = useMemo(
-    () => [
-      { value: "", label: "All Statuses" },
-      { value: "Not Started", label: "Not Started" },
-      { value: "Starting Soon", label: "Starting Soon" },
-      { value: "In Progress", label: "In Progress" },
-      { value: "Due Soon", label: "Due Soon" },
-      { value: "Overdue", label: "Overdue" },
-      { value: "Completed", label: "Completed" },
-      { value: "Unknown", label: "Unknown" },
-    ],
-    []
-  );
-
   const showErrorsForCustomer = useCallback(
     (customer = {}) => {
       const customerErrors = [];
@@ -138,161 +103,9 @@ export default function CustomersListCards({
     [projectErrors]
   );
 
-  const totalPages = useMemo(
-    () => Math.ceil((filteredCustomers.length || 0) / itemsPerPage),
-    [filteredCustomers.length]
-  );
-
-  const paginatedCustomers = useMemo(
-    () =>
-      filteredCustomers.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-      ),
-    [filteredCustomers, currentPage]
-  );
-
-  const handlePreviousPage = useCallback(() => {
-    setCurrentPage((prev) => Math.max(prev - 1, 1));
-  }, []);
-
-  const handleNextPage = useCallback(() => {
-    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-  }, [totalPages]);
-
-  const handleClearSearch = useCallback(() => {
-    setSearchQuery?.("");
-  }, [setSearchQuery]);
-
-  const handleNotificationToggle = useCallback(() => {
-    setIsNotificationsOpen?.((prev) => !prev);
-  }, [setIsNotificationsOpen]);
-
-
-
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>Customers</h1>
-
-      <div className={styles.searchSection}>
-        <div className={styles.searchWrapper}>
-          <FontAwesomeIcon
-            icon={faSearch}
-            className={styles.searchIcon}
-            aria-hidden="true"
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery?.(e.target.value)}
-            placeholder="Search by name, phone, or status..."
-            className={styles.searchInput}
-            aria-label="Search customers by name, phone, or status"
-          />
-          {searchQuery && (
-            <button
-              onClick={handleClearSearch}
-              className={styles.clearButton}
-              aria-label="Clear search"
-              type="button"
-            >
-              <FontAwesomeIcon icon={faTimes} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-
-        <div className={styles.filterWrapper}>
-          <label htmlFor="statusFilter" className={styles.visuallyHidden}>
-            Filter by status
-          </label>
-          <select
-            id="statusFilter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter?.(e.target.value)}
-            className={styles.statusFilter}
-            aria-label="Filter customers by status"
-          >
-            {statusOptions.map((option) => (
-              <option key={option.value || "all"} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      {notifications.length > 0 && (
-        <div className={styles.notificationPanel}>
-          <button
-            className={styles.notificationHeader}
-            onClick={handleNotificationToggle}
-            aria-expanded={isNotificationsOpen}
-            aria-controls="notification-list"
-            type="button"
-          >
-            <h2 className={styles.notificationTitle}>
-              Notifications
-              <span
-                className={styles.notificationCountBadge}
-                aria-label={`${notifications.length} notifications`}
-              >
-                ({notifications.length})
-              </span>
-            </h2>
-            <FontAwesomeIcon
-              icon={faChevronDown}
-              className={`${styles.toggleArrow} ${
-                isNotificationsOpen ? styles.open : ""
-              }`}
-              aria-hidden="true"
-            />
-          </button>
-
-          {isNotificationsOpen && (
-            <ul id="notification-list" className={styles.notificationList}>
-              {notifications.map((note, index) => (
-                <li
-                  key={`notification-${index}`}
-                  className={`${styles.notificationItem} ${
-                    note.overdue
-                      ? styles.overdue
-                      : note.nearDue
-                      ? styles.warning
-                      : styles.info
-                  }`}
-                >
-                  <FontAwesomeIcon
-                    icon={
-                      note.overdue
-                        ? faExclamationTriangle
-                        : note.nearDue
-                        ? faClock
-                        : faInfoCircle
-                    }
-                    className={styles.notificationIcon}
-                    aria-hidden="true"
-                  />
-                  <span>{note.message || "No message available"}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {error && (
-        <div className={styles.error} role="alert" aria-live="polite">
-          <FontAwesomeIcon icon={faExclamationTriangle} aria-hidden="true" />{" "}
-          {error}
-        </div>
-      )}
-
-      {isLoading ? (
-        <div className={styles.loading} role="status" aria-live="polite">
-          <FontAwesomeIcon icon={faSpinner} spin aria-hidden="true" />
-          <span>Loading Customers...</span>
-        </div>
-      ) : paginatedCustomers.length > 0 ? (
+      {paginatedCustomers.length > 0 ? (
         <>
           <div className={styles.cardsWrapper} role="list">
             {paginatedCustomers.map((customer = {}) => {
@@ -505,33 +318,6 @@ export default function CustomersListCards({
               );
             })}
           </div>
-
-          {totalPages > 1 && (
-            <nav className={styles.pagination} aria-label="Pagination navigation">
-              <button
-                onClick={handlePreviousPage}
-                disabled={currentPage === 1}
-                aria-label="Go to previous page"
-                type="button"
-              >
-                Previous
-              </button>
-              <span
-                aria-current="page"
-                aria-label={`Page ${currentPage} of ${totalPages}`}
-              >
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage >= totalPages}
-                aria-label="Go to next page"
-                type="button"
-              >
-                Next
-              </button>
-            </nav>
-          )}
         </>
       ) : (
         <div className={styles.noResults} role="status">
@@ -548,41 +334,6 @@ export default function CustomersListCards({
           </p>
         </div>
       )}
-
-      <aside className={styles.totalsSection} aria-label="Financial summary">
-        <p>
-          <span className={styles.label}>Total Grand Total:</span>{" "}
-          <span
-            className={styles.grandTotal}
-            aria-label={`Total grand total: $${(
-              totals.grandTotal ?? 0
-            ).toFixed(2)}`}
-          >
-            ${(totals.grandTotal ?? 0).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </span>
-        </p>
-        <p>
-          <span className={styles.label}>Total Amount Remaining:</span>{" "}
-          <span
-            className={styles.remaining}
-            aria-label={`Total amount remaining: $${(
-              totals.amountRemaining ?? 0
-            ).toFixed(2)}`}
-          >
-            ${(totals.amountRemaining ?? 0).toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </span>
-        </p>
-        <p className={styles.lastUpdated}>
-          Last Updated:{" "}
-          <time dateTime={lastUpdated}>{formatDate(lastUpdated)}</time>
-        </p>
-      </aside>
 
       {showErrorModal && (
         <div

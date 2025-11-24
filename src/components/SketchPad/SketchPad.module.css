@@ -1,0 +1,386 @@
+/* ===================================================================
+   SketchPage.module.css
+   =================================================================== */
+
+.sketchPage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+  font-family: var(--font-family);
+  background: var(--background);
+}
+
+.header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: 0.5px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem;
+  border-radius: var(--radius-md);
+}
+
+.tabBtn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  transition: all 0.3s ease;
+  font-family: var(--font-family);
+}
+
+.tabBtn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.activeTab {
+  background: white !important;
+  color: var(--primary) !important;
+  font-weight: var(--font-weight-bold);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+}
+
+/* Dark Mode */
+.dark .header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.dark .activeTab {
+  background: var(--surface) !important;
+  color: var(--primary) !important;
+}
+
+
+/* ===================================================================
+   SketchPad.module.css
+   =================================================================== */
+
+.sketchPad {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  height: 100%;
+  background-color: var(--surface);
+  padding: 1.5rem;
+}
+
+.toolbar {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--background) 0%, #ffffff 100%);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  flex-wrap: wrap;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.toolBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.toolBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.toolBtn:active:not(:disabled) {
+  transform: translateY(0) scale(1);
+  box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+}
+
+.toolBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background-color: var(--surface);
+}
+
+.toolBtn.active {
+  background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+  transform: scale(1.05);
+}
+
+.spacer {
+  flex: 1;
+  min-width: 1rem;
+}
+
+.canvasWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #fafbfc 0%, #f0f2f5 100%);
+  border-radius: var(--radius-lg);
+  border: 2px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  min-height: 500px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+}
+
+.canvasWrapper canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark Mode Support */
+.dark .sketchPad {
+  background-color: var(--surface);
+}
+
+.dark .toolbar {
+  background: linear-gradient(135deg, var(--background) 0%, var(--surface) 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .toolBtn {
+  background-color: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dark .toolBtn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+.dark .toolBtn.active {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+}
+
+.dark .canvasWrapper {
+  background: linear-gradient(135deg, #2a3544 0%, #1f2937 100%);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .toolbar {
+    gap: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .toolBtn {
+    width: 38px;
+    height: 38px;
+    font-size: 0.9rem;
+  }
+
+  .canvasWrapper {
+    min-height: 400px;
+    padding: 0.5rem;
+  }
+}
+
+
+/* ===================================================================
+   ThreeJSViewer.module.css
+   =================================================================== */
+
+.viewer {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #fafbfc 0%, #f0f2f5 100%);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin: 1.5rem;
+}
+
+.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 2rem;
+  text-align: center;
+}
+
+.placeholder p {
+  font-size: var(--font-size-lg);
+  color: var(--text-light);
+  font-weight: var(--font-weight-medium);
+  max-width: 500px;
+  line-height: 1.6;
+  background: white;
+  padding: 2rem 3rem;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 2px dashed rgba(52, 152, 219, 0.3);
+}
+
+.canvasContainer {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: linear-gradient(135deg, #e8ecf1 0%, #d1d8e0 100%);
+}
+
+.canvasContainer canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Controls overlay */
+.controls {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+
+.controls h3 {
+  margin: 0 0 0.5rem;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.controls p {
+  margin: 0.25rem 0;
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  line-height: 1.5;
+}
+
+/* Loading state */
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 4px solid rgba(52, 152, 219, 0.2);
+  border-top-color: var(--secondary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  margin-top: 1rem;
+  font-size: var(--font-size-base);
+  color: var(--text-light);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Dark Mode */
+.dark .viewer {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--background) 100%);
+}
+
+.dark .placeholder p {
+  background: var(--surface);
+  color: var(--text);
+  border-color: rgba(96, 165, 250, 0.3);
+}
+
+.dark .canvasContainer {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.dark .controls {
+  background: rgba(45, 55, 72, 0.95);
+  color: var(--text);
+}
+
+.dark .controls h3 {
+  color: var(--text);
+}
+
+.dark .controls p {
+  color: var(--text-light);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .viewer {
+    margin: 1rem;
+  }
+
+  .placeholder p {
+    font-size: var(--font-size-base);
+    padding: 1.5rem 2rem;
+  }
+
+  .controls {
+    top: 0.5rem;
+    right: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .controls h3 {
+    font-size: 0.75rem;
+  }
+  .controls p {
+    font-size: 0.75rem;
+  }
+}

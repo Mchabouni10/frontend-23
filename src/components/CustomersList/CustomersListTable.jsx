@@ -1,46 +1,25 @@
-//src/components/CustomersListTable/CustomersListTable.jsx
-
 import React, { useMemo } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faSearch,
   faEye,
   faEdit,
   faTrashAlt,
   faSort,
   faSortUp,
   faSortDown,
-  faTimes,
   faPlusCircle,
-  faExclamationTriangle,
-  faCheckCircle,
   faUser,
   faAddressCard,
   faPhone,
   faTasks,
   faCalendarAlt,
   faDollarSign,
-  faSpinner,
   faDownload,
-  faChevronDown,
-  faChevronUp,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "./CustomersList.module.css";
 
 export default function CustomersListTable({
-  searchQuery,
-  setSearchQuery,
   paginatedCustomers,
-  totalPages,
-  currentPage,
-  setCurrentPage,
-  isLoading,
-  error,
-  lastUpdated,
-  totals,
-  notifications,
-  isNotificationsOpen,
-  setIsNotificationsOpen,
   handleSort,
   handleDetails,
   handleEdit,
@@ -49,7 +28,6 @@ export default function CustomersListTable({
   handleExportCSV,
   sortConfig,
   formatPhoneNumber,
-  formatDate,
   navigate,
 }) {
   // Get sort icon based on current sort state
@@ -83,99 +61,7 @@ export default function CustomersListTable({
 
   return (
     <>
-      <h1 className={styles.title}>Customers</h1>
-      
-      {/* Search Section */}
-      <div className={styles.searchSection}>
-        <div className={styles.searchWrapper}>
-          <FontAwesomeIcon 
-            icon={faSearch} 
-            className={styles.searchIcon}
-            aria-hidden="true"
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by name, phone, or status..."
-            className={styles.searchInput}
-            aria-label="Search customers"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className={styles.clearButton}
-              aria-label="Clear search"
-              title="Clear search"
-            >
-              <FontAwesomeIcon icon={faTimes} aria-hidden="true" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Notifications Section */}
-      {notifications.length > 0 && (
-        <div className={styles.notificationsSection}>
-          <div
-            className={styles.notificationsHeader}
-            onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                setIsNotificationsOpen(!isNotificationsOpen);
-              }
-            }}
-            aria-expanded={isNotificationsOpen}
-            aria-controls="notifications-list"
-          >
-            <h3>
-              Notifications{" "}
-              <span className={styles.notificationCount}>
-                ({notifications.length})
-              </span>
-            </h3>
-            <FontAwesomeIcon
-              icon={isNotificationsOpen ? faChevronUp : faChevronDown}
-              className={styles.toggleIcon}
-              aria-hidden="true"
-            />
-          </div>
-          {isNotificationsOpen && (
-            <ul id="notifications-list">
-              {notifications.map((note, index) => (
-                <li
-                  key={`notification-${index}`}
-                  className={note.overdue ? styles.overdue : styles.nearDue}
-                >
-                  <FontAwesomeIcon
-                    icon={note.overdue ? faExclamationTriangle : faCheckCircle}
-                    aria-hidden="true"
-                  />{" "}
-                  {note.message}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {/* Error Message */}
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
-
-      {/* Loading State */}
-      {isLoading ? (
-        <div className={styles.loading} role="status">
-          <FontAwesomeIcon icon={faSpinner} spin aria-hidden="true" />
-          <span>Loading customers...</span>
-        </div>
-      ) : paginatedCustomers.length > 0 ? (
+      {paginatedCustomers.length > 0 ? (
         <div className={styles.tableWrapper}>
           {/* Table Header Actions */}
           <div className={styles.tableHeaderActions}>
@@ -404,50 +290,6 @@ export default function CustomersListTable({
               })}
             </tbody>
           </table>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <nav className={styles.pagination} aria-label="Pagination navigation">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                disabled={currentPage === 1}
-                aria-label="Go to previous page"
-              >
-                Previous
-              </button>
-              <span aria-current="page" aria-label={`Page ${currentPage} of ${totalPages}`}>
-                Page {currentPage} of {totalPages}
-              </span>
-              <button
-                onClick={() =>
-                  setCurrentPage((p) => Math.min(p + 1, totalPages))
-                }
-                disabled={currentPage === totalPages}
-                aria-label="Go to next page"
-              >
-                Next
-              </button>
-            </nav>
-          )}
-
-          {/* Totals Section */}
-          <div className={styles.totalsSection} role="region" aria-label="Financial summary">
-            <p>
-              Total Grand Total:{" "}
-              <span className={styles.grandTotal}>
-                ${totals.grandTotal.toFixed(2)}
-              </span>
-            </p>
-            <p>
-              Total Amount Remaining:{" "}
-              <span className={styles.remaining}>
-                ${totals.amountRemaining.toFixed(2)}
-              </span>
-            </p>
-            <p className={styles.lastUpdated}>
-              Last Updated: {formatDate(lastUpdated)}
-            </p>
-          </div>
         </div>
       ) : (
         <p className={styles.noResults}>

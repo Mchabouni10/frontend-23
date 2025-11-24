@@ -16,6 +16,8 @@ import CustomersList from './components/CustomersList/CustomersList';
 import CustomerProjects from './components/CustomerProjects/CustomerProjects';
 import EstimateSummaryPage from './components/EstimateSummary/EstimateSummary';
 import FinanceDashboard from './components/FinanceDashboard/FinanceDashboard';
+import SketchPage from './components/SketchPage/SketchPage';
+import CompanyExpenses from './components/CompanyExpenses/CompanyExpenses';
 
 export default function App() {
   const [user, setUser] = useState(getUser());
@@ -54,7 +56,7 @@ export default function App() {
           pauseOnHover
         />
         <div className="backgroundEffects"></div>
-        
+
         {/* Top-level error boundary for critical app structure */}
         <ErrorBoundaryWrapper boundaryName="AppRoot">
           {user ? (
@@ -85,14 +87,21 @@ export default function App() {
                         <HomePage />
                       </ErrorBoundaryWrapper>
                     } />
-                    
-                    {/* Print/Estimate route - Fixed route name */}
+
+                    {/* Sketch Designer Route */}
+                    <Route path="/home/sketch" element={
+                      <ErrorBoundaryWrapper boundaryName="SketchPage">
+                        <SketchPage />
+                      </ErrorBoundaryWrapper>
+                    } />
+
+                    {/* Print/Estimate route */}
                     <Route path="/home/print/:id" element={
                       <ErrorBoundaryWrapper boundaryName="EstimateSummary">
                         <EstimateSummaryPage />
                       </ErrorBoundaryWrapper>
                     } />
-                    
+
                     {/* Other routes with appropriate boundaries */}
                     <Route path="/home/customers" element={
                       <ErrorBoundaryWrapper boundaryName="CustomersList">
@@ -112,6 +121,11 @@ export default function App() {
                     <Route path="/home/finance" element={
                       <ErrorBoundaryWrapper boundaryName="FinanceDashboard">
                         <FinanceDashboard />
+                      </ErrorBoundaryWrapper>
+                    } />
+                    <Route path="/home/company-expenses" element={
+                      <ErrorBoundaryWrapper boundaryName="CompanyExpenses">
+                        <CompanyExpenses />
                       </ErrorBoundaryWrapper>
                     } />
                     <Route path="/logout" element={

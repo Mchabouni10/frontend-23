@@ -1,7 +1,17 @@
 // src/components/Navbar/Navbar.jsx
 import { Link, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSignOutAlt, faUsers, faPlusCircle, faFileAlt, faMoon, faSun, faChartPie } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faSignOutAlt, 
+  faUsers, 
+  faPlusCircle, 
+  faFileAlt, 
+  faMoon, 
+  faSun, 
+  faChartPie,
+  faPencilRuler,
+  faReceipt
+} from '@fortawesome/free-solid-svg-icons';
 import styles from './Navbar.module.css';
 
 export default function Navbar({ user, setUser, toggleDarkMode, isDarkMode }) {
@@ -29,11 +39,17 @@ export default function Navbar({ user, setUser, toggleDarkMode, isDarkMode }) {
             <span>New Project</span>
           </Link>
         </li>
+        <li>
+          <Link to="/home/sketch" className={styles.navLink}>
+            <FontAwesomeIcon icon={faPencilRuler} className={styles.navIcon} />
+            <span>Sketch</span>
+          </Link>
+        </li>
         {projectId && (
           <li>
             <Link to={`/home/print/${projectId}`} className={styles.navLink}>
               <FontAwesomeIcon icon={faFileAlt} className={styles.navIcon} />
-              <span>Print/Estimate</span>
+              <span>PrintEstimate</span>
             </Link>
           </li>
         )}
@@ -41,6 +57,12 @@ export default function Navbar({ user, setUser, toggleDarkMode, isDarkMode }) {
           <Link to="/home/finance" className={styles.navLink}>
             <FontAwesomeIcon icon={faChartPie} className={styles.navIcon} />
             <span>Finance Data</span>
+          </Link>
+        </li>
+        <li>
+          <Link to="/home/company-expenses" className={styles.navLink}>
+            <FontAwesomeIcon icon={faReceipt} className={styles.navIcon} />
+            <span>Expenses</span>
           </Link>
         </li>
         <li>

@@ -1,8 +1,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.example.app',
-  appName: 'Your App Name',
+  appId: 'com.remodelproapp.mobile',
+  appName: 'Remodel Pro',
   webDir: 'build',
   android: {
     allowMixedContent: true,

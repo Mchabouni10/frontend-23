@@ -1,5 +1,5 @@
 {
-  "name": "remo-frontend",
+  "name": "remo-frontend23",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -13,6 +13,8 @@
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@react-three/drei": "^9.88.17",
+    "@react-three/fiber": "^8.15.12",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
@@ -21,9 +23,11 @@
     "chart": "^0.1.2",
     "chart.js": "^4.4.9",
     "dompurify": "^3.3.0",
+    "fabric": "^6.9.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
+    "lucide-react": "^0.553.0",
     "print-js": "^1.6.0",
     "react": "^18.2.0",
     "react-chartjs-2": "^5.3.0",
@@ -31,11 +35,14 @@
     "react-datepicker": "^8.2.1",
     "react-day-picker": "^9.6.3",
     "react-dom": "^18.2.0",
+    "react-icons": "^5.5.0",
     "react-phone-input-2": "^2.15.1",
     "react-router-dom": "^6.21.1",
     "react-scripts": "5.0.1",
     "react-to-print": "^3.0.5",
     "react-toastify": "^11.0.5",
+    "three": "^0.160.0",
+    "three-gltf-exporter": "^0.0.1",
     "web-vitals": "^2.1.4",
     "zipcodes": "^8.0.0"
   },
@@ -64,6 +71,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@capacitor/assets": "^3.0.5",
     "eslint-plugin-css-modules": "^2.12.0",
     "react-app-rewired": "^2.2.1"

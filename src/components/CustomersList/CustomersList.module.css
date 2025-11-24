@@ -547,38 +547,64 @@
 }
 
 /* Totals section */
+/* Totals section */
 .totalsSection {
-  text-align: right;
-  padding: var(--spacing-md);
-  font-size: var(--font-size-sm);
-  color: var(--text);
-  border-top: 2px solid rgba(226, 232, 240, 0.5);
-  background: var(--surface);
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-}
-
-.totalsSection p {
-  margin: 0.3rem 0;
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
-  gap: var(--spacing-sm);
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-.totalsSection .grandTotal {
-  font-weight: var(--font-weight-bold);
-  color: var(--primary-dark);
+.totalItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  min-width: 200px;
+  border: 1px solid #edf2f7;
+  transition: transform 0.2s ease;
 }
 
-.totalsSection .remaining {
-  font-weight: var(--font-weight-bold);
-  color: var(--error);
+.totalItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.totalLabel {
+  font-size: 0.875rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.totalValue {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #2d3748;
+  line-height: 1.2;
+}
+
+.totalValue.remaining {
+  color: #e53e3e;
 }
 
 .lastUpdated {
-  font-size: 0.7rem;
-  color: var(--text-light);
+  width: 100%;
+  text-align: right;
+  font-size: 0.75rem;
+  color: #a0aec0;
+  margin-top: 0.5rem;
   font-style: italic;
-  margin-top: var(--spacing-sm);
 }
 
 /* Notifications section */
@@ -729,12 +755,94 @@
   outline-offset: 2px;
 }
 
+.mainContent {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  color: #2d3748;
+  font-weight: 700;
+}
+
+/* Controls Section */
+.controlsSection {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.searchFilterRow {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.searchWrapper {
+  flex: 1;
+  min-width: 300px;
+  position: relative;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0aec0;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #4299e1;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+.filterWrapper {
+  min-width: 200px;
+}
+
+.statusFilter {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: white;
+  font-size: 1rem;
+  color: #4a5568;
+  cursor: pointer;
+}
+
 /* View toggle */
 .viewToggle {
   display: flex;
-  justify-content: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
+  background: #edf2f7;
+  padding: 4px;
+  border-radius: 8px;
+  gap: 4px;
 }
 
 .toggleButton {
@@ -809,12 +917,10 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.3) 50%,
-    transparent 100%
-  );
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%);
   animation: glow 2s infinite ease-in-out;
 }
 
@@ -822,6 +928,7 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -871,12 +978,12 @@
   .tableWrapper {
     margin: 0 -0.2rem;
   }
-  
+
   .table th,
   .table td {
     padding: 0.4rem var(--spacing-sm);
   }
-  
+
   .currency,
   .grandTotal,
   .amountDue,
@@ -884,17 +991,17 @@
     padding: 0.4rem 0.3rem;
     min-width: 50px;
   }
-  
+
   .actions {
     gap: 0.15rem;
   }
-  
+
   .table td:nth-child(4) span {
     min-width: 22px;
     height: 22px;
     font-size: 0.7rem;
   }
-  
+
   .progressBarContainer {
     width: 70px;
   }
@@ -904,39 +1011,39 @@
   .mainContent {
     padding: var(--spacing-sm) 0.3rem;
   }
-  
+
   .container {
     padding: var(--spacing-sm);
     margin: 0 0.25rem;
   }
-  
+
   .title {
     font-size: var(--font-size-lg);
     margin-bottom: var(--spacing-md);
   }
-  
+
   .searchWrapper {
     max-width: 100%;
   }
-  
+
   .searchInput {
     padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) 1.8rem;
     font-size: 0.8rem;
   }
-  
+
   .actionButton {
     width: 24px;
     height: 24px;
     font-size: 0.875rem;
     padding: 0.3rem;
   }
-  
+
   .table th,
   .table td {
     font-size: 0.75rem;
     padding: 0.3rem 0.25rem;
   }
-  
+
   .currency,
   .grandTotal,
   .amountDue,
@@ -944,61 +1051,61 @@
     padding: 0.3rem 0.2rem;
     min-width: 45px;
   }
-  
+
   .totalsSection {
     font-size: 0.75rem;
     padding: var(--spacing-sm);
   }
-  
+
   .table td:nth-child(4) span {
     min-width: 20px;
     height: 20px;
     font-size: 0.65rem;
   }
-  
+
   .notificationsSection {
     padding: var(--spacing-sm);
   }
-  
+
   .notificationsSection h3 {
     font-size: 0.9rem;
   }
-  
+
   .notificationCount {
     font-size: 0.75rem;
   }
-  
+
   .toggleIcon {
     font-size: 0.875rem;
   }
-  
+
   .exportButton {
     font-size: 0.75rem;
     padding: 0.4rem 0.6rem;
   }
-  
+
   .columnToggle {
     flex-direction: column;
   }
-  
+
   .progressBarContainer {
     width: 60px;
     height: 8px;
   }
-  
+
   .progressText {
     font-size: 0.6rem;
   }
-  
+
   .amountDisplay {
     font-size: 0.7rem;
   }
-  
+
   .pagination {
     flex-direction: column;
     gap: var(--spacing-sm);
   }
-  
+
   .pagination button {
     width: 100%;
   }
@@ -1006,6 +1113,7 @@
 
 /* Print styles */
 @media print {
+
   .searchSection,
   .notificationsSection,
   .tableHeaderActions,
@@ -1013,20 +1121,19 @@
   .pagination {
     display: none;
   }
-  
+
   .container {
     box-shadow: none;
     border: 1px solid #000;
   }
-  
+
   .table {
     font-size: 0.75rem;
   }
-  
+
   .table thead th {
     background: #2c3e50 !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 }
-
