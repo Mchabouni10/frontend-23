@@ -276,31 +276,40 @@ export default function CompanyExpenses() {
     searchTerm,
   ]);
 
+  // Helper to calculate additional revenue for a single project
+  const getProjectAdditionalRevenue = (project) => {
+    let pMat = 0;
+    let pLab = 0;
+
+    const categories = project.categories || [];
+    categories.forEach((cat) => {
+      const workItems = cat.workItems || [];
+      workItems.forEach((item) => {
+        const units =
+          (item.surfaces || []).reduce(
+            (sum, surf) => sum + (parseFloat(surf.sqft) || 0),
+            0,
+          ) ||
+          parseFloat(item.linearFt) ||
+          parseFloat(item.units) ||
+          0;
+
+        pMat += (parseFloat(item.materialCost) || 0) * units;
+        pLab += (parseFloat(item.laborCost) || 0) * units;
+      });
+    });
+
+    const baseSubtotal = pMat + pLab;
+    const markup = baseSubtotal * (project.settings?.markup || 0);
+    const trans = parseFloat(project.settings?.transportationFee) || 0;
+
+    return { markup, trans, total: markup + trans };
+  };
+
   // Calculate total additional revenue (Markup + Transportation)
   const totalAdditionalRevenue = useMemo(() => {
-    return projects.reduce((total, project) => {
-      let pMat = 0;
-      let pLab = 0;
-
-      project.categories?.forEach((cat) => {
-        cat.workItems?.forEach((item) => {
-          item.surfaces?.forEach((surf) => {
-            const qty =
-              parseFloat(surf.sqft) ||
-              parseFloat(surf.linearFt) ||
-              parseFloat(surf.units) ||
-              0;
-            pMat += (parseFloat(surf.materialCost) || 0) * qty;
-            pLab += (parseFloat(surf.laborCost) || 0) * qty;
-          });
-        });
-      });
-
-      const baseSubtotal = pMat + pLab;
-      const markup = baseSubtotal * (project.settings?.markup || 0);
-      const trans = parseFloat(project.settings?.transportationFee) || 0;
-
-      return total + markup + trans;
+    return projects.reduce((sum, project) => {
+      return sum + getProjectAdditionalRevenue(project).total;
     }, 0);
   }, [projects]);
 
@@ -308,34 +317,14 @@ export default function CompanyExpenses() {
   const currentYear = new Date().getFullYear();
   const yearlyAdditionalRevenue = useMemo(() => {
     return projects.reduce((total, project) => {
-      const projectDate = project.settings?.depositDate
-        ? new Date(project.settings.depositDate)
-        : null;
-      if (!projectDate || projectDate.getFullYear() !== currentYear)
-        return total;
+      const projectDateStr =
+        project.settings?.depositDate || project.customerInfo?.startDate;
+      const projectDate = projectDateStr
+        ? new Date(projectDateStr)
+        : new Date();
+      if (projectDate.getFullYear() !== currentYear) return total;
 
-      let pMat = 0;
-      let pLab = 0;
-
-      project.categories?.forEach((cat) => {
-        cat.workItems?.forEach((item) => {
-          item.surfaces?.forEach((surf) => {
-            const qty =
-              parseFloat(surf.sqft) ||
-              parseFloat(surf.linearFt) ||
-              parseFloat(surf.units) ||
-              0;
-            pMat += (parseFloat(surf.materialCost) || 0) * qty;
-            pLab += (parseFloat(surf.laborCost) || 0) * qty;
-          });
-        });
-      });
-
-      const baseSubtotal = pMat + pLab;
-      const markup = baseSubtotal * (project.settings?.markup || 0);
-      const trans = parseFloat(project.settings?.transportationFee) || 0;
-
-      return total + markup + trans;
+      return total + getProjectAdditionalRevenue(project).total;
     }, 0);
   }, [projects, currentYear]);
 
