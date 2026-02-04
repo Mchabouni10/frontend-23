@@ -386,7 +386,7 @@ export default function FinanceDashboard() {
       totalProfit: netProfit,
       profitMargin,
     };
-  }, [projects, companyExpenses, chartLabels, dateFilter, isDateInFilter]);
+  }, [projects, companyExpenses, chartLabels, isDateInFilter]);
 
   // Chart configurations
   const chartOptions = {
