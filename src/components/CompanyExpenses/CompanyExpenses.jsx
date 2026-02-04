@@ -304,6 +304,41 @@ export default function CompanyExpenses() {
     }, 0);
   }, [projects]);
 
+  // Calculate yearly additional revenue (Markup + Transportation)
+  const currentYear = new Date().getFullYear();
+  const yearlyAdditionalRevenue = useMemo(() => {
+    return projects.reduce((total, project) => {
+      const projectDate = project.settings?.depositDate
+        ? new Date(project.settings.depositDate)
+        : null;
+      if (!projectDate || projectDate.getFullYear() !== currentYear)
+        return total;
+
+      let pMat = 0;
+      let pLab = 0;
+
+      project.categories?.forEach((cat) => {
+        cat.workItems?.forEach((item) => {
+          item.surfaces?.forEach((surf) => {
+            const qty =
+              parseFloat(surf.sqft) ||
+              parseFloat(surf.linearFt) ||
+              parseFloat(surf.units) ||
+              0;
+            pMat += (parseFloat(surf.materialCost) || 0) * qty;
+            pLab += (parseFloat(surf.laborCost) || 0) * qty;
+          });
+        });
+      });
+
+      const baseSubtotal = pMat + pLab;
+      const markup = baseSubtotal * (project.settings?.markup || 0);
+      const trans = parseFloat(project.settings?.transportationFee) || 0;
+
+      return total + markup + trans;
+    }, 0);
+  }, [projects, currentYear]);
+
   // Calculate filtered statistics
   const filteredStats = useMemo(() => {
     const total = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -429,7 +464,36 @@ export default function CompanyExpenses() {
               <span className={styles.cardAmount}>
                 ${totalAdditionalRevenue.toFixed(2)}
               </span>
-              <span className={styles.cardTrend}>Markup & Trans. Fees</span>
+              <span className={styles.cardTrend}>Total (All Time)</span>
+            </div>
+          </div>
+          <div className={styles.card}>
+            <div
+              className={styles.cardIcon}
+              style={{
+                background: "linear-gradient(135deg, #1abc9c, #16a085)",
+              }}
+            >
+              <FontAwesomeIcon icon={faWallet} />
+            </div>
+            <div className={styles.cardContent}>
+              <span className={styles.cardTitle}>Yearly Addit. Revenue</span>
+              <span className={styles.cardAmount}>
+                ${yearlyAdditionalRevenue.toFixed(2)}
+              </span>
+              <span
+                className={styles.cardTrend}
+                style={{
+                  color:
+                    yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
+                      ? "#2ecc71"
+                      : "#e74c3c",
+                }}
+              >
+                {yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
+                  ? "✓ Covers Yearly Overhead"
+                  : "✗ Shortfall from Overhead"}
+              </span>
             </div>
           </div>
           <div className={styles.card}>
