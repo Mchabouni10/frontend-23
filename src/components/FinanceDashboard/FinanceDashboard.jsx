@@ -224,11 +224,9 @@ export default function FinanceDashboard() {
     let totalProjectExpenses = 0; // COGS
     let totalOverhead = 0; // Company Expenses
 
-    // Additional Revenue Components for Overhead Coverage
+    // Additional Revenue Components for Overhead Coverage (Markup and Transportation only)
     let totalTransportation = 0;
     let totalMarkup = 0;
-    let totalWaste = 0;
-    let totalMisc = 0;
 
     // Process Projects (Revenue & COGS)
     projects.forEach((project) => {
@@ -419,13 +417,11 @@ export default function FinanceDashboard() {
       totalProfit: netProfit,
       profitMargin,
 
-      // Overhead Coverage Data
+      // Overhead Coverage Data (Only Markup and Transportation)
       additionalRevenue: {
         transportation: totalTransportation,
         markup: totalMarkup,
-        waste: totalWaste,
-        misc: totalMisc,
-        total: totalTransportation + totalMarkup + totalWaste + totalMisc,
+        total: totalTransportation + totalMarkup,
       },
     };
   }, [projects, companyExpenses, chartLabels, isDateInFilter]);
@@ -904,200 +900,6 @@ export default function FinanceDashboard() {
           </div>
         </header>
 
-        {/* Overhead Coverage Section */}
-        <section
-          className={styles.metricsGrid}
-          style={{ marginBottom: "2rem", gridTemplateColumns: "1fr" }}
-        >
-          <div
-            className={styles.metricCard}
-            style={{
-              background: "linear-gradient(135deg, #2c3e50 0%, #3498db 100%)",
-              color: "white",
-              padding: "2rem",
-            }}
-          >
-            <div style={{ marginBottom: "1.5rem" }}>
-              <h3
-                style={{
-                  color: "white",
-                  fontSize: "1.3rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                <FontAwesomeIcon icon={faWallet} />
-                Overhead Coverage Analysis
-              </h3>
-              <p style={{ fontSize: "0.9rem", opacity: 0.9 }}>
-                Comparing additional revenue (markup & transportation) against
-                company expenses
-              </p>
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                gap: "2rem",
-              }}
-            >
-              {/* Additional Revenue */}
-              <div>
-                <h4
-                  style={{
-                    fontSize: "0.85rem",
-                    opacity: 0.9,
-                    marginBottom: "0.5rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  Additional Revenue
-                </h4>
-                <div
-                  style={{
-                    fontSize: "2rem",
-                    fontWeight: "bold",
-                    marginBottom: "0.75rem",
-                  }}
-                >
-                  {formatCurrency(financialData.additionalRevenue.total)}
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.8rem",
-                    opacity: 0.85,
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: "600" }}>Markup</div>
-                    <div>
-                      {formatCurrency(financialData.additionalRevenue.markup)}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: "600" }}>Transportation</div>
-                    <div>
-                      {formatCurrency(
-                        financialData.additionalRevenue.transportation,
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: "600" }}>Waste</div>
-                    <div>
-                      {formatCurrency(financialData.additionalRevenue.waste)}
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontWeight: "600" }}>Misc Fees</div>
-                    <div>
-                      {formatCurrency(financialData.additionalRevenue.misc)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Company Expenses */}
-              <div>
-                <h4
-                  style={{
-                    fontSize: "0.85rem",
-                    opacity: 0.9,
-                    marginBottom: "0.5rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  Company Expenses (Overhead)
-                </h4>
-                <div
-                  style={{
-                    fontSize: "2rem",
-                    fontWeight: "bold",
-                    marginBottom: "0.75rem",
-                  }}
-                >
-                  {formatCurrency(financialData.totalOverhead)}
-                </div>
-                <div style={{ fontSize: "0.8rem", opacity: 0.85 }}>
-                  Fixed monthly expenses & operational costs
-                </div>
-              </div>
-
-              {/* Coverage Result */}
-              <div>
-                <h4
-                  style={{
-                    fontSize: "0.85rem",
-                    opacity: 0.9,
-                    marginBottom: "0.5rem",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  Coverage Status
-                </h4>
-                <div
-                  style={{
-                    fontSize: "2rem",
-                    fontWeight: "bold",
-                    marginBottom: "0.75rem",
-                    color:
-                      financialData.additionalRevenue.total >=
-                      financialData.totalOverhead
-                        ? "#2ecc71"
-                        : "#e74c3c",
-                  }}
-                >
-                  {financialData.additionalRevenue.total >=
-                  financialData.totalOverhead
-                    ? "✓ "
-                    : "✗ "}
-                  {financialData.additionalRevenue.total >=
-                  financialData.totalOverhead
-                    ? "Covered"
-                    : "Shortfall"}
-                </div>
-                <div
-                  style={{
-                    fontSize: "0.9rem",
-                    opacity: 0.9,
-                    marginBottom: "0.5rem",
-                  }}
-                >
-                  {financialData.additionalRevenue.total >=
-                  financialData.totalOverhead
-                    ? `Surplus: ${formatCurrency(
-                        financialData.additionalRevenue.total -
-                          financialData.totalOverhead,
-                      )}`
-                    : `Need: ${formatCurrency(
-                        financialData.totalOverhead -
-                          financialData.additionalRevenue.total,
-                      )}`}
-                </div>
-                <div style={{ fontSize: "0.8rem", opacity: 0.85 }}>
-                  Coverage:{" "}
-                  {financialData.totalOverhead > 0
-                    ? `${(
-                        (financialData.additionalRevenue.total /
-                          financialData.totalOverhead) *
-                        100
-                      ).toFixed(1)}%`
-                    : "N/A"}
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         {/* Key Metrics */}
         <div className={styles.metricsGrid}>
           <div className={styles.metricCard}>
@@ -1549,6 +1351,133 @@ export default function FinanceDashboard() {
           </div>
         </div>
       )}
+
+      {/* Overhead Coverage Analysis Chart */}
+      <div className={styles.chartSection}>
+        <div className={styles.chartHeader}>
+          <h2>
+            <FontAwesomeIcon icon={faWallet} /> Overhead Coverage Analysis
+          </h2>
+          <p className={styles.chartDescription}>
+            Comparing markup and transportation revenue against company expenses
+          </p>
+        </div>
+        <div className={styles.chartsGrid}>
+          <div className={styles.chartCard}>
+            <h3>
+              <FontAwesomeIcon icon={faChartBar} /> Revenue vs Expenses
+              Comparison
+            </h3>
+            <div className={styles.chartContainer}>
+              <Bar
+                data={{
+                  labels: ["Additional Revenue", "Company Expenses"],
+                  datasets: [
+                    {
+                      label: "Markup",
+                      data: [financialData.additionalRevenue.markup, 0],
+                      backgroundColor: "#3498db",
+                      borderRadius: 6,
+                    },
+                    {
+                      label: "Transportation",
+                      data: [financialData.additionalRevenue.transportation, 0],
+                      backgroundColor: "#2ecc71",
+                      borderRadius: 6,
+                    },
+                    {
+                      label: "Overhead",
+                      data: [0, financialData.totalOverhead],
+                      backgroundColor: "#e74c3c",
+                      borderRadius: 6,
+                    },
+                  ],
+                }}
+                options={{
+                  ...chartOptions,
+                  plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                      display: true,
+                      text: `Total Additional Revenue: ${formatCurrency(
+                        financialData.additionalRevenue.total,
+                      )} | Total Overhead: ${formatCurrency(
+                        financialData.totalOverhead,
+                      )}`,
+                      font: { family: "Poppins", size: 14, weight: 600 },
+                    },
+                  },
+                }}
+              />
+            </div>
+            <div
+              style={{
+                marginTop: "1rem",
+                padding: "1rem",
+                background:
+                  financialData.additionalRevenue.total >=
+                  financialData.totalOverhead
+                    ? "#d4edda"
+                    : "#f8d7da",
+                borderRadius: "8px",
+                border: `2px solid ${
+                  financialData.additionalRevenue.total >=
+                  financialData.totalOverhead
+                    ? "#28a745"
+                    : "#dc3545"
+                }`,
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "1.1rem",
+                  fontWeight: "bold",
+                  color:
+                    financialData.additionalRevenue.total >=
+                    financialData.totalOverhead
+                      ? "#155724"
+                      : "#721c24",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                {financialData.additionalRevenue.total >=
+                financialData.totalOverhead
+                  ? "✓ Overhead Fully Covered"
+                  : "✗ Overhead Not Covered"}
+              </div>
+              <div
+                style={{
+                  fontSize: "0.95rem",
+                  color:
+                    financialData.additionalRevenue.total >=
+                    financialData.totalOverhead
+                      ? "#155724"
+                      : "#721c24",
+                }}
+              >
+                {financialData.additionalRevenue.total >=
+                financialData.totalOverhead
+                  ? `Surplus: ${formatCurrency(
+                      financialData.additionalRevenue.total -
+                        financialData.totalOverhead,
+                    )} (${(
+                      (financialData.additionalRevenue.total /
+                        financialData.totalOverhead) *
+                      100
+                    ).toFixed(1)}% coverage)`
+                  : `Shortfall: ${formatCurrency(
+                      financialData.totalOverhead -
+                        financialData.additionalRevenue.total,
+                    )} (${(
+                      (financialData.additionalRevenue.total /
+                        financialData.totalOverhead) *
+                      100
+                    ).toFixed(1)}% coverage)`}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
