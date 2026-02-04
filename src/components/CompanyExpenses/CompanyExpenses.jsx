@@ -1,5 +1,5 @@
 // src/components/CompanyExpenses/CompanyExpenses.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faPlus, 
@@ -11,7 +11,6 @@ import {
   faHardHat, 
   faReceipt,
   faCalendarAlt,
-
   faTruck,
   faLaptop,
   faBullhorn,
@@ -22,8 +21,16 @@ import {
   faBuilding,
   faRecycle,
   faFileInvoiceDollar,
-  faUtensils
+  faUtensils,
+  faSpinner,
+  faFilter,
+  faDownload,
+  faChartLine,
+  faMoneyBillWave,
+  faTimes,
+  faSearch
 } from '@fortawesome/free-solid-svg-icons';
+import * as expensesAPI from '../../utilities/expenses-api';
 import styles from './CompanyExpenses.module.css';
 
 const CATEGORIES = [
@@ -47,11 +54,10 @@ const CATEGORIES = [
 ];
 
 export default function CompanyExpenses() {
-  // Load expenses from localStorage
-  const [expenses, setExpenses] = useState(() => {
-    const saved = localStorage.getItem('companyExpenses');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [expenses, setExpenses] = useState([]);
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Helper to get local date string YYYY-MM-DD
   const getLocalDate = () => {
@@ -69,46 +75,172 @@ export default function CompanyExpenses() {
     description: ''
   });
 
+  // Advanced filtering state
+  const [filterType, setFilterType] = useState('all'); // 'all', 'month', 'year', 'custom'
   const [selectedMonth, setSelectedMonth] = useState(getLocalDate().slice(0, 7)); // YYYY-MM
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [customDateRange, setCustomDateRange] = useState({
+    start: '',
+    end: ''
+  });
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  // Save to localStorage whenever expenses change
+  // Load expenses and dashboard data on mount
   useEffect(() => {
-    localStorage.setItem('companyExpenses', JSON.stringify(expenses));
-  }, [expenses]);
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const [expensesData, dashboardData] = await Promise.all([
+        expensesAPI.getAllExpenses(),
+        expensesAPI.getDashboard()
+      ]);
+      
+      setExpenses(expensesData);
+      setDashboard(dashboardData);
+    } catch (err) {
+      console.error('Error loading data:', err);
+      setError('Failed to load expenses. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.amount || !formData.date) return;
 
-    const newExpense = {
-      id: Date.now(),
-      ...formData,
-      amount: parseFloat(formData.amount)
-    };
+    try {
+      setSubmitting(true);
+      setError(null);
 
-    setExpenses([newExpense, ...expenses]);
-    setFormData({
-      date: getLocalDate(),
-      category: 'fuel',
-      amount: '',
-      description: ''
-    });
-  };
+      const expenseData = {
+        date: formData.date,
+        category: formData.category,
+        amount: parseFloat(formData.amount),
+        description: formData.description
+      };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this expense?')) {
-      setExpenses(expenses.filter(exp => exp.id !== id));
+      await expensesAPI.createExpense(expenseData);
+      await loadData();
+      
+      setFormData({
+        date: getLocalDate(),
+        category: 'fuel',
+        amount: '',
+        description: ''
+      });
+    } catch (err) {
+      console.error('Error creating expense:', err);
+      setError('Failed to create expense. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this expense?')) return;
+
+    try {
+      setError(null);
+      await expensesAPI.deleteExpense(id);
+      await loadData();
+    } catch (err) {
+      console.error('Error deleting expense:', err);
+      setError('Failed to delete expense. Please try again.');
+    }
+  };
+
+  const getCategoryColor = (catId) => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    return cat ? cat.color : '#95a5a6';
+  };
+
+  const getCategoryName = (catId) => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    return cat ? cat.name : catId;
+  };
+
+  const getCategoryIcon = (catId) => {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    return cat ? cat.icon : faReceipt;
+  };
+
+  // Advanced filtering logic
+  const filteredExpenses = useMemo(() => {
+    let filtered = [...expenses];
+
+    // Date filtering
+    if (filterType === 'month') {
+      filtered = filtered.filter(exp => exp.date.startsWith(selectedMonth));
+    } else if (filterType === 'year') {
+      filtered = filtered.filter(exp => exp.date.startsWith(selectedYear));
+    } else if (filterType === 'custom' && customDateRange.start && customDateRange.end) {
+      filtered = filtered.filter(exp => {
+        const expDate = exp.date;
+        return expDate >= customDateRange.start && expDate <= customDateRange.end;
+      });
+    }
+
+    // Category filtering
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(exp => exp.category === selectedCategory);
+    }
+
+    // Search filtering
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase();
+      filtered = filtered.filter(exp => 
+        getCategoryName(exp.category).toLowerCase().includes(search) ||
+        (exp.description && exp.description.toLowerCase().includes(search)) ||
+        exp.amount.toString().includes(search)
+      );
+    }
+
+    return filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+  }, [expenses, filterType, selectedMonth, selectedYear, customDateRange, selectedCategory, searchTerm]);
+
+  // Calculate filtered statistics
+  const filteredStats = useMemo(() => {
+    const total = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+    const count = filteredExpenses.length;
+    const average = count > 0 ? total / count : 0;
+    
+    const categoryBreakdown = {};
+    filteredExpenses.forEach(exp => {
+      if (!categoryBreakdown[exp.category]) {
+        categoryBreakdown[exp.category] = 0;
+      }
+      categoryBreakdown[exp.category] += exp.amount;
+    });
+
+    return { total, count, average, categoryBreakdown };
+  }, [filteredExpenses]);
+
+  // Get available years from expenses
+  const availableYears = useMemo(() => {
+    const years = new Set();
+    expenses.forEach(exp => {
+      const year = exp.date.slice(0, 4);
+      years.add(year);
+    });
+    return Array.from(years).sort((a, b) => b.localeCompare(a));
+  }, [expenses]);
+
   const handleExportCSV = () => {
     const headers = ['Date', 'Category', 'Description', 'Amount'];
-    const rows = expenses.map(exp => [
+    const rows = filteredExpenses.map(exp => [
       exp.date,
       getCategoryName(exp.category),
       `"${exp.description || ''}"`,
@@ -124,150 +256,153 @@ export default function CompanyExpenses() {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `expenses_${new Date().toISOString().split('T')[0]}.csv`);
+    
+    let filename = 'expenses';
+    if (filterType === 'month') filename += `_${selectedMonth}`;
+    else if (filterType === 'year') filename += `_${selectedYear}`;
+    filename += '.csv';
+    
+    link.setAttribute('download', filename);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // Calculate Totals
-  const calculateTotals = () => {
-    const now = new Date();
-    const currentYear = String(now.getFullYear());
-    const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
-    const currentDay = String(now.getDate()).padStart(2, '0');
-    
-    const todayStr = `${currentYear}-${currentMonth}-${currentDay}`;
-    const thisMonthStr = `${currentYear}-${currentMonth}`;
-    const thisYearStr = currentYear;
-
-    // Calculate start/end of current week (Sunday to Saturday)
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay());
-    startOfWeek.setHours(0, 0, 0, 0);
-    
-    const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 6);
-    endOfWeek.setHours(23, 59, 59, 999);
-
-    let daily = 0;
-    let weekly = 0;
-    let monthly = 0;
-    let yearly = 0;
-
-    expenses.forEach(exp => {
-      const amount = parseFloat(exp.amount);
-      const expDateObj = new Date(exp.date + 'T00:00:00'); // Force local time interpretation
-
-      // Daily (Exact match)
-      if (exp.date === todayStr) daily += amount;
-
-      // Weekly (Range check)
-      if (expDateObj >= startOfWeek && expDateObj <= endOfWeek) weekly += amount;
-
-      // Monthly (String match)
-      if (exp.date.startsWith(thisMonthStr)) monthly += amount;
-
-      // Yearly (String match)
-      if (exp.date.startsWith(thisYearStr)) yearly += amount;
-    });
-
-    return { daily, weekly, monthly, yearly };
+  const clearFilters = () => {
+    setFilterType('all');
+    setSelectedCategory('all');
+    setSearchTerm('');
+    setCustomDateRange({ start: '', end: '' });
   };
 
-  const totals = calculateTotals();
-
-  // Calculate Category Breakdown
-  const categoryBreakdown = CATEGORIES.map(cat => {
-    const total = expenses
-      .filter(exp => exp.category === cat.id)
-      .reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-    return { ...cat, total };
-  }).filter(cat => cat.total > 0).sort((a, b) => b.total - a.total);
-
-  const totalSpending = expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0);
-
-  const getCategoryColor = (catId) => {
-    const cat = CATEGORIES.find(c => c.id === catId);
-    return cat ? cat.color : '#95a5a6';
-  };
-
-  const getCategoryName = (catId) => {
-    const cat = CATEGORIES.find(c => c.id === catId);
-    return cat ? cat.name : catId;
-  };
-
-  const filteredExpenses = expenses.filter(exp => exp.date.startsWith(selectedMonth));
+  if (loading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingState}>
+          <FontAwesomeIcon icon={faSpinner} spin size="3x" />
+          <p>Loading expenses...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>Company Expenses</h1>
-          <p className="subtitle">Track and manage your business spending</p>
+          <h1 className={styles.title}>
+            <FontAwesomeIcon icon={faMoneyBillWave} />
+            Company Expenses
+          </h1>
+          <p className={styles.subtitle}>Track and manage your business spending with advanced insights</p>
         </div>
-        <div className="button button--secondary">
+        <div className={styles.dateDisplay}>
           <FontAwesomeIcon icon={faCalendarAlt} />
           <span>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
         </div>
       </header>
 
+      {error && (
+        <div className={styles.errorMessage}>
+          <p>{error}</p>
+          <button onClick={() => setError(null)}>×</button>
+        </div>
+      )}
+
       {/* Dashboard Cards */}
-      <div className={styles.dashboard}>
-        <div className={styles.card}>
-          <span className={styles.cardTitle}>Daily Total</span>
-          <span className={styles.cardAmount}>${totals.daily.toFixed(2)}</span>
-          <span className={styles.cardTrend}>Today's spending</span>
+      {dashboard && (
+        <div className={styles.dashboard}>
+          <div className={styles.card}>
+            <div className={styles.cardIcon} style={{ background: 'linear-gradient(135deg, #3498db, #2980b9)' }}>
+              <FontAwesomeIcon icon={faCalendarAlt} />
+            </div>
+            <div className={styles.cardContent}>
+              <span className={styles.cardTitle}>Daily Total</span>
+              <span className={styles.cardAmount}>${dashboard.periodTotals.daily.toFixed(2)}</span>
+              <span className={styles.cardTrend}>Today's spending</span>
+            </div>
+          </div>
+          <div className={styles.card}>
+            <div className={styles.cardIcon} style={{ background: 'linear-gradient(135deg, #9b59b6, #8e44ad)' }}>
+              <FontAwesomeIcon icon={faChartLine} />
+            </div>
+            <div className={styles.cardContent}>
+              <span className={styles.cardTitle}>Weekly Total</span>
+              <span className={styles.cardAmount}>${dashboard.periodTotals.weekly.toFixed(2)}</span>
+              <span className={styles.cardTrend}>This week</span>
+            </div>
+          </div>
+          <div className={styles.card}>
+            <div className={styles.cardIcon} style={{ background: 'linear-gradient(135deg, #e67e22, #d35400)' }}>
+              <FontAwesomeIcon icon={faMoneyBillWave} />
+            </div>
+            <div className={styles.cardContent}>
+              <span className={styles.cardTitle}>Monthly Total</span>
+              <span className={styles.cardAmount}>${dashboard.periodTotals.monthly.toFixed(2)}</span>
+              <span className={styles.cardTrend}>This month</span>
+            </div>
+          </div>
+          <div className={styles.card}>
+            <div className={styles.cardIcon} style={{ background: 'linear-gradient(135deg, #2ecc71, #27ae60)' }}>
+              <FontAwesomeIcon icon={faFileInvoiceDollar} />
+            </div>
+            <div className={styles.cardContent}>
+              <span className={styles.cardTitle}>Yearly Total</span>
+              <span className={styles.cardAmount}>${dashboard.periodTotals.yearly.toFixed(2)}</span>
+              <span className={styles.cardTrend}>This year</span>
+            </div>
+          </div>
         </div>
-        <div className={styles.card}>
-          <span className={styles.cardTitle}>Weekly Total</span>
-          <span className={styles.cardAmount}>${totals.weekly.toFixed(2)}</span>
-          <span className={styles.cardTrend}>This week</span>
-        </div>
-        <div className={styles.card}>
-          <span className={styles.cardTitle}>Monthly Total</span>
-          <span className={styles.cardAmount}>${totals.monthly.toFixed(2)}</span>
-          <span className={styles.cardTrend}>This month</span>
-        </div>
-        <div className={styles.card}>
-          <span className={styles.cardTitle}>Yearly Total</span>
-          <span className={styles.cardAmount}>${totals.yearly.toFixed(2)}</span>
-          <span className={styles.cardTrend}>This year</span>
-        </div>
-      </div>
+      )}
 
       {/* Category Breakdown */}
-      <section className={styles.breakdownSection}>
-        <h2 className="title" style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Spending by Category</h2>
-        <div className={styles.breakdownGrid}>
-          {categoryBreakdown.length === 0 ? (
-             <p style={{ color: 'var(--text-light)' }}>No spending data available.</p>
-          ) : (
-            categoryBreakdown.map(cat => (
-              <div key={cat.id} className={styles.breakdownItem}>
-                <div className={styles.breakdownHeader}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FontAwesomeIcon icon={cat.icon} style={{ color: cat.color }} />
-                    {cat.name}
-                  </span>
-                  <span>${cat.total.toFixed(2)} ({((cat.total / totalSpending) * 100).toFixed(1)}%)</span>
+      {dashboard && dashboard.categoryBreakdown && (
+        <section className={styles.breakdownSection}>
+          <h2 className={styles.sectionTitle}>
+            <FontAwesomeIcon icon={faChartLine} />
+            Spending by Category
+          </h2>
+          <div className={styles.breakdownGrid}>
+            {dashboard.categoryBreakdown.length === 0 ? (
+              <p className={styles.emptyState}>No spending data available.</p>
+            ) : (
+              dashboard.categoryBreakdown.map(cat => (
+                <div key={cat.category} className={styles.breakdownItem}>
+                  <div className={styles.breakdownHeader}>
+                    <span className={styles.breakdownLabel}>
+                      <FontAwesomeIcon 
+                        icon={getCategoryIcon(cat.category)} 
+                        style={{ color: getCategoryColor(cat.category) }} 
+                      />
+                      {getCategoryName(cat.category)}
+                    </span>
+                    <span className={styles.breakdownValue}>
+                      ${cat.total.toFixed(2)} ({cat.percentage}%)
+                    </span>
+                  </div>
+                  <div className={styles.breakdownBarBg}>
+                    <div 
+                      className={styles.breakdownBarFill} 
+                      style={{ 
+                        width: `${cat.percentage}%`, 
+                        backgroundColor: getCategoryColor(cat.category) 
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className={styles.breakdownBarBg}>
-                  <div 
-                    className={styles.breakdownBarFill} 
-                    style={{ width: `${(cat.total / totalSpending) * 100}%`, backgroundColor: cat.color }}
-                  ></div>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+              ))
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Add Expense Form */}
       <section className={styles.formSection}>
-        <h2 className="title" style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>Add New Expense</h2>
+        <h2 className={styles.sectionTitle}>
+          <FontAwesomeIcon icon={faPlus} />
+          Add New Expense
+        </h2>
         <form onSubmit={handleSubmit} className={styles.formGrid}>
           <div className={styles.formGroup}>
             <label className={styles.label}>Date</label>
@@ -276,7 +411,8 @@ export default function CompanyExpenses() {
               name="date" 
               value={formData.date} 
               onChange={handleInputChange} 
-              className="input" 
+              className={styles.input}
+              disabled={submitting}
               required 
             />
           </div>
@@ -287,7 +423,8 @@ export default function CompanyExpenses() {
               name="category" 
               value={formData.category} 
               onChange={handleInputChange} 
-              className="select"
+              className={styles.select}
+              disabled={submitting}
             >
               {CATEGORIES.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.name}</option>
@@ -302,53 +439,213 @@ export default function CompanyExpenses() {
               name="amount" 
               value={formData.amount} 
               onChange={handleInputChange} 
-              className="input" 
+              className={styles.input}
               placeholder="0.00" 
               step="0.01" 
-              min="0" 
+              min="0.01" 
+              disabled={submitting}
               required 
             />
           </div>
 
-          <div className={styles.formGroup} style={{ flexGrow: 2 }}>
+          <div className={styles.formGroup}>
             <label className={styles.label}>Description</label>
             <input 
               type="text" 
               name="description" 
               value={formData.description} 
               onChange={handleInputChange} 
-              className="input" 
+              className={styles.input}
               placeholder="e.g. Shell Gas Station" 
+              disabled={submitting}
             />
           </div>
 
-          <button type="submit" className="button button--primary" style={{ height: '46px' }}>
-            <FontAwesomeIcon icon={faPlus} />
-            <span>Add Expense</span>
+          <button 
+            type="submit" 
+            className={styles.submitButton}
+            disabled={submitting}
+          >
+            {submitting ? (
+              <>
+                <FontAwesomeIcon icon={faSpinner} spin />
+                <span>Adding...</span>
+              </>
+            ) : (
+              <>
+                <FontAwesomeIcon icon={faPlus} />
+                <span>Add Expense</span>
+              </>
+            )}
           </button>
         </form>
       </section>
 
-      {/* Recent Expenses List */}
-      <section className={styles.listSection}>
-        <div className={styles.controls}>
-          <h2 className="title" style={{ fontSize: '1.5rem' }}>Expense History</h2>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+      {/* Advanced Filters Section */}
+      <section className={styles.filtersSection}>
+        <div className={styles.filtersHeader}>
+          <h2 className={styles.sectionTitle}>
+            <FontAwesomeIcon icon={faFilter} />
+            Advanced Filters
+          </h2>
+          {(filterType !== 'all' || selectedCategory !== 'all' || searchTerm) && (
+            <button onClick={clearFilters} className={styles.clearButton}>
+              <FontAwesomeIcon icon={faTimes} />
+              Clear All Filters
+            </button>
+          )}
+        </div>
+
+        <div className={styles.filtersGrid}>
+          {/* Filter Type Selection */}
+          <div className={styles.filterGroup}>
+            <label className={styles.label}>Filter By</label>
+            <div className={styles.filterTypeButtons}>
+              <button 
+                type="button"
+                className={`${styles.filterTypeButton} ${filterType === 'all' ? styles.active : ''}`}
+                onClick={() => setFilterType('all')}
+              >
+                All Time
+              </button>
+              <button 
+                type="button"
+                className={`${styles.filterTypeButton} ${filterType === 'month' ? styles.active : ''}`}
+                onClick={() => setFilterType('month')}
+              >
+                Month
+              </button>
+              <button 
+                type="button"
+                className={`${styles.filterTypeButton} ${filterType === 'year' ? styles.active : ''}`}
+                onClick={() => setFilterType('year')}
+              >
+                Year
+              </button>
+              <button 
+                type="button"
+                className={`${styles.filterTypeButton} ${filterType === 'custom' ? styles.active : ''}`}
+                onClick={() => setFilterType('custom')}
+              >
+                Custom Range
+              </button>
+            </div>
+          </div>
+
+          {/* Conditional Date Inputs */}
+          {filterType === 'month' && (
             <div className={styles.filterGroup}>
-              <label className={styles.label}>Filter Month:</label>
+              <label className={styles.label}>Select Month</label>
               <input 
                 type="month" 
                 value={selectedMonth} 
                 onChange={(e) => setSelectedMonth(e.target.value)} 
-                className="input"
-                style={{ width: 'auto' }}
+                className={styles.input}
               />
             </div>
-            <button onClick={handleExportCSV} className={styles.exportButton}>
-              <FontAwesomeIcon icon={faFileInvoiceDollar} />
-              Export CSV
-            </button>
+          )}
+
+          {filterType === 'year' && (
+            <div className={styles.filterGroup}>
+              <label className={styles.label}>Select Year</label>
+              <select 
+                value={selectedYear} 
+                onChange={(e) => setSelectedYear(e.target.value)} 
+                className={styles.select}
+              >
+                {availableYears.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+                {!availableYears.includes(new Date().getFullYear().toString()) && (
+                  <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
+                )}
+              </select>
+            </div>
+          )}
+
+          {filterType === 'custom' && (
+            <>
+              <div className={styles.filterGroup}>
+                <label className={styles.label}>Start Date</label>
+                <input 
+                  type="date" 
+                  value={customDateRange.start} 
+                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, start: e.target.value }))} 
+                  className={styles.input}
+                />
+              </div>
+              <div className={styles.filterGroup}>
+                <label className={styles.label}>End Date</label>
+                <input 
+                  type="date" 
+                  value={customDateRange.end} 
+                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, end: e.target.value }))} 
+                  className={styles.input}
+                  min={customDateRange.start}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Category Filter */}
+          <div className={styles.filterGroup}>
+            <label className={styles.label}>Category</label>
+            <select 
+              value={selectedCategory} 
+              onChange={(e) => setSelectedCategory(e.target.value)} 
+              className={styles.select}
+            >
+              <option value="all">All Categories</option>
+              {CATEGORIES.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
           </div>
+
+          {/* Search */}
+          <div className={styles.filterGroup}>
+            <label className={styles.label}>Search</label>
+            <div className={styles.searchInput}>
+              <FontAwesomeIcon icon={faSearch} />
+              <input 
+                type="text" 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                className={styles.input}
+                placeholder="Search by description, category, or amount..."
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Statistics */}
+        <div className={styles.filterStats}>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Filtered Results:</span>
+            <span className={styles.statValue}>{filteredStats.count} expenses</span>
+          </div>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Total Amount:</span>
+            <span className={styles.statValue}>${filteredStats.total.toFixed(2)}</span>
+          </div>
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Average:</span>
+            <span className={styles.statValue}>${filteredStats.average.toFixed(2)}</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Expense History */}
+      <section className={styles.listSection}>
+        <div className={styles.controls}>
+          <h2 className={styles.sectionTitle}>
+            <FontAwesomeIcon icon={faReceipt} />
+            Expense History
+          </h2>
+          <button onClick={handleExportCSV} className={styles.exportButton}>
+            <FontAwesomeIcon icon={faDownload} />
+            Export to CSV
+          </button>
         </div>
 
         <div className={styles.tableContainer}>
@@ -365,30 +662,32 @@ export default function CompanyExpenses() {
             <tbody>
               {filteredExpenses.length === 0 ? (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-light)' }}>
-                    No expenses found for this month.
+                  <td colSpan="5" className={styles.emptyCell}>
+                    No expenses found matching your filters.
                   </td>
                 </tr>
               ) : (
                 filteredExpenses.map(exp => (
-                  <tr key={exp.id}>
+                  <tr key={exp._id}>
                     <td>{new Date(exp.date).toLocaleDateString()}</td>
                     <td>
                       <span 
                         className={styles.categoryTag}
                         style={{ 
                           backgroundColor: `${getCategoryColor(exp.category)}20`, 
-                          color: getCategoryColor(exp.category) 
+                          color: getCategoryColor(exp.category),
+                          borderLeft: `3px solid ${getCategoryColor(exp.category)}`
                         }}
                       >
+                        <FontAwesomeIcon icon={getCategoryIcon(exp.category)} />
                         {getCategoryName(exp.category)}
                       </span>
                     </td>
                     <td>{exp.description || '-'}</td>
-                    <td style={{ fontWeight: 'bold' }}>${exp.amount.toFixed(2)}</td>
+                    <td className={styles.amountCell}>${exp.amount.toFixed(2)}</td>
                     <td>
                       <button 
-                        onClick={() => handleDelete(exp.id)} 
+                        onClick={() => handleDelete(exp._id)} 
                         className={styles.deleteButton}
                         title="Delete Expense"
                       >

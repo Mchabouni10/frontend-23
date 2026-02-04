@@ -1,3 +1,4 @@
+// src/utilities/send-request.js
 import { getToken } from './users-service';
 
 const API_URL = process.env.REACT_APP_API_URL;
@@ -30,9 +31,23 @@ export default async function sendRequest(endpoint, method = 'GET', payload = nu
     console.log('Response headers:', Object.fromEntries(res.headers.entries()));
     
     if (res.ok) {
-      const data = await res.json();
-      console.log('Response data:', data);
-      return data;
+      // Handle 204 No Content responses (common for DELETE)
+      if (res.status === 204) {
+        console.log('No content response (204)');
+        return { success: true };
+      }
+      
+      // Check if response has content
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        console.log('Response data:', data);
+        return data;
+      }
+      
+      // Fallback for non-JSON responses
+      console.log('Non-JSON response');
+      return { success: true };
     }
     
     // Better error handling

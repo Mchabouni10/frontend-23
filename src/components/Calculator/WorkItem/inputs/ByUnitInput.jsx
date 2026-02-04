@@ -1,9 +1,9 @@
 // src/components/Calculator/WorkItem/inputs/ByUnitInput.jsx
-import React, { useCallback, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
-import { useCategories } from '../../../../context/CategoriesContext';
-import styles from './ByUnitInput.module.css';
-import commonStyles from '../../../../styles/common.module.css';
+import React, { useCallback, useMemo, useState } from "react";
+import PropTypes from "prop-types";
+import { useCategories } from "../../../../context/CategoriesContext";
+import styles from "./ByUnitInput.module.css";
+import commonStyles from "../../../../styles/common.module.css";
 
 export default function ByUnitInput({
   catIndex,
@@ -17,161 +17,203 @@ export default function ByUnitInput({
   onError,
   minValue = 1,
   maxValue = 9999,
-  unitLabel = 'Units',
-  unitAbbreviation = 'units',
+  unitLabel = "Units",
+  unitAbbreviation = "units",
   allowDecimals = false,
 }) {
   const { setCategories } = useCategories();
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
   const [hasError, setHasError] = useState(false);
 
   const units = useMemo(() => {
     const value = surface?.units;
     if (value === null || value === undefined) return minValue;
-    
-    const numValue = typeof value === 'string' ? 
-      (allowDecimals ? parseFloat(value) : parseInt(value, 10)) : value;
-    
+
+    const numValue =
+      typeof value === "string"
+        ? allowDecimals
+          ? parseFloat(value)
+          : parseInt(value, 10)
+        : value;
+
     return !isNaN(numValue) && numValue >= minValue ? numValue : minValue;
   }, [surface?.units, minValue, allowDecimals]);
 
   const displayValue = useMemo(() => {
     if (inputValue) return inputValue;
-    return allowDecimals ? Number(units).toString() : Math.floor(units).toString();
+    return allowDecimals
+      ? Number(units).toString()
+      : Math.floor(units).toString();
   }, [inputValue, units, allowDecimals]);
 
-  const validateInput = useCallback((value) => {
-    const numValue = allowDecimals ? parseFloat(value) : parseInt(value, 10);
-    
-    if (isNaN(numValue)) {
-      return { isValid: false, error: 'Please enter a valid number' };
-    }
-    
-    if (numValue < minValue) {
-      return { isValid: false, error: `Value must be at least ${minValue}` };
-    }
-    
-    if (numValue > maxValue) {
-      return { isValid: false, error: `Value must be no more than ${maxValue}` };
-    }
+  const validateInput = useCallback(
+    (value) => {
+      const numValue = allowDecimals ? parseFloat(value) : parseInt(value, 10);
 
-    if (!allowDecimals && numValue !== Math.floor(numValue)) {
-      return { isValid: false, error: 'Please enter a whole number' };
-    }
-    
-    return { isValid: true, error: null };
-  }, [minValue, maxValue, allowDecimals]);
+      if (isNaN(numValue)) {
+        return { isValid: false, error: "Please enter a valid number" };
+      }
 
-  const updateSurface = useCallback((field, value) => {
-    if (disabled) return;
+      if (numValue < minValue) {
+        return { isValid: false, error: `Value must be at least ${minValue}` };
+      }
 
-    const validation = validateInput(value);
-    setHasError(!validation.isValid);
-    
-    if (!validation.isValid) {
-      onError?.(validation.error);
-      return;
-    }
-
-    const parsedValue = allowDecimals ? parseFloat(value) : parseInt(value, 10);
-    
-    try {
-      setCategories((prev) => {
-        if (!prev[catIndex]?.workItems?.[workIndex]?.surfaces?.[surfIndex]) {
-          throw new Error('Invalid surface reference');
-        }
-
-        const newCategories = [...prev];
-        const category = { ...newCategories[catIndex] };
-        const workItems = [...category.workItems];
-        const item = { ...workItems[workIndex] };
-        const surfaces = [...item.surfaces];
-        
-        surfaces[surfIndex] = {
-          ...surfaces[surfIndex],
-          [field]: parsedValue,
+      if (numValue > maxValue) {
+        return {
+          isValid: false,
+          error: `Value must be no more than ${maxValue}`,
         };
-        
-        item.surfaces = surfaces;
-        workItems[workIndex] = item;
-        category.workItems = workItems;
-        newCategories[catIndex] = category;
-        
-        return newCategories;
-      });
-      
-      onError?.(null);
-    } catch (error) {
-      console.error('Error updating surface:', error);
-      onError?.('Failed to update surface data');
-      setHasError(true);
-    }
-  }, [disabled, validateInput, setCategories, catIndex, workIndex, surfIndex, onError, allowDecimals]);
+      }
 
-  const handleInputChange = useCallback((e) => {
-    const value = e.target.value;
-    
-    if (!allowDecimals && value.includes('.')) {
-      return;
-    }
-    
-    setInputValue(value);
-    
-    if (hasError) {
-      setHasError(false);
-      onError?.(null);
-    }
-  }, [hasError, onError, allowDecimals]);
+      if (!allowDecimals && numValue !== Math.floor(numValue)) {
+        return { isValid: false, error: "Please enter a whole number" };
+      }
+
+      return { isValid: true, error: null };
+    },
+    [minValue, maxValue, allowDecimals],
+  );
+
+  const updateSurface = useCallback(
+    (field, value) => {
+      if (disabled) return;
+
+      const validation = validateInput(value);
+      setHasError(!validation.isValid);
+
+      if (!validation.isValid) {
+        onError?.(validation.error);
+        return;
+      }
+
+      const parsedValue = allowDecimals
+        ? parseFloat(value)
+        : parseInt(value, 10);
+
+      try {
+        setCategories((prev) => {
+          if (!prev[catIndex]?.workItems?.[workIndex]?.surfaces?.[surfIndex]) {
+            throw new Error("Invalid surface reference");
+          }
+
+          const newCategories = [...prev];
+          const category = { ...newCategories[catIndex] };
+          const workItems = [...category.workItems];
+          const item = { ...workItems[workIndex] };
+          const surfaces = [...item.surfaces];
+
+          surfaces[surfIndex] = {
+            ...surfaces[surfIndex],
+            [field]: parsedValue,
+          };
+
+          item.surfaces = surfaces;
+          workItems[workIndex] = item;
+          category.workItems = workItems;
+          newCategories[catIndex] = category;
+
+          return newCategories;
+        });
+
+        onError?.(null);
+      } catch (error) {
+        console.error("Error updating surface:", error);
+        onError?.("Failed to update surface data");
+        setHasError(true);
+      }
+    },
+    [
+      disabled,
+      validateInput,
+      setCategories,
+      catIndex,
+      workIndex,
+      surfIndex,
+      onError,
+      allowDecimals,
+    ],
+  );
+
+  const handleInputChange = useCallback(
+    (e) => {
+      const value = e.target.value;
+
+      if (!allowDecimals && value.includes(".")) {
+        return;
+      }
+
+      setInputValue(value);
+
+      if (hasError) {
+        setHasError(false);
+        onError?.(null);
+      }
+    },
+    [hasError, onError, allowDecimals],
+  );
 
   const handleInputBlur = useCallback(() => {
     const value = inputValue || displayValue;
-    updateSurface('units', value);
-    setInputValue('');
+    updateSurface("units", value);
+    setInputValue("");
   }, [inputValue, displayValue, updateSurface]);
 
-  const handleKeyPress = useCallback((e) => {
-    if (e.key === 'Enter') {
-      e.target.blur();
-    }
-    
-    if (!allowDecimals && e.key === '.') {
-      e.preventDefault();
-    }
-  }, [allowDecimals]);
+  const handleKeyPress = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        e.target.blur();
+      }
 
-  const handleKeyDown = useCallback((e) => {
-    if (disabled) return;
-    
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      e.preventDefault();
-      const currentValue = parseFloat(displayValue) || minValue;
-      const increment = allowDecimals ? 0.1 : 1;
-      const newValue = e.key === 'ArrowUp' ? 
-        currentValue + increment : 
-        Math.max(minValue, currentValue - increment);
-      
-      updateSurface('units', newValue.toString());
-    }
-  }, [disabled, displayValue, minValue, allowDecimals, updateSurface]);
+      if (!allowDecimals && e.key === ".") {
+        e.preventDefault();
+      }
+    },
+    [allowDecimals],
+  );
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (disabled) return;
+
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        e.preventDefault();
+        const currentValue = parseFloat(displayValue) || minValue;
+        const increment = allowDecimals ? 0.1 : 1;
+        const newValue =
+          e.key === "ArrowUp"
+            ? currentValue + increment
+            : Math.max(minValue, currentValue - increment);
+
+        updateSurface("units", newValue.toString());
+      }
+    },
+    [disabled, displayValue, minValue, allowDecimals, updateSurface],
+  );
 
   const inputId = `units-${catIndex}-${workIndex}-${surfIndex}`;
   const errorId = `${inputId}-error`;
-  const step = allowDecimals ? '0.1' : '1';
+  const step = allowDecimals ? "0.1" : "1";
 
   return (
-    <div className={`${styles.byUnitInput} ${hasError ? styles.hasError : ''}`}>
+    <div className={`${styles.byUnitInput} ${hasError ? styles.hasError : ""}`}>
       <div className={styles.field}>
         <label htmlFor={inputId} className={styles.label}>
           {unitLabel}:
-          <span className={styles.required} aria-label="required field">*</span>
+          <span className={styles.required} aria-label="required field">
+            *
+          </span>
         </label>
-        
-        <div className={`${styles.inputWrapper} ${commonStyles.inputWrapper} ${hasError ? styles.errorInput : ''}`}>
-          <i 
-            className={`fas fa-cube ${commonStyles.inputIcon}`} 
+
+        <div
+          className={`${styles.inputWrapper} ${commonStyles.inputWrapper} ${
+            hasError ? styles.errorInput : ""
+          }`}
+        >
+          <i
+            className={`fas fa-cube ${commonStyles.inputIcon}`}
             aria-hidden="true"
           ></i>
-          
+
           <input
             id={inputId}
             type="number"
@@ -181,6 +223,7 @@ export default function ByUnitInput({
             value={displayValue}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
+            onFocus={(e) => e.target.select()}
             onKeyPress={handleKeyPress}
             onKeyDown={handleKeyDown}
             placeholder={minValue.toString()}
@@ -188,23 +231,27 @@ export default function ByUnitInput({
             aria-label={`Surface ${surfIndex + 1} ${unitLabel.toLowerCase()}`}
             aria-describedby={hasError ? errorId : undefined}
             aria-invalid={hasError}
-            className={hasError ? styles.inputError : ''}
+            className={hasError ? styles.inputError : ""}
           />
-          
+
           <span className={styles.unit} aria-label="unit">
-            {units === 1 ? unitAbbreviation.replace(/s$/, '') : unitAbbreviation}
+            {units === 1
+              ? unitAbbreviation.replace(/s$/, "")
+              : unitAbbreviation}
           </span>
         </div>
-        
+
         {hasError && (
-          <div 
+          <div
             id={errorId}
             className={styles.errorMessage}
             role="alert"
             aria-live="polite"
           >
             <i className="fas fa-exclamation-circle" aria-hidden="true"></i>
-            Please enter a {allowDecimals ? 'number' : 'whole number'} between {minValue} and {maxValue}
+            Please enter a {allowDecimals
+              ? "number"
+              : "whole number"} between {minValue} and {maxValue}
           </div>
         )}
       </div>
@@ -238,7 +285,7 @@ ByUnitInput.defaultProps = {
   onError: null,
   minValue: 1,
   maxValue: 9999,
-  unitLabel: 'Units',
-  unitAbbreviation: 'units',
+  unitLabel: "Units",
+  unitAbbreviation: "units",
   allowDecimals: false,
 };

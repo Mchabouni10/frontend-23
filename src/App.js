@@ -1,4 +1,4 @@
-// src/App.jsx
+// src/App.js
 import './App.css';
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
@@ -16,7 +16,7 @@ import CustomersList from './components/CustomersList/CustomersList';
 import CustomerProjects from './components/CustomerProjects/CustomerProjects';
 import EstimateSummaryPage from './components/EstimateSummary/EstimateSummary';
 import FinanceDashboard from './components/FinanceDashboard/FinanceDashboard';
-import SketchPage from './components/SketchPage/SketchPage';
+import FloorPlanDesigner from './components/SketchPad/FloorPlanDesigner';
 import CompanyExpenses from './components/CompanyExpenses/CompanyExpenses';
 
 export default function App() {
@@ -88,10 +88,10 @@ export default function App() {
                       </ErrorBoundaryWrapper>
                     } />
 
-                    {/* Sketch Designer Route */}
+                    {/* Sketch Designer Route - UPDATED */}
                     <Route path="/home/sketch" element={
-                      <ErrorBoundaryWrapper boundaryName="SketchPage">
-                        <SketchPage />
+                      <ErrorBoundaryWrapper boundaryName="FloorPlanDesigner">
+                        <FloorPlanDesigner />
                       </ErrorBoundaryWrapper>
                     } />
 

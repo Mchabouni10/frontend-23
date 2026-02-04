@@ -1,25 +1,28 @@
-import React, { useState, useCallback } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faTable, 
-  faTh, 
-  faSearch, 
-  faTimes, 
-  faChevronDown, 
-  faChevronUp, 
-  faExclamationTriangle, 
+import React, { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faTable,
+  faTh,
+  faSearch,
+  faTimes,
+  faCalendarAlt,
+  faChevronDown,
+  faChevronUp,
+  faExclamationTriangle,
   faCheckCircle,
-  faSpinner
-} from '@fortawesome/free-solid-svg-icons';
-import { useCustomers } from './useCustomers';
-import CustomersListTable from './CustomersListTable';
-import CustomersListCards from './CustomersListCards';
-import styles from './CustomersList.module.css';
+  faSpinner,
+  faPlus,
+} from "@fortawesome/free-solid-svg-icons";
+import { useCustomers } from "./useCustomers";
+import CustomersListTable from "./CustomersListTable";
+import CustomersListCards from "./CustomersListCards";
+import styles from "./CustomersList.module.css";
 
 // View mode constants
 const VIEW_MODES = {
-  TABLE: 'table',
-  CARDS: 'cards',
+  TABLE: "table",
+  CARDS: "cards",
 };
 
 const STATUS_OPTIONS = [
@@ -34,8 +37,9 @@ const STATUS_OPTIONS = [
 ];
 
 export default function CustomersList() {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState(VIEW_MODES.TABLE);
-  
+
   // Custom hook to manage customer data
   const customerData = useCustomers({ viewMode });
   const {
@@ -43,6 +47,8 @@ export default function CustomersList() {
     setSearchQuery,
     statusFilter,
     setStatusFilter,
+    dateFilter,
+    setDateFilter,
     notifications,
     isNotificationsOpen,
     setIsNotificationsOpen,
@@ -51,7 +57,7 @@ export default function CustomersList() {
     error,
     totalPages,
     currentPage,
-    setCurrentPage
+    setCurrentPage,
   } = customerData;
 
   const handleTableView = useCallback(() => setViewMode(VIEW_MODES.TABLE), []);
@@ -62,13 +68,30 @@ export default function CustomersList() {
     <main className={styles.mainContent} role="main">
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Customers</h1>
-          
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <h1 className={styles.title}>Customers</h1>
+            <button
+              onClick={() => navigate("/home/new-customer-project")}
+              className={styles.toggleButton}
+              style={{
+                backgroundColor: "#2ecc71",
+                color: "white",
+                border: "none",
+                gap: "0.5rem",
+              }}
+            >
+              <FontAwesomeIcon icon={faPlus} />
+              <span>New Customer</span>
+            </button>
+          </div>
+
           {/* View Toggle Controls */}
           <nav className={styles.viewToggle} aria-label="View mode selection">
             <button
               onClick={handleTableView}
-              className={`${styles.toggleButton} ${isTableView ? styles.active : ''}`}
+              className={`${styles.toggleButton} ${
+                isTableView ? styles.active : ""
+              }`}
               aria-pressed={isTableView}
               type="button"
             >
@@ -77,7 +100,9 @@ export default function CustomersList() {
             </button>
             <button
               onClick={handleCardsView}
-              className={`${styles.toggleButton} ${!isTableView ? styles.active : ''}`}
+              className={`${styles.toggleButton} ${
+                !isTableView ? styles.active : ""
+              }`}
               aria-pressed={!isTableView}
               type="button"
             >
@@ -103,7 +128,16 @@ export default function CustomersList() {
                 <button
                   onClick={() => setSearchQuery("")}
                   className={styles.clearButton}
-                  style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#a0aec0' }}
+                  style={{
+                    position: "absolute",
+                    right: "1rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    color: "#a0aec0",
+                  }}
                 >
                   <FontAwesomeIcon icon={faTimes} />
                 </button>
@@ -123,6 +157,119 @@ export default function CustomersList() {
                 ))}
               </select>
             </div>
+
+            {/* Date Filter Controls */}
+            <div
+              className={styles.filterWrapper}
+              style={{
+                marginLeft: "1rem",
+                display: "flex",
+                gap: "0.5rem",
+                alignItems: "center",
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faCalendarAlt}
+                className={styles.searchIcon}
+                style={{ marginRight: "0.5rem", color: "#718096" }}
+              />
+
+              <select
+                value={dateFilter.type}
+                onChange={(e) =>
+                  setDateFilter({ ...dateFilter, type: e.target.value })
+                }
+                className={styles.statusFilter}
+              >
+                <option value="all">All Time</option>
+                <option value="year">Yearly</option>
+                <option value="custom">Custom Range</option>
+              </select>
+
+              {dateFilter.type === "year" && (
+                <select
+                  value={dateFilter.year || new Date().getFullYear()}
+                  onChange={(e) =>
+                    setDateFilter({
+                      ...dateFilter,
+                      year: parseInt(e.target.value),
+                    })
+                  }
+                  className={styles.statusFilter}
+                >
+                  {Array.from(
+                    { length: 5 },
+                    (_, i) => new Date().getFullYear() - i + 1,
+                  )
+                    .reverse()
+                    .map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  {Array.from(
+                    { length: 10 },
+                    (_, i) => new Date().getFullYear() - i,
+                  ).map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              {dateFilter.type === "custom" && (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "0.5rem",
+                    alignItems: "center",
+                  }}
+                >
+                  <input
+                    type="date"
+                    value={
+                      dateFilter.startDate
+                        ? new Date(dateFilter.startDate)
+                            .toISOString()
+                            .split("T")[0]
+                        : ""
+                    }
+                    onChange={(e) =>
+                      setDateFilter({
+                        ...dateFilter,
+                        startDate: e.target.value
+                          ? new Date(e.target.value)
+                          : null,
+                      })
+                    }
+                    className={styles.searchInput}
+                    style={{ paddingLeft: "0.5rem", width: "auto" }}
+                  />
+                  <span>to</span>
+                  <input
+                    type="date"
+                    value={
+                      dateFilter.endDate
+                        ? new Date(dateFilter.endDate)
+                            .toISOString()
+                            .split("T")[0]
+                        : ""
+                    }
+                    onChange={(e) =>
+                      setDateFilter({
+                        ...dateFilter,
+                        endDate: e.target.value
+                          ? new Date(e.target.value)
+                          : null,
+                      })
+                    }
+                    className={styles.searchInput}
+                    style={{ paddingLeft: "0.5rem", width: "auto" }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Notifications */}
@@ -133,15 +280,29 @@ export default function CustomersList() {
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
               >
                 <h3>
-                  Notifications <span style={{ color: '#e53e3e' }}>({notifications.length})</span>
+                  Notifications{" "}
+                  <span style={{ color: "#e53e3e" }}>
+                    ({notifications.length})
+                  </span>
                 </h3>
-                <FontAwesomeIcon icon={isNotificationsOpen ? faChevronUp : faChevronDown} />
+                <FontAwesomeIcon
+                  icon={isNotificationsOpen ? faChevronUp : faChevronDown}
+                />
               </div>
               {isNotificationsOpen && (
                 <ul className={styles.notificationList}>
                   {notifications.map((note, index) => (
-                    <li key={index} className={`${styles.notificationItem} ${note.overdue ? styles.overdue : styles.warning}`}>
-                      <FontAwesomeIcon icon={note.overdue ? faExclamationTriangle : faCheckCircle} />
+                    <li
+                      key={index}
+                      className={`${styles.notificationItem} ${
+                        note.overdue ? styles.overdue : styles.warning
+                      }`}
+                    >
+                      <FontAwesomeIcon
+                        icon={
+                          note.overdue ? faExclamationTriangle : faCheckCircle
+                        }
+                      />
                       {note.message}
                     </li>
                   ))}
@@ -174,14 +335,16 @@ export default function CustomersList() {
         {!isLoading && totalPages > 1 && (
           <nav className={styles.pagination}>
             <button
-              onClick={() => setCurrentPage(p => Math.max(p - 1, 1))}
+              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
             >
               Previous
             </button>
-            <span>Page {currentPage} of {totalPages}</span>
+            <span>
+              Page {currentPage} of {totalPages}
+            </span>
             <button
-              onClick={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
+              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
             >
               Next
@@ -193,12 +356,33 @@ export default function CustomersList() {
         {!isLoading && (
           <div className={styles.totalsSection}>
             <div className={styles.totalItem}>
-              <span className={styles.totalLabel}>Grand Total</span>
-              <span className={styles.totalValue}>${totals.grandTotal.toFixed(2)}</span>
+              <span className={styles.totalLabel}>
+                Grand Total
+                {dateFilter.type !== "all" && (
+                  <span
+                    style={{
+                      fontSize: "0.8em",
+                      fontWeight: "normal",
+                      marginLeft: "0.5rem",
+                    }}
+                  >
+                    (
+                    {dateFilter.type === "year"
+                      ? dateFilter.year
+                      : "Selected Period"}
+                    )
+                  </span>
+                )}
+              </span>
+              <span className={styles.totalValue}>
+                ${totals.grandTotal.toFixed(2)}
+              </span>
             </div>
             <div className={styles.totalItem}>
               <span className={styles.totalLabel}>Outstanding</span>
-              <span className={`${styles.totalValue} ${styles.remaining}`}>${totals.amountRemaining.toFixed(2)}</span>
+              <span className={`${styles.totalValue} ${styles.remaining}`}>
+                ${totals.amountRemaining.toFixed(2)}
+              </span>
             </div>
           </div>
         )}

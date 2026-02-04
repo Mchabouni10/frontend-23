@@ -1,34 +1,63 @@
 // src/components/HomePage/HomePage.jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSave, faUndo, faArrowLeft, faEdit, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { CategoriesProvider, useCategories } from '../../context/CategoriesContext';
-import { SettingsProvider, useSettings } from '../../context/SettingsContext';
-import { WorkTypeProvider, useWorkType } from '../../context/WorkTypeContext';
-import { CalculatorEngine } from '../Calculator/engine/CalculatorEngine';
-import CustomerInfo from '../CustomerInfo/CustomerInfo';
-import Calculator from '../Calculator/Calculator';
-import CostBreakdown from '../Calculator/CostBreakdown/CostBreakdown';
-import styles from './HomePage.module.css';
-import { saveProject, updateProject, getProject } from '../../services/projectService';
-import ErrorBoundary from '../ErrorBoundary';
+import React, { useState, useEffect, useCallback } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faSave,
+  faUndo,
+  faArrowLeft,
+  faEdit,
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
+import {
+  CategoriesProvider,
+  useCategories,
+} from "../../context/CategoriesContext";
+import { SettingsProvider, useSettings } from "../../context/SettingsContext";
+import { WorkTypeProvider, useWorkType } from "../../context/WorkTypeContext";
+import { CalculatorEngine } from "../Calculator/engine/CalculatorEngine";
+import CustomerInfo from "../CustomerInfo/CustomerInfo";
+import Calculator from "../Calculator/Calculator";
+import CostBreakdown from "../Calculator/CostBreakdown/CostBreakdown";
+import styles from "./HomePage.module.css";
+import {
+  saveProject,
+  updateProject,
+  getProject,
+} from "../../services/projectService";
+import ErrorBoundary from "../ErrorBoundary";
 
 // Validate project before saving
 const validateProjectData = (customer) => {
-  const requiredFields = ['firstName', 'lastName', 'street', 'phone', 'startDate', 'zipCode', 'email', 'projectName'];
+  const requiredFields = [
+    "firstName",
+    "lastName",
+    "street",
+    "phone",
+    "startDate",
+    "zipCode",
+    "email",
+    "projectName",
+  ];
   const missing = requiredFields.filter((field) => {
-    if (field === 'startDate') {
-      return !customer[field] || (customer[field] instanceof Date && isNaN(customer[field].getTime()));
+    if (field === "startDate") {
+      return (
+        !customer[field] ||
+        (customer[field] instanceof Date && isNaN(customer[field].getTime()))
+      );
     }
     return !customer[field]?.trim();
   });
 
-  if (missing.length > 0) return `Please fill in all required fields: ${missing.join(', ')}`;
+  if (missing.length > 0)
+    return `Please fill in all required fields: ${missing.join(", ")}`;
 
-  if (customer.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) return 'Please enter a valid email address.';
+  if (customer.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email))
+    return "Please enter a valid email address.";
 
-  if (!/^\d{5}$/.test(customer.zipCode)) return 'ZIP Code must be exactly 5 digits.';
+  if (!/^\d{5}$/.test(customer.zipCode))
+    return "ZIP Code must be exactly 5 digits.";
 
   return null;
 };
@@ -37,20 +66,26 @@ const validateProjectData = (customer) => {
 const sanitizeCategoriesWithEngine = (categories) => {
   if (!Array.isArray(categories)) return [];
 
-  const sanitized = categories.map((category) => {
-    if (!category || typeof category !== 'object') return null;
+  const sanitized = categories
+    .map((category) => {
+      if (!category || typeof category !== "object") return null;
 
-    const workItems = Array.isArray(category.workItems)
-      ? category.workItems.map((item) => {
-          if (!item || typeof item !== 'object') return null;
-          // Remove manual measurementType setting - let WorkItem handle it
-          const surfaces = Array.isArray(item.surfaces) ? item.surfaces.filter(Boolean) : [];
-          return { ...item, surfaces };
-        }).filter(Boolean)
-      : [];
+      const workItems = Array.isArray(category.workItems)
+        ? category.workItems
+            .map((item) => {
+              if (!item || typeof item !== "object") return null;
+              // Remove manual measurementType setting - let WorkItem handle it
+              const surfaces = Array.isArray(item.surfaces)
+                ? item.surfaces.filter(Boolean)
+                : [];
+              return { ...item, surfaces };
+            })
+            .filter(Boolean)
+        : [];
 
-    return { ...category, workItems };
-  }).filter(Boolean);
+      return { ...category, workItems };
+    })
+    .filter(Boolean);
 
   return sanitized;
 };
@@ -60,62 +95,79 @@ function HomePageContent() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const initialCustomerInfo = location.pathname === '/home/new-customer-project' ? {} : location.state?.customerInfo || {};
+  const initialCustomerInfo =
+    location.pathname === "/home/new-customer-project"
+      ? {}
+      : location.state?.customerInfo || {};
 
   const { categories, setCategories } = useCategories();
   const { settings, setSettings } = useSettings();
-  
+
   // Use the WorkType hook directly - now properly available
   const workTypeContext = useWorkType();
-  const { getMeasurementType, isValidSubtype, getWorkTypeDetails } = workTypeContext;
-  
+  const { getMeasurementType, isValidSubtype, getWorkTypeDetails } =
+    workTypeContext;
+
   const [customer, setCustomer] = useState({
-    firstName: initialCustomerInfo.firstName || '',
-    lastName: initialCustomerInfo.lastName || '',
-    street: initialCustomerInfo.street || '',
-    unit: initialCustomerInfo.unit || '',
-    city: initialCustomerInfo.city || '',
-    state: initialCustomerInfo.state || 'IL',
-    zipCode: initialCustomerInfo.zipCode || '',
-    phone: initialCustomerInfo.phone || '',
-    email: initialCustomerInfo.email || '',
-    projectName: initialCustomerInfo.projectName || '',
-    type: initialCustomerInfo.type || 'Residential',
-    paymentType: initialCustomerInfo.paymentType || 'Cash',
-    startDate: initialCustomerInfo.startDate ? new Date(initialCustomerInfo.startDate) : '',
-    finishDate: initialCustomerInfo.finishDate ? new Date(initialCustomerInfo.finishDate) : '',
-    notes: initialCustomerInfo.notes || '',
+    firstName: initialCustomerInfo.firstName || "",
+    lastName: initialCustomerInfo.lastName || "",
+    street: initialCustomerInfo.street || "",
+    unit: initialCustomerInfo.unit || "",
+    city: initialCustomerInfo.city || "",
+    state: initialCustomerInfo.state || "IL",
+    zipCode: initialCustomerInfo.zipCode || "",
+    phone: initialCustomerInfo.phone || "",
+    email: initialCustomerInfo.email || "",
+    projectName: initialCustomerInfo.projectName || "",
+    type: initialCustomerInfo.type || "Residential",
+    paymentType: initialCustomerInfo.paymentType || "Cash",
+    startDate: initialCustomerInfo.startDate
+      ? new Date(initialCustomerInfo.startDate)
+      : "",
+    finishDate: initialCustomerInfo.finishDate
+      ? new Date(initialCustomerInfo.finishDate)
+      : "",
+    notes: initialCustomerInfo.notes || "",
   });
 
   const [projectId, setProjectId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isCustomerInfoVisible, setIsCustomerInfoVisible] = useState(true);
 
-  const isDetailsMode = location.pathname.startsWith('/home/customer/') && id;
-  const isEditMode = location.pathname.startsWith('/home/edit/') && id;
-  const isNewMode = location.pathname === '/home/customer' || location.pathname === '/home/new-customer-project';
+  const isDetailsMode = location.pathname.startsWith("/home/customer/") && id;
+  const isEditMode = location.pathname.startsWith("/home/edit/") && id;
+  const isNewMode =
+    location.pathname === "/home/customer" ||
+    location.pathname === "/home/new-customer-project";
 
   // Check if workType functions are ready
-  const workTypeFunctionsReady = !!(getMeasurementType && isValidSubtype && getWorkTypeDetails);
+  const workTypeFunctionsReady = !!(
+    getMeasurementType &&
+    isValidSubtype &&
+    getWorkTypeDetails
+  );
 
   // Validation for required customer fields
   const validateCustomerFields = useCallback(() => {
     const requiredFields = [
-      'firstName',
-      'lastName', 
-      'street',
-      'city',
-      'zipCode',
-      'phone',
-      'email',
-      'projectName',
-      'startDate'
+      "firstName",
+      "lastName",
+      "street",
+      "city",
+      "zipCode",
+      "phone",
+      "email",
+      "projectName",
+      "startDate",
     ];
 
     // Check if all required fields are filled
-    const missingFields = requiredFields.filter(field => {
-      if (field === 'startDate') {
-        return !customer[field] || (customer[field] instanceof Date && isNaN(customer[field].getTime()));
+    const missingFields = requiredFields.filter((field) => {
+      if (field === "startDate") {
+        return (
+          !customer[field] ||
+          (customer[field] instanceof Date && isNaN(customer[field].getTime()))
+        );
       }
       return !customer[field] || !customer[field].toString().trim();
     });
@@ -130,8 +182,8 @@ function HomePageContent() {
     }
 
     if (customer.phone) {
-      const cleaned = customer.phone.replace(/\D/g, '');
-      if (!(cleaned.length === 11 && cleaned.startsWith('1'))) {
+      const cleaned = customer.phone.replace(/\D/g, "");
+      if (!(cleaned.length === 11 && cleaned.startsWith("1"))) {
         return false;
       }
     }
@@ -151,26 +203,33 @@ function HomePageContent() {
           setProjectId(project._id);
 
           const normalizedCustomer = {
-            firstName: project.customerInfo?.firstName || '',
-            lastName: project.customerInfo?.lastName || '',
-            street: project.customerInfo?.street || '',
-            unit: project.customerInfo?.unit || '',
-            city: project.customerInfo?.city || '',
-            state: project.customerInfo?.state || 'IL',
-            zipCode: project.customerInfo?.zipCode || '',
-            phone: project.customerInfo?.phone || '',
-            email: project.customerInfo?.email || '',
-            projectName: project.customerInfo?.projectName || '',
-            type: project.customerInfo?.type || 'Residential',
-            paymentType: project.customerInfo?.paymentType || 'Cash',
-            startDate: project.customerInfo?.startDate ? new Date(project.customerInfo.startDate) : '',
-            finishDate: project.customerInfo?.finishDate ? new Date(project.customerInfo.finishDate) : '',
-            notes: project.customerInfo?.notes || '',
+            firstName: project.customerInfo?.firstName || "",
+            lastName: project.customerInfo?.lastName || "",
+            street: project.customerInfo?.street || "",
+            unit: project.customerInfo?.unit || "",
+            city: project.customerInfo?.city || "",
+            state: project.customerInfo?.state || "IL",
+            zipCode: project.customerInfo?.zipCode || "",
+            phone: project.customerInfo?.phone || "",
+            email: project.customerInfo?.email || "",
+            projectName: project.customerInfo?.projectName || "",
+            type: project.customerInfo?.type || "Residential",
+            paymentType: project.customerInfo?.paymentType || "Cash",
+            startDate: project.customerInfo?.startDate
+              ? new Date(project.customerInfo.startDate)
+              : "",
+            finishDate: project.customerInfo?.finishDate
+              ? new Date(project.customerInfo.finishDate)
+              : "",
+            notes: project.customerInfo?.notes || "",
+            status: project.status || "Not Started", // Ensure status is captured
           };
           setCustomer(normalizedCustomer);
 
           // Simplified sanitization - no need to pass functions
-          const sanitizedCategories = sanitizeCategoriesWithEngine(project.categories);
+          const sanitizedCategories = sanitizeCategoriesWithEngine(
+            project.categories,
+          );
           setCategories(sanitizedCategories);
 
           const normalizedSettings = {
@@ -186,27 +245,42 @@ function HomePageContent() {
           };
           setSettings(normalizedSettings);
         } catch (err) {
-          console.error('Error loading project:', err);
-          alert('Failed to load project.');
-          navigate('/home/customers');
+          console.error("Error loading project:", err);
+          alert("Failed to load project.");
+          navigate("/home/customers");
         } finally {
           setLoading(false);
         }
       }
     };
-    
+
     if (workTypeFunctionsReady) {
       loadProject();
     }
-  }, [id, isEditMode, isDetailsMode, navigate, workTypeFunctionsReady, setCategories, setSettings]);
+  }, [
+    id,
+    isEditMode,
+    isDetailsMode,
+    navigate,
+    workTypeFunctionsReady,
+    setCategories,
+    setSettings,
+  ]);
 
   // Save or update project using CalculatorEngine
   const saveOrUpdateProject = async () => {
-    console.log('Save button clicked, workTypeFunctionsReady:', workTypeFunctionsReady);
-    
+    console.log(
+      "Save button clicked, workTypeFunctionsReady:",
+      workTypeFunctionsReady,
+    );
+
     if (!workTypeFunctionsReady) {
-      alert('System not ready. Please wait a moment and try again.');
-      console.error('WorkType functions not ready:', { getMeasurementType: !!getMeasurementType, isValidSubtype: !!isValidSubtype, getWorkTypeDetails: !!getWorkTypeDetails });
+      alert("System not ready. Please wait a moment and try again.");
+      console.error("WorkType functions not ready:", {
+        getMeasurementType: !!getMeasurementType,
+        isValidSubtype: !!isValidSubtype,
+        getWorkTypeDetails: !!getWorkTypeDetails,
+      });
       return;
     }
 
@@ -221,7 +295,11 @@ function HomePageContent() {
 
     try {
       // Instantiate CalculatorEngine with context functions
-      const engine = new CalculatorEngine(sanitizedCategories, settings, workTypeContext);
+      const engine = new CalculatorEngine(
+        sanitizedCategories,
+        settings,
+        workTypeContext,
+      );
 
       // Recalculate totals, breakdowns, payments
       const totals = engine.calculateTotals();
@@ -232,72 +310,87 @@ function HomePageContent() {
       const projectData = {
         customerInfo: {
           ...customer,
-          startDate: customer.startDate instanceof Date && !isNaN(customer.startDate.getTime())
-            ? customer.startDate.toISOString().split('T')[0]
-            : customer.startDate,
-          finishDate: customer.finishDate instanceof Date && !isNaN(customer.finishDate.getTime())
-            ? customer.finishDate.toISOString().split('T')[0]
-            : customer.finishDate,
+          startDate:
+            customer.startDate instanceof Date &&
+            !isNaN(customer.startDate.getTime())
+              ? customer.startDate.toISOString().split("T")[0]
+              : customer.startDate,
+          finishDate:
+            customer.finishDate instanceof Date &&
+            !isNaN(customer.finishDate.getTime())
+              ? customer.finishDate.toISOString().split("T")[0]
+              : customer.finishDate,
         },
         categories: sanitizedCategories,
         settings: {
           ...settings,
-          payments: (settings.payments || []).map(payment => ({
+          payments: (settings.payments || []).map((payment) => ({
             ...payment,
-            date: payment.date instanceof Date ? payment.date.toISOString().split('T')[0] : payment.date,
+            date:
+              payment.date instanceof Date
+                ? payment.date.toISOString().split("T")[0]
+                : payment.date,
             amount: Number(payment.amount),
-            method: payment.method || 'Cash',
-            note: payment.note || '',
+            method: payment.method || "Cash",
+            note: payment.note || "",
             isPaid: Boolean(payment.isPaid),
           })),
           deposit: Number(settings.deposit) || 0,
-          depositDate: settings.depositDate ? new Date(settings.depositDate).toISOString().split('T')[0] : null,
+          depositDate: settings.depositDate
+            ? new Date(settings.depositDate).toISOString().split("T")[0]
+            : null,
         },
         totals,
         breakdowns,
         paymentDetails,
       };
 
-      console.log('Project data to save:', projectData);
+      console.log("Project data to save:", projectData);
 
       setLoading(true);
-      
+
       if (isEditMode && projectId) {
         await updateProject(projectId, projectData);
-        alert('Project updated successfully!');
-        navigate('/home/customers');
+        alert("Project updated successfully!");
+        navigate("/home/customers");
       } else if (isNewMode) {
         const newProject = await saveProject(projectData);
         setProjectId(newProject._id);
-        alert('Project saved successfully!');
-        navigate('/home/customers');
+        alert("Project saved successfully!");
+        navigate("/home/customers");
       }
     } catch (err) {
-      console.error('Error saving project:', err);
-      alert('Failed to save/update project: ' + (err.message || 'Unknown error'));
+      console.error("Error saving project:", err);
+      alert(
+        "Failed to save/update project: " + (err.message || "Unknown error"),
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const resetAll = () => {
-    if (window.confirm('Are you sure you want to reset all data? This cannot be undone.')) {
+    if (
+      window.confirm(
+        "Are you sure you want to reset all data? This cannot be undone.",
+      )
+    ) {
       setCustomer({
-        firstName: '',
-        lastName: '',
-        street: '',
-        unit: '',
-        city: '',
-        state: 'IL',
-        zipCode: '',
-        phone: '',
-        email: '',
-        projectName: '',
-        type: 'Residential',
-        paymentType: 'Cash',
-        startDate: '',
-        finishDate: '',
-        notes: '',
+        firstName: "",
+        lastName: "",
+        street: "",
+        unit: "",
+        city: "",
+        state: "IL",
+        zipCode: "",
+        phone: "",
+        email: "",
+        projectName: "",
+        type: "Residential",
+        paymentType: "Cash",
+        startDate: "",
+        finishDate: "",
+        notes: "",
       });
       setCategories([]);
       setSettings({
@@ -312,7 +405,7 @@ function HomePageContent() {
         laborDiscount: 0,
       });
       setProjectId(null);
-      alert('All data reset.');
+      alert("All data reset.");
     }
   };
 
@@ -320,7 +413,7 @@ function HomePageContent() {
     if (id) navigate(`/home/edit/${id}`);
   };
 
-  const toggleCustomerInfo = () => setIsCustomerInfoVisible(prev => !prev);
+  const toggleCustomerInfo = () => setIsCustomerInfoVisible((prev) => !prev);
 
   if (loading && !workTypeFunctionsReady) {
     return (
@@ -342,15 +435,56 @@ function HomePageContent() {
     );
   }
 
-  console.log('Render - workTypeFunctionsReady:', workTypeFunctionsReady, 'loading:', loading, 'isCustomerDataValid:', isCustomerDataValid);
+  console.log(
+    "Render - workTypeFunctionsReady:",
+    workTypeFunctionsReady,
+    "loading:",
+    loading,
+    "isCustomerDataValid:",
+    isCustomerDataValid,
+  );
 
   return (
-    <main className={`${styles.mainContent} ${!isCustomerInfoVisible ? styles.mainContentCompact : ''}`}>
+    <main
+      className={`${styles.mainContent} ${
+        !isCustomerInfoVisible ? styles.mainContentCompact : ""
+      }`}
+    >
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1 className={styles.title}>
-            {isDetailsMode ? 'Project Details' : isEditMode ? 'Edit Project' : 'New Project'}
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <h1 className={styles.title}>
+              {isDetailsMode
+                ? "Project Details"
+                : isEditMode
+                ? "Edit Project"
+                : "New Project"}
+            </h1>
+            {/* Status Badge */}
+            {(isEditMode || isDetailsMode) && customer.status && (
+              <span
+                className={styles.statusBadge}
+                style={{
+                  fontSize: "0.8rem",
+                  padding: "0.25rem 0.75rem",
+                  borderRadius: "1rem",
+                  backgroundColor:
+                    customer.status === "Completed"
+                      ? "#2ecc71"
+                      : customer.status === "In Progress"
+                      ? "#3498db"
+                      : customer.status === "Overdue"
+                      ? "#e74c3c"
+                      : "#95a5a6",
+                  color: "white",
+                  fontWeight: "600",
+                  textTransform: "uppercase",
+                }}
+              >
+                {customer.status}
+              </span>
+            )}
+          </div>
           {isDetailsMode && (
             <button onClick={handleEditClick} className={styles.editButton}>
               <FontAwesomeIcon icon={faEdit} className={styles.buttonIcon} />
@@ -359,26 +493,62 @@ function HomePageContent() {
           )}
         </div>
         <div className={styles.content}>
-          <div className={`${styles.topRow} ${!isCustomerInfoVisible ? styles.customerHidden : ''}`}>
+          <div
+            className={`${styles.topRow} ${
+              !isCustomerInfoVisible ? styles.customerHidden : ""
+            }`}
+          >
             {!isDetailsMode && (
               <button
                 onClick={toggleCustomerInfo}
-                className={`${styles.toggleArrow} ${isCustomerInfoVisible ? styles.toggleArrowRight : styles.toggleArrowLeft}`}
+                className={`${styles.toggleArrow} ${
+                  isCustomerInfoVisible
+                    ? styles.toggleArrowRight
+                    : styles.toggleArrowLeft
+                }`}
                 disabled={loading}
-                aria-label={isCustomerInfoVisible ? 'Hide customer information' : 'Show customer information'}
+                aria-label={
+                  isCustomerInfoVisible
+                    ? "Hide customer information"
+                    : "Show customer information"
+                }
                 aria-expanded={isCustomerInfoVisible}
                 aria-controls="customer-section"
               >
-                <FontAwesomeIcon icon={isCustomerInfoVisible ? faChevronLeft : faChevronRight} className={styles.toggleIcon} />
+                <FontAwesomeIcon
+                  icon={isCustomerInfoVisible ? faChevronLeft : faChevronRight}
+                  className={styles.toggleIcon}
+                />
               </button>
             )}
-            <section className={`${styles.customerSection} ${!isCustomerInfoVisible ? styles.customerSectionHidden : ''}`} id="customer-section">
-              <div className={styles.slideWrapper} style={{ transform: isCustomerInfoVisible ? 'translateX(0)' : 'translateX(-100%)' }} aria-hidden={!isCustomerInfoVisible}>
-                <CustomerInfo customer={customer} setCustomer={setCustomer} disabled={isDetailsMode} />
+            <section
+              className={`${styles.customerSection} ${
+                !isCustomerInfoVisible ? styles.customerSectionHidden : ""
+              }`}
+              id="customer-section"
+            >
+              <div
+                className={styles.slideWrapper}
+                style={{
+                  transform: isCustomerInfoVisible
+                    ? "translateX(0)"
+                    : "translateX(-100%)",
+                }}
+                aria-hidden={!isCustomerInfoVisible}
+              >
+                <CustomerInfo
+                  customer={customer}
+                  setCustomer={setCustomer}
+                  disabled={isDetailsMode}
+                />
               </div>
             </section>
-            <section className={`${styles.calculatorSection} ${!isCustomerInfoVisible ? styles.calculatorExpanded : ''}`}>
-             <Calculator disabled={Boolean(isDetailsMode)} />
+            <section
+              className={`${styles.calculatorSection} ${
+                !isCustomerInfoVisible ? styles.calculatorExpanded : ""
+              }`}
+            >
+              <Calculator disabled={Boolean(isDetailsMode)} />
             </section>
           </div>
           <section className={styles.costBreakdownSection}>
@@ -387,33 +557,56 @@ function HomePageContent() {
         </div>
         <div className={styles.buttonGroup}>
           {isDetailsMode ? (
-            <button onClick={() => navigate('/home/customers')} className={styles.backButton}>
-              <FontAwesomeIcon icon={faArrowLeft} className={styles.buttonIcon} />
+            <button
+              onClick={() => navigate("/home/customers")}
+              className={styles.backButton}
+            >
+              <FontAwesomeIcon
+                icon={faArrowLeft}
+                className={styles.buttonIcon}
+              />
               Back to Customers
             </button>
           ) : (
             <>
-              <button 
-                onClick={saveOrUpdateProject} 
-                className={styles.saveButton} 
-                disabled={loading || !workTypeFunctionsReady || !isCustomerDataValid}
+              <button
+                onClick={saveOrUpdateProject}
+                className={styles.saveButton}
+                disabled={
+                  loading || !workTypeFunctionsReady || !isCustomerDataValid
+                }
                 title={
-                  !workTypeFunctionsReady 
-                    ? 'Waiting for system to initialize...' 
-                    : !isCustomerDataValid 
-                      ? 'Please fill in all required customer information fields'
-                      : ''
+                  !workTypeFunctionsReady
+                    ? "Waiting for system to initialize..."
+                    : !isCustomerDataValid
+                    ? "Please fill in all required customer information fields"
+                    : ""
                 }
               >
                 <FontAwesomeIcon icon={faSave} className={styles.buttonIcon} />
-                {loading ? 'Saving...' : isEditMode && projectId ? 'Update Project' : 'Save Project'}
+                {loading
+                  ? "Saving..."
+                  : isEditMode && projectId
+                  ? "Update Project"
+                  : "Save Project"}
               </button>
-              <button onClick={resetAll} className={styles.resetButton} disabled={loading}>
+              <button
+                onClick={resetAll}
+                className={styles.resetButton}
+                disabled={loading}
+              >
                 <FontAwesomeIcon icon={faUndo} className={styles.buttonIcon} />
                 Reset All
               </button>
-              <button onClick={() => navigate('/home/customers')} className={styles.backButton} disabled={loading}>
-                <FontAwesomeIcon icon={faArrowLeft} className={styles.buttonIcon} />
+              <button
+                onClick={() => navigate("/home/customers")}
+                className={styles.backButton}
+                disabled={loading}
+              >
+                <FontAwesomeIcon
+                  icon={faArrowLeft}
+                  className={styles.buttonIcon}
+                />
                 Back to Customers
               </button>
             </>
@@ -427,7 +620,7 @@ function HomePageContent() {
 // HomePage with providers - restructured for proper context access
 export default function HomePage() {
   const { id } = useParams();
-  const projectKey = id || 'new-project';
+  const projectKey = id || "new-project";
 
   return (
     <ErrorBoundary boundaryName="HomePage">
@@ -444,11 +637,16 @@ export default function HomePage() {
 
 // Wrapper component to ensure proper context access timing
 function HomePageContentWrapper() {
-  const { getMeasurementType, isValidSubtype, getWorkTypeDetails } = useWorkType();
-  
+  const { getMeasurementType, isValidSubtype, getWorkTypeDetails } =
+    useWorkType();
+
   // Wait for context to be ready
-  const isContextReady = !!(getMeasurementType && isValidSubtype && getWorkTypeDetails);
-  
+  const isContextReady = !!(
+    getMeasurementType &&
+    isValidSubtype &&
+    getWorkTypeDetails
+  );
+
   if (!isContextReady) {
     return (
       <main className={styles.mainContent}>
@@ -458,6 +656,6 @@ function HomePageContentWrapper() {
       </main>
     );
   }
-  
+
   return <HomePageContent />;
 }
