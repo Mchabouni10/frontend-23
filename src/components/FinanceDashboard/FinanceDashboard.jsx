@@ -327,11 +327,9 @@ export default function FinanceDashboard() {
           0,
         );
 
-        // Accumulate specific overhead-covering revenues
+        // Accumulate specific overhead-covering revenues (Markup and Transportation only)
         totalTransportation += trans;
         totalMarkup += markup;
-        totalWaste += waste;
-        totalMisc += misc;
 
         const projectCost = pMat + pLab + tax + waste + trans + misc;
 
@@ -1410,6 +1408,240 @@ export default function FinanceDashboard() {
                 }}
               />
             </div>
+
+            {/* Detailed Breakdown */}
+            <div
+              style={{
+                marginTop: "1.5rem",
+                padding: "1.5rem",
+                background: "#f8f9fa",
+                borderRadius: "8px",
+              }}
+            >
+              <h4
+                style={{
+                  marginBottom: "1rem",
+                  fontSize: "1.1rem",
+                  fontWeight: "bold",
+                  color: "#2c3e50",
+                }}
+              >
+                Detailed Breakdown
+              </h4>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: "1.5rem",
+                }}
+              >
+                {/* Additional Revenue Section */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      color: "#7f8c8d",
+                      marginBottom: "0.75rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    Additional Revenue
+                  </div>
+                  <div
+                    style={{
+                      marginBottom: "0.5rem",
+                      padding: "0.5rem",
+                      background: "white",
+                      borderRadius: "4px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.9rem", color: "#34495e" }}>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          width: "12px",
+                          height: "12px",
+                          background: "#3498db",
+                          borderRadius: "2px",
+                          marginRight: "8px",
+                        }}
+                      ></span>
+                      Markup
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.95rem",
+                        fontWeight: "bold",
+                        color: "#2c3e50",
+                      }}
+                    >
+                      {formatCurrency(financialData.additionalRevenue.markup)}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      marginBottom: "0.5rem",
+                      padding: "0.5rem",
+                      background: "white",
+                      borderRadius: "4px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.9rem", color: "#34495e" }}>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          width: "12px",
+                          height: "12px",
+                          background: "#2ecc71",
+                          borderRadius: "2px",
+                          marginRight: "8px",
+                        }}
+                      ></span>
+                      Transportation
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.95rem",
+                        fontWeight: "bold",
+                        color: "#2c3e50",
+                      }}
+                    >
+                      {formatCurrency(
+                        financialData.additionalRevenue.transportation,
+                      )}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      marginTop: "0.75rem",
+                      paddingTop: "0.75rem",
+                      borderTop: "2px solid #dee2e6",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "1rem",
+                        fontWeight: "bold",
+                        color: "#2c3e50",
+                      }}
+                    >
+                      Total Additional Revenue
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "1.1rem",
+                        fontWeight: "bold",
+                        color: "#3498db",
+                      }}
+                    >
+                      {formatCurrency(financialData.additionalRevenue.total)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Company Expenses Section */}
+                <div>
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      color: "#7f8c8d",
+                      marginBottom: "0.75rem",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                    }}
+                  >
+                    Company Expenses
+                  </div>
+                  <div
+                    style={{
+                      padding: "0.5rem",
+                      background: "white",
+                      borderRadius: "4px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span style={{ fontSize: "0.9rem", color: "#34495e" }}>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          width: "12px",
+                          height: "12px",
+                          background: "#e74c3c",
+                          borderRadius: "2px",
+                          marginRight: "8px",
+                        }}
+                      ></span>
+                      Total Overhead
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.95rem",
+                        fontWeight: "bold",
+                        color: "#2c3e50",
+                      }}
+                    >
+                      {formatCurrency(financialData.totalOverhead)}
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      marginTop: "0.75rem",
+                      paddingTop: "0.75rem",
+                      borderTop: "2px solid #dee2e6",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "1rem",
+                        fontWeight: "bold",
+                        color: "#2c3e50",
+                      }}
+                    >
+                      Net Difference
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "1.1rem",
+                        fontWeight: "bold",
+                        color:
+                          financialData.additionalRevenue.total >=
+                          financialData.totalOverhead
+                            ? "#27ae60"
+                            : "#e74c3c",
+                      }}
+                    >
+                      {financialData.additionalRevenue.total >=
+                      financialData.totalOverhead
+                        ? "+"
+                        : ""}
+                      {formatCurrency(
+                        financialData.additionalRevenue.total -
+                          financialData.totalOverhead,
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Coverage Status */}
             <div
               style={{
                 marginTop: "1rem",
