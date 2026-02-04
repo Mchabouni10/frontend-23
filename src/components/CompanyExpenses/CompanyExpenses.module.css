@@ -81,7 +81,11 @@
   align-items: center;
   gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-lg);
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(52, 152, 219, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--surface) 0%,
+    rgba(52, 152, 219, 0.05) 100%
+  );
   border-radius: var(--radius-lg);
   border: 1px solid rgba(52, 152, 219, 0.2);
   color: var(--text);
@@ -113,7 +117,7 @@
 }
 
 .card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -172,6 +176,14 @@
   font-size: var(--font-size-xs);
   color: var(--success);
   font-weight: var(--font-weight-medium);
+}
+
+.positive {
+  color: #2ecc71 !important;
+}
+
+.negative {
+  color: #e74c3c !important;
 }
 
 /* Section Titles */
@@ -357,7 +369,11 @@
 
 /* Filters Section */
 .filtersSection {
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(52, 152, 219, 0.02) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--surface) 0%,
+    rgba(52, 152, 219, 0.02) 100%
+  );
   padding: var(--spacing-xl);
   border-radius: var(--radius-lg);
   box-shadow: 0 4px 12px var(--shadow);

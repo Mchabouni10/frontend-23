@@ -477,9 +477,18 @@ export default function CompanyExpenses() {
               <FontAwesomeIcon icon={faWallet} />
             </div>
             <div className={styles.cardContent}>
-              <span className={styles.cardTitle}>Yearly Addit. Revenue</span>
-              <span className={styles.cardAmount}>
-                ${yearlyAdditionalRevenue.toFixed(2)}
+              <span className={styles.cardTitle}>Yearly Overhead Coverage</span>
+              <span
+                className={`${styles.cardAmount} ${
+                  yearlyAdditionalRevenue - dashboard.periodTotals.yearly >= 0
+                    ? styles.positive
+                    : styles.negative
+                }`}
+              >
+                $
+                {(
+                  yearlyAdditionalRevenue - dashboard.periodTotals.yearly
+                ).toFixed(2)}
               </span>
               <span
                 className={styles.cardTrend}
@@ -491,8 +500,12 @@ export default function CompanyExpenses() {
                 }}
               >
                 {yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
-                  ? "✓ Covers Yearly Overhead"
-                  : "✗ Shortfall from Overhead"}
+                  ? `✓ $${(
+                      yearlyAdditionalRevenue - dashboard.periodTotals.yearly
+                    ).toFixed(2)} Surplus`
+                  : `✗ $${Math.abs(
+                      yearlyAdditionalRevenue - dashboard.periodTotals.yearly,
+                    ).toFixed(2)} Shortfall`}
               </span>
             </div>
           </div>
