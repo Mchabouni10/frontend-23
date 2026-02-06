@@ -56,7 +56,7 @@ export default function CustomersListTable({
       const progress = total > 0 ? ((total - remaining) / total) * 100 : 0;
       return Math.round(progress);
     },
-    []
+    [],
   );
 
   return (
@@ -102,8 +102,12 @@ export default function CustomersListTable({
                       : "not sorted"
                   }`}
                 >
-                  <FontAwesomeIcon icon={faAddressCard} aria-hidden="true" /> Last{" "}
-                  <FontAwesomeIcon icon={getSortIcon("lastName")} aria-hidden="true" />
+                  <FontAwesomeIcon icon={faAddressCard} aria-hidden="true" />{" "}
+                  Last{" "}
+                  <FontAwesomeIcon
+                    icon={getSortIcon("lastName")}
+                    aria-hidden="true"
+                  />
                 </th>
                 <th scope="col">
                   <FontAwesomeIcon icon={faPhone} aria-hidden="true" /> Phone
@@ -130,11 +134,16 @@ export default function CustomersListTable({
                       : "not sorted"
                   }`}
                 >
-                  <FontAwesomeIcon icon={faCalendarAlt} aria-hidden="true" /> Start{" "}
-                  <FontAwesomeIcon icon={getSortIcon("startDate")} aria-hidden="true" />
+                  <FontAwesomeIcon icon={faCalendarAlt} aria-hidden="true" />{" "}
+                  Start{" "}
+                  <FontAwesomeIcon
+                    icon={getSortIcon("startDate")}
+                    aria-hidden="true"
+                  />
                 </th>
                 <th scope="col">
-                  <FontAwesomeIcon icon={faCalendarAlt} aria-hidden="true" /> Finish
+                  <FontAwesomeIcon icon={faCalendarAlt} aria-hidden="true" />{" "}
+                  Finish
                 </th>
                 <th scope="col">Status</th>
                 <th
@@ -156,11 +165,16 @@ export default function CustomersListTable({
                       : "not sorted"
                   }`}
                 >
-                  <FontAwesomeIcon icon={faDollarSign} aria-hidden="true" /> Remaining{" "}
-                  <FontAwesomeIcon icon={getSortIcon("amountRemaining")} aria-hidden="true" />
+                  <FontAwesomeIcon icon={faDollarSign} aria-hidden="true" />{" "}
+                  Remaining{" "}
+                  <FontAwesomeIcon
+                    icon={getSortIcon("amountRemaining")}
+                    aria-hidden="true"
+                  />
                 </th>
                 <th scope="col">
-                  <FontAwesomeIcon icon={faDollarSign} aria-hidden="true" /> Total
+                  <FontAwesomeIcon icon={faDollarSign} aria-hidden="true" />{" "}
+                  Total
                 </th>
                 <th scope="col">Actions</th>
               </tr>
@@ -169,14 +183,15 @@ export default function CustomersListTable({
               {paginatedCustomers.map((customer, index) => {
                 const hasMultipleProjects = customer.projects.length > 1;
                 const progress = getPaymentProgress(customer);
-                const customerId = customer.projects[0]?._id || `customer-${index}`;
-                
+                const customerId =
+                  customer.projects[0]?._id || `customer-${index}`;
+
                 return (
                   <tr key={customerId}>
                     <td>{customer.customerInfo.firstName || "N/A"}</td>
                     <td>{customer.customerInfo.lastName || "N/A"}</td>
                     <td>
-                      <a 
+                      <a
                         href={`tel:${customer.customerInfo.phone}`}
                         className={styles.phoneLink}
                         aria-label={`Call ${customer.customerInfo.firstName} ${customer.customerInfo.lastName}`}
@@ -194,7 +209,9 @@ export default function CustomersListTable({
                     <td>
                       <span
                         className={`${styles.status} ${
-                          styles[customer.status.toLowerCase().replace(/\s+/g, "")]
+                          styles[
+                            customer.status.toLowerCase().replace(/\s+/g, "")
+                          ]
                         }`}
                         data-tooltip={customer.status}
                       >
@@ -209,7 +226,7 @@ export default function CustomersListTable({
                       }
                     >
                       <div className={styles.progressContainer}>
-                        <div 
+                        <div
                           className={styles.progressBarContainer}
                           role="progressbar"
                           aria-valuenow={progress}
@@ -221,7 +238,10 @@ export default function CustomersListTable({
                             className={styles.progressBar}
                             style={{ width: `${progress}%` }}
                           />
-                          <span className={styles.progressText} aria-hidden="true">
+                          <span
+                            className={styles.progressText}
+                            aria-hidden="true"
+                          >
                             {progress}%
                           </span>
                         </div>
@@ -265,7 +285,10 @@ export default function CustomersListTable({
                         title="Add New Project"
                         aria-label={`Add new project for ${customer.customerInfo.firstName} ${customer.customerInfo.lastName}`}
                       >
-                        <FontAwesomeIcon icon={faPlusCircle} aria-hidden="true" />
+                        <FontAwesomeIcon
+                          icon={faPlusCircle}
+                          aria-hidden="true"
+                        />
                       </button>
                       <button
                         onClick={() => handleDelete(customer.projects[0]._id)}

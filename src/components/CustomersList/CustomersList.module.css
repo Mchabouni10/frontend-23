@@ -4,7 +4,7 @@
 .mainContent {
   background-color: var(--background);
   min-height: calc(100vh - 60px);
-  padding: var(--spacing-sm) 0 var(--spacing-lg);
+  padding: 2rem;
   display: flex;
   justify-content: center;
   align-items: flex-start;
@@ -13,10 +13,10 @@
 
 /* Container for the table and controls */
 .container {
-  max-width: 1400px;
+  max-width: 100%;
   width: 100%;
-  margin: 0 0.5rem;
-  padding: var(--spacing-sm);
+  margin: 0;
+  padding: 2rem;
   background: var(--surface);
   border-radius: var(--radius-md);
   box-shadow: 0 3px 10px var(--shadow);
@@ -546,57 +546,168 @@
   font-weight: var(--font-weight-medium);
 }
 
-/* Totals section */
-/* Totals section */
-.totalsSection {
+/* Compact Premium Totals Section */
+.premiumTotalsSection {
   margin-top: 2rem;
-  padding: 1.5rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
-  gap: 2rem;
-  flex-wrap: wrap;
 }
 
-.totalItem {
+.revenueCompositionCard {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  padding: 1.25rem 1.5rem;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  gap: 1rem;
+  min-width: 320px;
+}
+
+.revenueCompositionCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
+  border-color: rgba(52, 152, 219, 0.3);
+}
+
+.cardGlow {
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(52, 152, 219, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+
+
+.compositionItems {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.compositionItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.25rem 0;
+}
+
+.compositionItem:not(:last-child) {
+  border-bottom: 1px dashed rgba(226, 232, 240, 0.5);
+  padding-bottom: 0.75rem;
+}
+
+.itemLabel {
+  display: flex;
+  align-items: center;
   gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  min-width: 200px;
-  border: 1px solid #edf2f7;
-  transition: transform 0.2s ease;
-}
-
-.totalItem:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.totalLabel {
-  font-size: 0.875rem;
   color: #64748b;
+  font-size: 0.7rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  font-weight: 600;
 }
 
-.totalValue {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #2d3748;
-  line-height: 1.2;
+.labelIcon {
+  font-size: 0.75rem;
+  opacity: 0.7;
 }
 
-.totalValue.remaining {
-  color: #e53e3e;
+.itemValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  line-height: 1;
 }
+
+.stackedAddRevenue {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  color: #27ae60;
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.stackedAddRevenue svg {
+  font-size: 0.7rem;
+}
+
+
+
+/* Danger Item (Outstanding) */
+.dangerItem {
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.05) 0%, rgba(192, 57, 43, 0.08) 100%);
+  border-color: rgba(231, 76, 60, 0.2);
+}
+
+.dangerItem .labelIcon,
+.dangerItem .itemValue {
+  color: var(--error);
+}
+
+/* Tooltip */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: help;
+  color: #a0aec0;
+  font-size: 0.8rem;
+}
+
+.tooltipText {
+  visibility: hidden;
+  width: 180px;
+  background-color: var(--primary-dark);
+  color: #fff;
+  text-align: center;
+  border-radius: 8px;
+  padding: 8px;
+  position: absolute;
+  z-index: 10;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.7rem;
+  font-weight: normal;
+  text-transform: none;
+  letter-spacing: normal;
+  pointer-events: none;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.tooltipText::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: var(--primary-dark) transparent transparent transparent;
+}
+
+.tooltip:hover .tooltipText {
+  visibility: visible;
+  opacity: 1;
+}
+
+
 
 .lastUpdated {
   width: 100%;
@@ -757,7 +868,7 @@
 
 .mainContent {
   padding: 2rem;
-  max-width: 1400px;
+  max-width: 100%;
   margin: 0 auto;
 }
 

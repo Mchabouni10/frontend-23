@@ -540,6 +540,7 @@ function HomePageContent() {
                   customer={customer}
                   setCustomer={setCustomer}
                   disabled={isDetailsMode}
+                  isEditMode={isEditMode}
                 />
               </div>
             </section>

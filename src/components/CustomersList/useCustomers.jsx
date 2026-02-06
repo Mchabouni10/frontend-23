@@ -7,6 +7,10 @@ import {
   formatPhoneNumber,
   formatDate,
 } from "../Calculator/utils/customerhelper";
+import {
+  getProjectAdditionalRevenue,
+  isProjectFullyPaid,
+} from "../../constants/additionalRevenueCalculator";
 import { useWorkType } from "../../context/WorkTypeContext";
 
 // Constants
@@ -269,6 +273,17 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
   }, [searchQuery]);
 
   /**
+   * Helper to Calculate Additional Revenue (Markup + Transportation)
+   * Uses shared utility for consistency
+   */
+  const calculateProjectAdditionalRevenue = useCallback((project) => {
+    if (isProjectFullyPaid(project)) {
+      return getProjectAdditionalRevenue(project).total;
+    }
+    return 0;
+  }, []);
+
+  /**
    * Group projects by customer
    */
   const groupAndSetCustomers = useCallback(
@@ -286,6 +301,7 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
             projects: [],
             totalGrandTotal: 0,
             totalAmountRemaining: 0,
+            totalAdditionalRevenue: 0, // NEW field
             earliestStartDate: null,
             latestFinishDate: null,
           });
@@ -297,6 +313,10 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
         const { grandTotal, amountRemaining } = projectTotals(project);
         customer.totalGrandTotal += grandTotal;
         customer.totalAmountRemaining += amountRemaining;
+
+        // Calculate Additional Revenue
+        const addRev = calculateProjectAdditionalRevenue(project);
+        customer.totalAdditionalRevenue += addRev;
 
         const startDate = project.customerInfo?.startDate
           ? new Date(project.customerInfo.startDate)
@@ -323,7 +343,7 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
         status: determineStatus(customer.projects),
       }));
     },
-    [projectTotals, determineStatus],
+    [projectTotals, determineStatus, calculateProjectAdditionalRevenue],
   );
 
   /**
@@ -451,8 +471,10 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
         grandTotal: acc.grandTotal + (customer.totalGrandTotal || 0),
         amountRemaining:
           acc.amountRemaining + (customer.totalAmountRemaining || 0),
+        additionalRevenue:
+          acc.additionalRevenue + (customer.totalAdditionalRevenue || 0), // NEW total
       }),
-      { grandTotal: 0, amountRemaining: 0 },
+      { grandTotal: 0, amountRemaining: 0, additionalRevenue: 0 },
     );
   }, [filteredCustomers]);
 

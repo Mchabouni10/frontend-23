@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { getProjects } from "../../services/projectService";
 import { getAllExpenses } from "../../utilities/expenses-api";
+import { getProjectAdditionalRevenue } from "../../constants/additionalRevenueCalculator";
 import { Doughnut, Line, Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -225,6 +226,7 @@ export default function FinanceDashboard() {
     let totalOverhead = 0; // Company Expenses
 
     // Additional Revenue Components for Overhead Coverage (Markup and Transportation only)
+    // Using shared utility to ensure consistency across all pages
     let totalTransportation = 0;
     let totalMarkup = 0;
 
@@ -266,72 +268,102 @@ export default function FinanceDashboard() {
         }
       });
 
-      // Project Expenses
+      // Project Expenses - Calculate for all projects
       const projectDate = project.customerInfo?.startDate
         ? new Date(project.customerInfo.startDate)
         : new Date();
+
+      let pMat = 0,
+        pLab = 0;
+      (project.categories || []).forEach((cat) => {
+        (cat.workItems || []).forEach((item) => {
+          const units =
+            (item.surfaces || []).reduce(
+              (sum, surf) => sum + (parseFloat(surf.sqft) || 0),
+              0,
+            ) ||
+            parseFloat(item.linearFt) ||
+            parseFloat(item.units) ||
+            0;
+          const matCost = (parseFloat(item.materialCost) || 0) * units;
+          const labCost = (parseFloat(item.laborCost) || 0) * units;
+          pMat += matCost;
+          pLab += labCost;
+          const subtype = item.subtype || "Other";
+          materialTypes[subtype] = (materialTypes[subtype] || 0) + matCost;
+        });
+      });
+
+      // Calculate Labor Discount
+      const laborDiscountRate =
+        parseFloat(project.settings?.laborDiscount) || 0;
+      const laborDiscountAmount = pLab * laborDiscountRate;
+
+      // Base Subtotal (Material + Labor - Discount)
+      const baseSubtotal = pMat + pLab - laborDiscountAmount;
+
+      // Calculate Waste
+      let waste = 0;
+      if (
+        project.settings?.wasteEntries &&
+        project.settings.wasteEntries.length > 0
+      ) {
+        waste = project.settings.wasteEntries.reduce((sum, entry) => {
+          const cost = parseFloat(entry.surfaceCost) || 0;
+          const factor = parseFloat(entry.wasteFactor) || 0;
+          return sum + cost * factor;
+        }, 0);
+      } else {
+        waste = baseSubtotal * (project.settings?.wasteFactor || 0);
+      }
+
+      const tax = baseSubtotal * (project.settings?.taxRate || 0);
+
+      // Get project's markup and transportation using shared utility
+      const projectRevenue = getProjectAdditionalRevenue(project);
+      const projectMarkup = projectRevenue.markup;
+      const projectTransportation = projectRevenue.transportation;
+
+      const misc = (project.settings?.miscFees || []).reduce(
+        (sum, fee) => sum + (parseFloat(fee.amount) || 0),
+        0,
+      );
+
+      // Calculate total project value
+      const totalProjectValue =
+        baseSubtotal +
+        projectMarkup +
+        tax +
+        waste +
+        projectTransportation +
+        misc;
+
+      // Calculate lifetime collections
+      const lifetimeCollections =
+        payments.reduce(
+          (sum, p) => sum + (p.isPaid ? parseFloat(p.amount) || 0 : 0),
+          0,
+        ) + deposit;
+
+      // Calculate remaining balance and fully paid status
+      const remainingBalance = totalProjectValue - lifetimeCollections;
+      const isFullyPaid = remainingBalance <= 0.01;
+
+      // Track project expenses and attribute revenue if project started in filter period
       if (isDateInFilter(projectDate)) {
         const label = projectDate.toLocaleString("default", {
           month: "short",
           year: "numeric",
         });
 
-        let pMat = 0,
-          pLab = 0;
-        (project.categories || []).forEach((cat) => {
-          (cat.workItems || []).forEach((item) => {
-            const units =
-              (item.surfaces || []).reduce(
-                (sum, surf) => sum + (parseFloat(surf.sqft) || 0),
-                0,
-              ) ||
-              parseFloat(item.linearFt) ||
-              parseFloat(item.units) ||
-              0;
-            const matCost = (parseFloat(item.materialCost) || 0) * units;
-            const labCost = (parseFloat(item.laborCost) || 0) * units;
-            pMat += matCost;
-            pLab += labCost;
-            const subtype = item.subtype || "Other";
-            materialTypes[subtype] = (materialTypes[subtype] || 0) + matCost;
-          });
-        });
-
-        const baseSubtotal = pMat + pLab;
-
-        // Calculate Waste
-        let waste = 0;
-        if (
-          project.settings?.wasteEntries &&
-          project.settings.wasteEntries.length > 0
-        ) {
-          waste = project.settings.wasteEntries.reduce((sum, entry) => {
-            const cost = parseFloat(entry.surfaceCost) || 0;
-            const factor = parseFloat(entry.wasteFactor) || 0;
-            return sum + cost * factor;
-          }, 0);
-        } else {
-          waste = baseSubtotal * (project.settings?.wasteFactor || 0);
+        // *** Using Shared Utility: Only count Markup and Transportation if Fully Paid ***
+        if (isFullyPaid) {
+          totalMarkup += projectMarkup;
+          totalTransportation += projectTransportation;
         }
 
-        const tax = baseSubtotal * (project.settings?.taxRate || 0);
-
-        // Calculate Markup (Revenue from markup)
-        // If markup is manually set as a fixed amount in settings? actually structure usually implies percentage
-        // AdditionalCosts.jsx treats markup as percentage.
-        const markup = baseSubtotal * (project.settings?.markup || 0);
-
-        const trans = parseFloat(project.settings?.transportationFee) || 0;
-        const misc = (project.settings?.miscFees || []).reduce(
-          (sum, fee) => sum + (parseFloat(fee.amount) || 0),
-          0,
-        );
-
-        // Accumulate specific overhead-covering revenues (Markup and Transportation only)
-        totalTransportation += trans;
-        totalMarkup += markup;
-
-        const projectCost = pMat + pLab + tax + waste + trans + misc;
+        const projectCost =
+          pMat + pLab + tax + waste + projectTransportation + misc;
 
         if (projectExpensesByMonth[label] !== undefined)
           projectExpensesByMonth[label] += projectCost;
@@ -341,30 +373,30 @@ export default function FinanceDashboard() {
         expenseCategories.Material += pMat;
         expenseCategories.Labor += pLab;
         expenseCategories.Tax += tax;
-        expenseCategories.Fees += trans + misc;
-
-        const lifetimeCollections =
-          payments.reduce(
-            (sum, p) => sum + (p.isPaid ? parseFloat(p.amount) || 0 : 0),
-            0,
-          ) + deposit;
-        const profit = lifetimeCollections - projectCost;
-
-        profitByProject.push({
-          name: project.customerInfo?.projectName || `Project ${project._id}`,
-          profit,
-          details: {
-            customer: `${project.customerInfo?.firstName || ""} ${
-              project.customerInfo?.lastName || ""
-            }`.trim(),
-            collections: lifetimeCollections,
-            expenses: projectCost,
-            categories: project.categories || [],
-            payments: payments,
-            deposit,
-          },
-        });
+        expenseCategories.Fees += projectTransportation + misc;
       }
+
+      const projectCost =
+        pMat + pLab + tax + waste + projectTransportation + misc;
+      const projectProfit = lifetimeCollections - projectCost;
+
+      profitByProject.push({
+        name: project.customerInfo?.projectName || `Project ${project._id}`,
+        profit: projectProfit,
+        details: {
+          customer: `${project.customerInfo?.firstName || ""} ${
+            project.customerInfo?.lastName || ""
+          }`.trim(),
+          collections: lifetimeCollections,
+          expenses: projectCost,
+          categories: project.categories || [],
+          payments: payments,
+          deposit,
+          isFullyPaid,
+          remainingBalance,
+          laborDiscountAmount,
+        },
+      });
     });
 
     // Process Company Expenses (Overhead)

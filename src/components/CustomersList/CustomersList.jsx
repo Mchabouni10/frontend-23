@@ -13,6 +13,10 @@ import {
   faCheckCircle,
   faSpinner,
   faPlus,
+  faWallet,
+  faArrowTrendUp,
+  faCoins,
+  faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { useCustomers } from "./useCustomers";
 import CustomersListTable from "./CustomersListTable";
@@ -352,39 +356,79 @@ export default function CustomersList() {
           </nav>
         )}
 
-        {/* Totals */}
+        {/* Compact Premium Totals Section */}
         {!isLoading && (
-          <div className={styles.totalsSection}>
-            <div className={styles.totalItem}>
-              <span className={styles.totalLabel}>
-                Grand Total
-                {dateFilter.type !== "all" && (
-                  <span
-                    style={{
-                      fontSize: "0.8em",
-                      fontWeight: "normal",
-                      marginLeft: "0.5rem",
-                    }}
-                  >
-                    (
-                    {dateFilter.type === "year"
-                      ? dateFilter.year
-                      : "Selected Period"}
-                    )
-                  </span>
-                )}
-              </span>
-              <span className={styles.totalValue}>
-                ${totals.grandTotal.toFixed(2)}
-              </span>
+          <section className={styles.premiumTotalsSection}>
+            <div className={styles.revenueCompositionCard}>
+              <div className={styles.cardGlow}></div>
+
+              <div className={styles.compositionItems}>
+                {/* Grand Total & Add. Revenue Stack */}
+                <div className={styles.compositionItem}>
+                  <div className={styles.itemLabel}>
+                    <FontAwesomeIcon
+                      icon={faCoins}
+                      className={styles.labelIcon}
+                    />
+                    <span>Grand Total</span>
+                    <div className={styles.tooltip}>
+                      <FontAwesomeIcon icon={faInfoCircle} />
+                      <span className={styles.tooltipText}>
+                        Total project values including materials, labor, and all
+                        fees
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.itemValue}>
+                    $
+                    {totals.grandTotal.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </div>
+                  {totals.additionalRevenue > 0 && (
+                    <div className={styles.stackedAddRevenue}>
+                      <FontAwesomeIcon icon={faArrowTrendUp} />
+                      <span>
+                        Inc. $
+                        {totals.additionalRevenue.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}{" "}
+                        Earned Add. Revenue
+                      </span>
+                      <div className={styles.tooltip}>
+                        <FontAwesomeIcon icon={faInfoCircle} />
+                        <span className={styles.tooltipText}>
+                          Markup & Transportation from fully paid projects
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Outstanding Item */}
+                <div
+                  className={`${styles.compositionItem} ${styles.dangerItem}`}
+                >
+                  <div className={styles.itemLabel}>
+                    <FontAwesomeIcon
+                      icon={faWallet}
+                      className={styles.labelIcon}
+                    />
+                    <span>Outstanding</span>
+                  </div>
+                  <div className={styles.itemValue}>
+                    $
+                    {totals.amountRemaining.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className={styles.totalItem}>
-              <span className={styles.totalLabel}>Outstanding</span>
-              <span className={`${styles.totalValue} ${styles.remaining}`}>
-                ${totals.amountRemaining.toFixed(2)}
-              </span>
-            </div>
-          </div>
+          </section>
         )}
       </div>
     </main>
