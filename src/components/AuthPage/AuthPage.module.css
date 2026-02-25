@@ -1,160 +1,347 @@
-/* src/components/AuthPage/AuthPage.module.css */
+/* AuthPage.module.css — Elevated Auth Shell */
+
+/* ============================================================
+   PAGE WRAPPER — full-viewport with atmospheric background
+   ============================================================ */
 .AuthPage {
   min-height: 100vh;
-  background: var(--background); /* Uses --background from global.css */
+  background-color: var(--background);
   display: flex;
   justify-content: center;
   align-items: center;
   padding: var(--spacing-xl);
   position: relative;
   overflow: hidden;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.4s ease;
 }
 
+/* Subtle grid texture overlay */
+.AuthPage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(44, 62, 80, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(44, 62, 80, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ambient glow orbs */
+.AuthPage::after {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(52, 152, 219, 0.08) 0%, transparent 70%);
+  top: -200px;
+  right: -200px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+:global(.dark) .AuthPage::before {
+  background-image:
+    linear-gradient(rgba(91, 141, 238, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(91, 141, 238, 0.04) 1px, transparent 1px);
+}
+
+:global(.dark) .AuthPage::after {
+  background: radial-gradient(circle, rgba(91, 141, 238, 0.12) 0%, transparent 70%);
+}
+
+/* Second orb — bottom left */
+.ambientOrb {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(44, 62, 80, 0.06) 0%, transparent 70%);
+  bottom: -150px;
+  left: -150px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+:global(.dark) .ambientOrb {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.08) 0%, transparent 70%);
+}
+
+/* ============================================================
+   CARD CONTAINER
+   ============================================================ */
 .container {
   position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 480px;
+  max-width: 460px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-xl);
-  background: var(--surface); /* Uses --surface from global.css */
+  gap: var(--spacing-lg);
+  background: var(--surface);
   border-radius: var(--radius-lg);
   padding: var(--spacing-xl);
-  box-shadow: 0 6px 24px var(--shadow); /* Uses --shadow from global.css */
-  border: 1px solid rgba(226, 232, 240, 0.2); /* Subtle border with variable opacity */
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow:
+    0 4px 6px var(--shadow),
+    0 20px 60px var(--shadow-md);
+  border: 1px solid var(--border-strong);
+  transition: background-color 0.4s ease, box-shadow 0.4s ease;
+  animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Top accent bar */
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+  background-size: 200% 100%;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  animation: shimmer 4s linear infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+:global(.dark) .container {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  box-shadow:
+    0 4px 6px var(--shadow),
+    0 20px 60px var(--shadow-lg),
+    0 0 0 1px var(--border);
+}
+
+/* ============================================================
+   HEADER — Logo + Branding
+   ============================================================ */
 .header {
   text-align: center;
-  animation: fadeIn 1s ease-in;
+  animation: fadeSlideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+  width: 100%;
+}
+
+.logoMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+  box-shadow: 0 4px 16px var(--shadow-md);
+}
+
+:global(.dark) .logoMark {
+  box-shadow: 0 4px 16px var(--glow-primary);
+}
+
+.logoMark i {
+  font-size: 1.5rem;
+  color: #ffffff;
 }
 
 .title {
-  color: var(--text); /* Uses --text for light/dark mode */
-  font-size: 2.2rem;
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 1px;
+  color: var(--text);
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+
+:global(.dark) .title {
+  color: var(--text);
 }
 
 .subtitle {
-  color: var(--text-light); /* Uses --text-light for light/dark mode */
-  font-size: 1.1rem;
-  opacity: 0.8;
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  opacity: 0.85;
+  line-height: 1.5;
 }
 
+/* ============================================================
+   MODE TOGGLE — Login / Sign Up switcher
+   ============================================================ */
 .toggleContainer {
   display: flex;
-  background: rgba(44, 62, 80, 0.1); /* Light mode default */
-  border-radius: 50px;
-  padding: 0.4rem;
-  transition: background-color 0.3s ease;
+  width: 100%;
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  border: 1px solid var(--border-strong);
+  animation: fadeSlideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+  gap: 4px;
 }
 
 :global(.dark) .toggleContainer {
-  background: rgba(148, 163, 184, 0.2); /* Adjusted for dark mode with --text-light */
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
 }
 
 .toggleButton {
   flex: 1;
-  padding: 0.8rem 1.5rem;
+  padding: 0.6rem 1rem;
   border: none;
   background: transparent;
-  color: var(--text); /* Uses --text for light/dark mode */
-  font-size: 1rem;
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 4px;
   position: relative;
   overflow: hidden;
 }
 
-.toggleButton span {
-  position: relative;
-  z-index: 1;
-}
-
-.toggleButton::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(44, 62, 80, 0.2), transparent);
-  transition: all 0.5s ease;
-}
-
-:global(.dark) .toggleButton::after {
-  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent); /* Dark mode shine */
-}
-
-.toggleButton:hover::after {
-  left: 100%;
+.toggleButton:hover:not(.active) {
+  color: var(--text);
+  background: var(--border);
 }
 
 .toggleButton.active {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); /* Uses --primary and --primary-dark */
-  border-radius: 25px;
-  color: var(--surface); /* White text in active state */
-  box-shadow: 0 0 15px var(--shadow);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px var(--shadow-md);
 }
 
+:global(.dark) .toggleButton.active {
+  box-shadow: 0 2px 12px var(--glow-primary);
+}
+
+:global(.dark) .toggleButton {
+  color: var(--text-light);
+}
+
+:global(.dark) .toggleButton:hover:not(.active) {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ============================================================
+   FORM WRAPPER
+   ============================================================ */
 .formWrapper {
   width: 100%;
-  transition: all 0.3s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  animation: fadeSlideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
 }
 
 .formWrapper.animate {
-  transform: scale(0.95);
+  transform: scale(0.97) translateY(4px);
   opacity: 0;
 }
 
+/* ============================================================
+   FOOTER
+   ============================================================ */
 .footer {
-  color: var(--text-light); /* Uses --text-light for light/dark mode */
-  font-size: 0.9rem;
-  opacity: 0.7;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--spacing-sm); /* 0.5rem */
+  gap: var(--spacing-sm);
+  animation: fadeSlideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+  width: 100%;
 }
 
+/* ============================================================
+   DARK MODE TOGGLE BUTTON
+   ============================================================ */
 .darkModeToggle {
-  padding: var(--spacing-sm); /* 0.5rem */
-  background: transparent;
-  border: 1px solid rgba(226, 232, 240, 0.3); /* Subtle border */
-  border-radius: var(--radius-sm); /* 6px */
-  color: var(--text); /* Matches text color */
-  font-size: 1.2rem;
+  padding: 0;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-light);
+  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  width: 40px;
-  height: 40px;
+  transition: all 0.25s ease;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-:global(.dark) .darkModeToggle {
-  border: 1px solid rgba(148, 163, 184, 0.3); /* Dark mode border */
-}
-
 .darkModeToggle:hover {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); /* Matches toggleButton active state */
-  color: var(--surface); /* White on hover */
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: #ffffff;
   border-color: transparent;
-  box-shadow: 0 2px 8px var(--shadow);
-  transform: translateY(-2px);
+  box-shadow: 0 2px 8px var(--shadow-md);
+  transform: translateY(-1px) rotate(12deg);
 }
 
-/* Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
+:global(.dark) .darkModeToggle {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--text-light);
+}
+
+:global(.dark) .darkModeToggle:hover {
+  box-shadow: 0 2px 12px var(--glow-primary);
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 520px) {
+  .AuthPage {
+    padding: var(--spacing-md);
+    align-items: flex-start;
+    padding-top: var(--spacing-xl);
+  }
+
+  .container {
+    padding: var(--spacing-lg);
+    gap: var(--spacing-md);
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .toggleButton {
+    padding: 0.5rem 0.75rem;
+    font-size: var(--font-size-xs);
+  }
 }

@@ -1,174 +1,58 @@
-/* SquareFootageInput.module.css - Enhanced with global style alignment and modern effects */
-
+/* SquareFootageInput.module.css - Optimized compact layout with dark mode consistency */
 .squareFootageInput {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
-  margin-bottom: var(--spacing-xs);
+  gap: var(--spacing-sm);
   padding: var(--spacing-md);
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(255, 255, 255, 0.95) 100%);
-  border: 2px solid rgba(var(--primary), 0.15);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px var(--shadow);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px var(--shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
-  overflow: hidden;
-}
-
-.squareFootageInput::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
-  background-size: 200% 100%;
-  animation: shimmer 3s linear infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
 }
 
 .squareFootageInput:hover {
-  border-color: rgba(var(--primary), 0.3);
-  box-shadow: 0 12px 40px var(--shadow);
-  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px var(--shadow-md);
 }
 
-.dimensions {
+/* Header row with subtype and toggle */
+.headerRow {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  width: 100%;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
 }
 
-.field {
+.subtypeField {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  min-width: 150px;
-}
-
-.label {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--text);
-  display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  letter-spacing: 0.5px;
+  min-width: 0;
+}
+
+.inlineLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  white-space: nowrap;
+  min-width: fit-content;
 }
 
 .required {
   color: var(--error);
-  font-size: var(--font-size-sm);
+  margin-left: 2px;
   font-weight: var(--font-weight-extrabold);
 }
 
-.inputWrapper {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  position: relative;
-  background: var(--surface);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(209, 213, 219, 0.3);
-  padding: var(--spacing-sm);
-  backdrop-filter: blur(5px);
-}
-
-.inputWrapper input {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) calc(var(--spacing-md) + 1.75rem);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  color: var(--text);
-  background: transparent;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.inputWrapper input:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
-}
-
-.inputWrapper input:disabled,
-.inputWrapper input[readOnly] {
-  background: transparent;
-  color: var(--text-light);
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.inputWrapper.errorInput {
-  border-color: var(--error);
-}
-
-.inputWrapper.errorInput input {
-  box-shadow: 0 0 0 3px rgba(var(--error), 0.2);
-}
-
-.inputError {
-  border-color: var(--error) !important;
-  box-shadow: 0 0 0 3px rgba(var(--error), 0.2) !important;
-}
-
-.unit {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-light);
-  padding: 0 var(--spacing-md);
-}
-
-.multiply {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-light);
-  padding: 0 var(--spacing-md);
-  user-select: none;
-}
-
-.inputWrapper .inputIcon {
-  position: absolute;
-  left: var(--spacing-md);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-light);
-  font-size: var(--font-size-base);
-}
-
-.errorMessage {
-  color: var(--error);
-  font-size: var(--font-size-base);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  background: rgba(var(--error), 0.15);
-  border-radius: var(--radius-md);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-.toggleContainer {
-  display: flex;
-  justify-content: flex-start;
-  margin: var(--spacing-md) 0;
-  background: rgba(var(--primary), 0.05);
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-md);
-}
-
+/* Compact toggle switch */
 .toggleSwitch {
-  position: relative;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  user-select: none;
 }
 
 .toggleInput {
@@ -181,22 +65,19 @@
 .toggleLabel {
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
   cursor: pointer;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--text);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
 .toggleSlider {
   position: relative;
-  width: 56px;
-  height: 28px;
-  background: rgba(203, 213, 224, 0.5);
-  border-radius: 28px;
+  width: 42px;
+  height: 22px;
+  background: var(--muted-bg);
+  border: 1px solid var(--border);
+  border-radius: 22px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(5px);
 }
 
 .toggleSlider::before {
@@ -204,20 +85,22 @@
   position: absolute;
   top: 2px;
   left: 2px;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   background: var(--surface);
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px var(--shadow);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .toggleInput:checked + .toggleLabel .toggleSlider {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .toggleInput:checked + .toggleLabel .toggleSlider::before {
-  transform: translateX(28px);
+  transform: translateX(20px);
+  background: #ffffff;
 }
 
 .toggleInput:disabled + .toggleLabel {
@@ -225,13 +108,11 @@
   cursor: not-allowed;
 }
 
-.toggleInput:disabled + .toggleLabel .toggleSlider {
-  background: rgba(226, 232, 240, 0.3);
-}
-
 .toggleText {
-  font-weight: var(--font-weight-bold);
-  transition: color 0.3s ease;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+  white-space: nowrap;
 }
 
 .toggleInput:checked + .toggleLabel .toggleText {
@@ -239,124 +120,327 @@
 }
 
 .toggleInput:focus + .toggleLabel .toggleSlider {
-  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
+  box-shadow: 0 0 0 3px var(--glow-primary);
 }
 
-.toggleInput:focus:not(:focus-visible) + .toggleLabel .toggleSlider {
-  box-shadow: none;
-}
-
+/* Select dropdown */
 .select {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid rgba(209, 213, 219, 0.3);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
+  flex: 1;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
   color: var(--text);
-  background: var(--surface);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  font-family: var(--font-family);
+  background: var(--surface-raised);
+  transition: all 0.3s ease;
   appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right var(--spacing-md) center;
+  background-position: right var(--spacing-xs) center;
   background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
-  padding-right: calc(var(--spacing-md) + 1.5em);
-  backdrop-filter: blur(5px);
+  background-size: 1.2em 1.2em;
+  padding-right: calc(var(--spacing-sm) + 1.2em);
+  min-width: 0;
+  font-family: var(--font-family);
+}
+
+.select option {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.select::placeholder {
+  color: var(--text-muted);
 }
 
 .select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(var(--primary), 0.2);
+  box-shadow: 0 0 0 2px var(--glow-primary);
 }
 
 .select:disabled {
-  background: rgba(233, 236, 239, 0.1);
-  color: var(--text-light);
-  opacity: 0.7;
+  background: var(--muted-bg);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
-  20%, 40%, 60%, 80% { transform: translateX(8px); }
+/* Input rows - horizontal layout */
+.inputRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+.inputRow .inlineLabel {
+  padding-top: var(--spacing-xs);
+  min-width: 60px;
+}
+
+.inputGroup {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.dimensionsRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.dimensionsRow .inputRow {
+  flex: 1;
+  min-width: 0;
+}
+
+.multiply {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-light);
+  padding-top: var(--spacing-xs);
+  user-select: none;
+  flex-shrink: 0;
+}
+
+/* Input wrapper */
+.inputWrapper {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  position: relative;
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  padding: var(--spacing-xs);
+  transition: all 0.3s ease;
+}
+
+.inputWrapper input {
+  width: 100%;
+  padding: var(--spacing-xs) var(--spacing-sm) var(--spacing-xs) calc(var(--spacing-sm) + 1.5rem);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  background: transparent;
+  min-width: 0;
+  font-family: var(--font-family);
+}
+
+.inputWrapper input::placeholder {
+  color: var(--text-muted);
+}
+
+.inputWrapper input:focus {
+  outline: none;
+}
+
+.inputWrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--glow-primary);
+}
+
+.inputWrapper input:disabled,
+.inputWrapper input[readOnly] {
+  color: var(--text-muted);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.inputWrapper.errorInput {
+  border-color: var(--error);
+}
+
+.inputWrapper.errorInput:focus-within {
+  box-shadow: 0 0 0 2px var(--glow-error);
+}
+
+.unit {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-light);
+  padding-right: var(--spacing-xs);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.inputWrapper .inputIcon {
+  position: absolute;
+  left: var(--spacing-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  pointer-events: none;
+}
+
+/* Error message */
+.errorMessage {
+  color: var(--error);
+  font-size: var(--font-size-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-sm);
+}
+
+.errorMessage i {
+  flex-shrink: 0;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .squareFootageInput {
-    padding: var(--spacing-md);
-  }
-
-  .dimensions {
+  .headerRow {
     flex-direction: column;
     align-items: stretch;
     gap: var(--spacing-sm);
   }
-
-  .field {
-    min-width: 100%;
+  .subtypeField {
+    flex-direction: column;
+    align-items: stretch;
   }
-
-  .toggleContainer {
-    justify-content: center;
+  .toggleSwitch {
+    justify-content: flex-start;
+  }
+  .dimensionsRow {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+  .multiply {
+    display: none;
   }
 }
 
 @media (max-width: 480px) {
   .squareFootageInput {
-    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
   }
-
-  .label,
-  .select {
-    font-size: var(--font-size-sm);
+  .inputRow {
+    flex-direction: column;
+    gap: var(--spacing-xs);
   }
-
-  .toggleSlider {
-    width: 48px;
-    height: 24px;
-  }
-
-  .toggleSlider::before {
-    width: 20px;
-    height: 20px;
-  }
-
-  .toggleInput:checked + .toggleLabel .toggleSlider::before {
-    transform: translateX(24px);
+  .inputRow .inlineLabel {
+    min-width: auto;
+    padding-top: 0;
   }
 }
 
-/* Dark Mode */
-.dark .squareFootageInput {
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(0, 0, 0, 0.3) 100%);
-  border-color: rgba(var(--primary), 0.2);
-}
-
-.dark .inputWrapper,
-.dark .select {
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+:global(.dark) .squareFootageInput {
   background: var(--surface);
-  border-color: rgba(209, 213, 219, 0.2);
+  border-color: var(--border-strong);
 }
 
-.dark .inputWrapper input {
+:global(.dark) .squareFootageInput:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px var(--shadow-md);
+}
+
+:global(.dark) .headerRow {
+  border-bottom-color: var(--border-strong);
+}
+
+:global(.dark) .inlineLabel,
+:global(.dark) .toggleText {
   color: var(--text);
 }
 
-.dark .toggleSlider {
-  background: rgba(74, 85, 104, 0.5);
+:global(.dark) .multiply {
+  color: var(--text-light);
 }
 
-.dark .toggleInput:checked + .toggleLabel .toggleSlider {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+:global(.dark) .inputWrapper {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+
+:global(.dark) .inputWrapper input {
+  color: var(--text);
+  background: transparent;
+}
+
+:global(.dark) .inputWrapper input::placeholder {
+  color: var(--text-muted);
+}
+
+:global(.dark) .inputWrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--glow-primary);
+}
+
+:global(.dark) .inputWrapper input:disabled,
+:global(.dark) .inputWrapper input[readOnly] {
+  color: var(--text-muted);
+}
+
+:global(.dark) .inputWrapper.errorInput {
+  border-color: var(--error);
+}
+
+:global(.dark) .inputWrapper.errorInput:focus-within {
+  box-shadow: 0 0 0 2px var(--glow-error);
+}
+
+:global(.dark) .select {
+  background-color: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--text);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238892a4' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+:global(.dark) .select option {
+  background-color: var(--surface-raised);
+  color: var(--text);
+}
+
+:global(.dark) .select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--glow-primary);
+}
+
+:global(.dark) .select:disabled {
+  background-color: var(--muted-bg);
+  color: var(--text-muted);
+}
+
+:global(.dark) .toggleSlider {
+  background: var(--muted-bg);
+  border-color: var(--border-strong);
+}
+
+:global(.dark) .toggleSlider::before {
+  background: var(--text-light);
+}
+
+:global(.dark) .toggleInput:checked + .toggleLabel .toggleSlider {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+:global(.dark) .toggleInput:checked + .toggleLabel .toggleSlider::before {
+  background: #ffffff;
+}
+
+:global(.dark) .toggleInput:checked + .toggleLabel .toggleText {
+  color: var(--primary);
+}
+
+:global(.dark) .unit,
+:global(.dark) .inputWrapper .inputIcon {
+  color: var(--text-light);
+}
+
+:global(.dark) .errorMessage {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
 }
 
 /* High Contrast */
@@ -364,32 +448,21 @@
   .squareFootageInput,
   .inputWrapper,
   .select {
-    border-color: #000000;
+    border-color: currentColor;
   }
-
-  .inputWrapper.errorInput {
-    border-color: #000000;
-  }
-
   .toggleSlider {
-    border: 2px solid #000000;
-  }
-
-  .toggleSlider::before {
-    border: 1px solid #000000;
+    border: 2px solid currentColor;
   }
 }
 
 /* Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   .squareFootageInput,
-  .inputWrapper input,
+  .inputWrapper,
   .select,
   .toggleSlider,
-  .toggleSlider::before,
-  .errorMessage {
+  .toggleSlider::before {
     transition: none;
-    animation: none;
   }
 }
 
@@ -399,8 +472,7 @@
     box-shadow: none;
     border: 1px solid #000;
   }
-
-  .toggleContainer {
+  .toggleSwitch {
     display: none;
   }
 }

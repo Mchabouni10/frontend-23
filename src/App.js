@@ -1,5 +1,4 @@
 // src/App.js
-import './App.css';
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -7,6 +6,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getUser } from './utilities/users-service';
 import { ErrorProvider } from './context/ErrorContext';
+import { WorkTypeProvider } from './context/WorkTypeContext';
 import ErrorBoundaryWrapper from './components/ErrorBoundary';
 import Navbar from './components/Navbar/Navbar';
 import AuthPage from './components/AuthPage/AuthPage';
@@ -43,115 +43,118 @@ export default function App() {
 
   return (
     <ErrorProvider>
-      <div className="App">
-        <ToastContainer
-          position="top-right"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-        />
-        <div className="backgroundEffects"></div>
+      {/* WorkTypeProvider is now at the root so ALL routes have access to it */}
+      <WorkTypeProvider>
+        <div className="App">
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+          <div className="backgroundEffects"></div>
 
-        {/* Top-level error boundary for critical app structure */}
-        <ErrorBoundaryWrapper boundaryName="AppRoot">
-          {user ? (
-            <>
-              <Navbar
-                user={user}
-                setUser={setUser}
-                toggleDarkMode={toggleDarkMode}
-                isDarkMode={isDarkMode}
-              />
-              <main className="mainContent">
-                {/* Separate boundary for main content */}
-                <ErrorBoundaryWrapper boundaryName="MainContent">
-                  <Routes>
-                    {/* HomePage gets its own boundary since it's complex */}
-                    <Route path="/home/customer" element={
-                      <ErrorBoundaryWrapper boundaryName="HomePage">
-                        <HomePage />
-                      </ErrorBoundaryWrapper>
-                    } />
-                    <Route path="/home/customer/:id" element={
-                      <ErrorBoundaryWrapper boundaryName="HomePageDetail">
-                        <HomePage />
-                      </ErrorBoundaryWrapper>
-                    } />
-                    <Route path="/home/edit/:id" element={
-                      <ErrorBoundaryWrapper boundaryName="HomePageEdit">
-                        <HomePage />
-                      </ErrorBoundaryWrapper>
-                    } />
-
-                    {/* Sketch Designer Route - UPDATED */}
-                    <Route path="/home/sketch" element={
-                      <ErrorBoundaryWrapper boundaryName="FloorPlanDesigner">
-                        <FloorPlanDesigner />
-                      </ErrorBoundaryWrapper>
-                    } />
-
-                    {/* Print/Estimate route */}
-                    <Route path="/home/print/:id" element={
-                      <ErrorBoundaryWrapper boundaryName="EstimateSummary">
-                        <EstimateSummaryPage />
-                      </ErrorBoundaryWrapper>
-                    } />
-
-                    {/* Other routes with appropriate boundaries */}
-                    <Route path="/home/customers" element={
-                      <ErrorBoundaryWrapper boundaryName="CustomersList">
-                        <CustomersList />
-                      </ErrorBoundaryWrapper>
-                    } />
-                    <Route path="/home/customer-projects" element={
-                      <ErrorBoundaryWrapper boundaryName="CustomerProjects">
-                        <CustomerProjects />
-                      </ErrorBoundaryWrapper>
-                    } />
-                    <Route path="/home/new-customer-project" element={
-                      <ErrorBoundaryWrapper boundaryName="NewProject">
-                        <HomePage />
-                      </ErrorBoundaryWrapper>
-                    } />
-                    <Route path="/home/finance" element={
-                      <ErrorBoundaryWrapper boundaryName="FinanceDashboard">
-                        <FinanceDashboard />
-                      </ErrorBoundaryWrapper>
-                    } />
-                    <Route path="/home/company-expenses" element={
-                      <ErrorBoundaryWrapper boundaryName="CompanyExpenses">
-                        <CompanyExpenses />
-                      </ErrorBoundaryWrapper>
-                    } />
-                    <Route path="/logout" element={
-                      <ErrorBoundaryWrapper boundaryName="Logout">
-                        <UserLogOut user={user} setUser={setUser} />
-                      </ErrorBoundaryWrapper>
-                    } />
-                    <Route path="/" element={<Navigate to="/home/customers" />} />
-                  </Routes>
-                </ErrorBoundaryWrapper>
-              </main>
-            </>
-          ) : (
-            <>
-              {/* Auth page gets its own boundary */}
-              <ErrorBoundaryWrapper boundaryName="AuthPage">
-                <AuthPage
+          {/* Top-level error boundary for critical app structure */}
+          <ErrorBoundaryWrapper boundaryName="AppRoot">
+            {user ? (
+              <>
+                <Navbar
+                  user={user}
                   setUser={setUser}
                   toggleDarkMode={toggleDarkMode}
                   isDarkMode={isDarkMode}
                 />
-              </ErrorBoundaryWrapper>
-            </>
-          )}
-        </ErrorBoundaryWrapper>
-      </div>
+                <main className="mainContent">
+                  {/* Separate boundary for main content */}
+                  <ErrorBoundaryWrapper boundaryName="MainContent">
+                    <Routes>
+                      {/* HomePage gets its own boundary since it's complex */}
+                      <Route path="/home/customer" element={
+                        <ErrorBoundaryWrapper boundaryName="HomePage">
+                          <HomePage />
+                        </ErrorBoundaryWrapper>
+                      } />
+                      <Route path="/home/customer/:id" element={
+                        <ErrorBoundaryWrapper boundaryName="HomePageDetail">
+                          <HomePage />
+                        </ErrorBoundaryWrapper>
+                      } />
+                      <Route path="/home/edit/:id" element={
+                        <ErrorBoundaryWrapper boundaryName="HomePageEdit">
+                          <HomePage />
+                        </ErrorBoundaryWrapper>
+                      } />
+
+                      {/* Sketch Designer Route */}
+                      <Route path="/home/sketch" element={
+                        <ErrorBoundaryWrapper boundaryName="FloorPlanDesigner">
+                          <FloorPlanDesigner />
+                        </ErrorBoundaryWrapper>
+                      } />
+
+                      {/* Print/Estimate route */}
+                      <Route path="/home/print/:id" element={
+                        <ErrorBoundaryWrapper boundaryName="EstimateSummary">
+                          <EstimateSummaryPage />
+                        </ErrorBoundaryWrapper>
+                      } />
+
+                      {/* Other routes with appropriate boundaries */}
+                      <Route path="/home/customers" element={
+                        <ErrorBoundaryWrapper boundaryName="CustomersList">
+                          <CustomersList />
+                        </ErrorBoundaryWrapper>
+                      } />
+                      <Route path="/home/customer-projects" element={
+                        <ErrorBoundaryWrapper boundaryName="CustomerProjects">
+                          <CustomerProjects />
+                        </ErrorBoundaryWrapper>
+                      } />
+                      <Route path="/home/new-customer-project" element={
+                        <ErrorBoundaryWrapper boundaryName="NewProject">
+                          <HomePage />
+                        </ErrorBoundaryWrapper>
+                      } />
+                      <Route path="/home/finance" element={
+                        <ErrorBoundaryWrapper boundaryName="FinanceDashboard">
+                          <FinanceDashboard />
+                        </ErrorBoundaryWrapper>
+                      } />
+                      <Route path="/home/company-expenses" element={
+                        <ErrorBoundaryWrapper boundaryName="CompanyExpenses">
+                          <CompanyExpenses />
+                        </ErrorBoundaryWrapper>
+                      } />
+                      <Route path="/logout" element={
+                        <ErrorBoundaryWrapper boundaryName="Logout">
+                          <UserLogOut user={user} setUser={setUser} />
+                        </ErrorBoundaryWrapper>
+                      } />
+                      <Route path="/" element={<Navigate to="/home/customers" />} />
+                    </Routes>
+                  </ErrorBoundaryWrapper>
+                </main>
+              </>
+            ) : (
+              <>
+                {/* Auth page gets its own boundary */}
+                <ErrorBoundaryWrapper boundaryName="AuthPage">
+                  <AuthPage
+                    setUser={setUser}
+                    toggleDarkMode={toggleDarkMode}
+                    isDarkMode={isDarkMode}
+                  />
+                </ErrorBoundaryWrapper>
+              </>
+            )}
+          </ErrorBoundaryWrapper>
+        </div>
+      </WorkTypeProvider>
     </ErrorProvider>
   );
 }

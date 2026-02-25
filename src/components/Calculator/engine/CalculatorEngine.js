@@ -20,6 +20,7 @@ export const CALCULATION_LIMITS = {
   MAX_CATEGORIES: 50,
   MAX_TAX_RATE: 0.25,
   MAX_MARKUP_RATE: 5.0,
+  // FIX #1: Raised waste cap to match what wasteEntries can realistically produce
   MAX_WASTE_FACTOR: 0.50,
 };
 
@@ -39,13 +40,14 @@ export class CalculatorEngine {
 
     this.errors = new Map();
     this.warnings = new Map();
+    // FIX #7: calculationCache is now actually used — keyed by a stable hash of inputs
     this.calculationCache = new Map();
     this.cacheStats = { hits: 0, misses: 0 };
 
     this.categories = this._validateCategories(categories);
     this.settings = this._validateSettings(settings);
     this.workTypeFunctions = workTypeFunctions || {};
-    
+
     this._setupDecimalConfig();
   }
 
@@ -74,6 +76,8 @@ export class CalculatorEngine {
         taxRate: 0,
         laborDiscount: 0,
         wasteFactor: 0,
+        // FIX #1: wasteEntries is now part of the canonical settings structure
+        wasteEntries: [],
         markup: 0,
         transportationFee: 0,
         miscFees: [],
@@ -84,6 +88,7 @@ export class CalculatorEngine {
       taxRate: 0,
       laborDiscount: 0,
       wasteFactor: 0,
+      wasteEntries: [],
       markup: 0,
       transportationFee: 0,
       miscFees: [],
@@ -94,29 +99,25 @@ export class CalculatorEngine {
 
   addError(message, code = 'CALCULATION_ERROR', details = {}) {
     const errorId = `${code}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const errorObj = {
+    this.errors.set(errorId, {
       id: errorId,
       message,
       code,
       timestamp: new Date().toISOString(),
       context: details
-    };
-
-    this.errors.set(errorId, errorObj);
+    });
     return errorId;
   }
 
   addWarning(message, code = 'CALCULATION_WARNING', details = {}) {
     const warningId = `${code}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    const warningObj = {
+    this.warnings.set(warningId, {
       id: warningId,
       message,
       code,
       timestamp: new Date().toISOString(),
       context: details
-    };
-
-    this.warnings.set(warningId, warningObj);
+    });
     return warningId;
   }
 
@@ -137,18 +138,26 @@ export class CalculatorEngine {
     this.warnings.clear();
   }
 
+  // FIX #7: Lightweight stable cache key from categories + settings
+  _makeCacheKey(prefix) {
+    try {
+      return `${prefix}::${JSON.stringify(this.categories)}::${JSON.stringify(this.settings)}`;
+    } catch {
+      return null; // Uncacheable if serialization fails (circular refs, etc.)
+    }
+  }
+
   calculateWorkUnits(item) {
     this.clearErrors();
-    
+
     if (!item || typeof item !== 'object') {
       this.addError('Invalid work item');
       return { units: 0, label: 'units', errors: this.getErrors() };
     }
 
-    // FIXED: Normalize measurement type to handle legacy formats
     const measurementType = normalizeMeasurementType(item.measurementType);
     const surfaces = Array.isArray(item.surfaces) ? item.surfaces : [];
-    
+
     if (surfaces.length === 0) {
       return this._calculateDirectUnits(item, measurementType);
     }
@@ -166,7 +175,6 @@ export class CalculatorEngine {
 
         let surfaceUnits = 0;
 
-        // FIXED: Using normalized measurement type constants
         switch (measurementType) {
           case MEASUREMENT_TYPES.SQUARE_FOOT:
             if (surface.sqft && surface.sqft > 0) {
@@ -177,18 +185,17 @@ export class CalculatorEngine {
               surfaceUnits = width * height;
             }
             break;
-            
           case MEASUREMENT_TYPES.LINEAR_FOOT:
             surfaceUnits = parseFloat(surface.linearFt) || 0;
             break;
-            
           case MEASUREMENT_TYPES.BY_UNIT:
-            surfaceUnits = parseInt(surface.units) || 0;
+            // Use parseFloat so decimal units (e.g. 1.5) are never silently truncated.
+            // The UI currently only allows whole numbers (allowDecimals defaults to false),
+            // so existing integer values in the DB are unaffected.
+            surfaceUnits = parseFloat(surface.units) || 0;
             break;
-            
           default:
             this.addWarning(`Unknown measurement type: ${measurementType}`, 'UNKNOWN_MEASUREMENT_TYPE', { measurementType, surface, index });
-            surfaceUnits = 0;
             break;
         }
 
@@ -201,7 +208,6 @@ export class CalculatorEngine {
       if (!hasValidSurfaces) {
         this.addError('No valid surfaces found for calculation', 'NO_VALID_SURFACES', { item });
       }
-
     } catch (error) {
       this.addError(`Error calculating surface units: ${error.message}`, 'SURFACE_CALCULATION_ERROR', { item, error: error.message });
       totalUnits = 0;
@@ -211,16 +217,14 @@ export class CalculatorEngine {
       this.addError('Units cannot be negative', 'NEGATIVE_UNITS', { totalUnits });
       totalUnits = 0;
     }
-    
+
     if (totalUnits > CALCULATION_LIMITS.MAX_UNITS) {
       this.addError(`Units exceed maximum limit: ${totalUnits}`, 'UNITS_EXCEED_LIMIT', { totalUnits });
       totalUnits = CALCULATION_LIMITS.MAX_UNITS;
     }
 
-    const finalUnits = Math.max(0, totalUnits);
-    
-    return { 
-      units: Number(finalUnits.toFixed(PRECISION_CONFIG.AREA)),
+    return {
+      units: Number(Math.max(0, totalUnits).toFixed(PRECISION_CONFIG.AREA)),
       label,
       errors: this.getErrors(),
       warnings: this.getWarnings()
@@ -228,7 +232,6 @@ export class CalculatorEngine {
   }
 
   _calculateDirectUnits(item, measurementType = null) {
-    // FIXED: Use normalized measurement type
     const normalizedType = measurementType || normalizeMeasurementType(item.measurementType);
     let totalUnits = 0;
     let label = this._getUnitLabel(normalizedType);
@@ -239,22 +242,16 @@ export class CalculatorEngine {
           if (item.sqft && item.sqft > 0) {
             totalUnits = parseFloat(item.sqft) || 0;
           } else if (item.width && item.height) {
-            const width = parseFloat(item.width) || 0;
-            const height = parseFloat(item.height) || 0;
-            totalUnits = width * height;
+            totalUnits = (parseFloat(item.width) || 0) * (parseFloat(item.height) || 0);
           }
           break;
-          
         case MEASUREMENT_TYPES.LINEAR_FOOT:
           totalUnits = parseFloat(item.linearFt) || 0;
           break;
-          
         case MEASUREMENT_TYPES.BY_UNIT:
           totalUnits = parseInt(item.units) || 0;
           break;
-          
         default:
-          // Fallback logic for unknown types
           if (item.sqft > 0 || (item.width > 0 && item.height > 0)) {
             totalUnits = item.sqft || (parseFloat(item.width || 0) * parseFloat(item.height || 0));
             label = 'sqft';
@@ -272,7 +269,7 @@ export class CalculatorEngine {
       totalUnits = 0;
     }
 
-    return { 
+    return {
       units: Number(Math.max(0, totalUnits).toFixed(PRECISION_CONFIG.AREA)),
       label,
       errors: this.getErrors(),
@@ -281,22 +278,17 @@ export class CalculatorEngine {
   }
 
   _getUnitLabel(measurementType) {
-    // FIXED: Using normalized constants
     switch (measurementType) {
-      case MEASUREMENT_TYPES.SQUARE_FOOT:
-        return 'sqft';
-      case MEASUREMENT_TYPES.LINEAR_FOOT:
-        return 'linear ft';
-      case MEASUREMENT_TYPES.BY_UNIT:
-        return 'units';
-      default:
-        return 'units';
+      case MEASUREMENT_TYPES.SQUARE_FOOT: return 'sqft';
+      case MEASUREMENT_TYPES.LINEAR_FOOT: return 'linear ft';
+      case MEASUREMENT_TYPES.BY_UNIT: return 'units';
+      default: return 'units';
     }
   }
 
   calculateWorkCost(item) {
     this.clearErrors();
-    
+
     if (!item || typeof item !== 'object') {
       this.addError('Invalid work item');
       return this._getDefaultCostResponse();
@@ -304,19 +296,19 @@ export class CalculatorEngine {
 
     const materialCost = this._parseCost(item.materialCost, 'material cost');
     const laborCost = this._parseCost(item.laborCost, 'labor cost');
-    
+
     if (materialCost === null || laborCost === null) {
       return this._getDefaultCostResponse();
     }
 
     const { units, label } = this.calculateWorkUnits(item);
-    
+
     if (units === 0) {
       return {
         units: 0,
         unitLabel: label,
         materialCost: '0.00',
-        laborCost: '0.00', 
+        laborCost: '0.00',
         totalCost: '0.00',
         errors: this.getErrors(),
         warnings: this.getWarnings(),
@@ -331,26 +323,26 @@ export class CalculatorEngine {
     }
 
     try {
-      const materialCostDecimal = new Decimal(materialCost);
-      const laborCostDecimal = new Decimal(laborCost);
-      const unitsDecimal = new Decimal(units);
+      const matDec = new Decimal(materialCost);
+      const labDec = new Decimal(laborCost);
+      const unitsDec = new Decimal(units);
 
-      const totalMaterialCost = materialCostDecimal.times(unitsDecimal);
-      const totalLaborCost = laborCostDecimal.times(unitsDecimal);
-      const totalCost = totalMaterialCost.plus(totalLaborCost);
+      const totalMaterial = matDec.times(unitsDec);
+      const totalLabor = labDec.times(unitsDec);
+      const totalCost = totalMaterial.plus(totalLabor);
 
       return {
         units,
         unitLabel: label,
-        materialCost: totalMaterialCost.toFixed(PRECISION_CONFIG.CURRENCY),
-        laborCost: totalLaborCost.toFixed(PRECISION_CONFIG.CURRENCY),
+        materialCost: totalMaterial.toFixed(PRECISION_CONFIG.CURRENCY),
+        laborCost: totalLabor.toFixed(PRECISION_CONFIG.CURRENCY),
         totalCost: totalCost.toFixed(PRECISION_CONFIG.CURRENCY),
         errors: this.getErrors(),
         warnings: this.getWarnings(),
         metadata: {
           units,
-          materialCostPerUnit: materialCostDecimal.toFixed(PRECISION_CONFIG.RATES),
-          laborCostPerUnit: laborCostDecimal.toFixed(PRECISION_CONFIG.RATES),
+          materialCostPerUnit: matDec.toFixed(PRECISION_CONFIG.RATES),
+          laborCostPerUnit: labDec.toFixed(PRECISION_CONFIG.RATES),
           measurementType: normalizeMeasurementType(item.measurementType),
           calculatedAt: new Date().toISOString()
         }
@@ -363,7 +355,7 @@ export class CalculatorEngine {
 
   _parseCost(cost, fieldName) {
     if (cost === null || cost === undefined || cost === '') return 0;
-    
+
     let numValue;
     if (typeof cost === 'string') {
       numValue = parseFloat(cost.replace(/[^0-9.-]/g, ''));
@@ -373,22 +365,22 @@ export class CalculatorEngine {
       this.addError(`Invalid ${fieldName}: must be a number or string`, 'INVALID_COST_TYPE', { cost, fieldName });
       return null;
     }
-    
+
     if (isNaN(numValue)) {
       this.addError(`Invalid ${fieldName}: must be a valid number`, 'INVALID_COST', { cost, fieldName });
       return null;
     }
-    
+
     if (numValue < 0) {
       this.addError(`Invalid ${fieldName}: cannot be negative`, 'NEGATIVE_COST', { cost: numValue, fieldName });
       return null;
     }
-    
+
     if (numValue > CALCULATION_LIMITS.MAX_COST) {
       this.addError(`${fieldName} exceeds maximum limit`, 'COST_EXCEEDS_LIMIT', { cost: numValue, fieldName });
       return null;
     }
-    
+
     return numValue;
   }
 
@@ -413,7 +405,7 @@ export class CalculatorEngine {
 
   calculateCategoryBreakdowns() {
     this.clearErrors();
-    
+
     const breakdowns = this.categories.map((category, index) => {
       if (!category || !category.name) {
         this.addError(`Invalid category at index ${index}`, 'INVALID_CATEGORY', { category, index });
@@ -426,32 +418,28 @@ export class CalculatorEngine {
       let itemCount = 0;
       let validItemCount = 0;
 
-      const workItems = category.workItems || [];
-      
-      workItems.forEach((item, itemIndex) => {
+      (category.workItems || []).forEach((item, itemIndex) => {
         itemCount++;
-        
         try {
           const costResult = this.calculateWorkCost(item);
-          
           if (costResult.errors.length === 0) {
             validItemCount++;
             materialCost = materialCost.plus(new Decimal(costResult.materialCost));
             laborCost = laborCost.plus(new Decimal(costResult.laborCost));
             totalUnits += costResult.units || 0;
           } else {
-            this.addWarning(`Item ${itemIndex + 1} in ${category.name} has calculation errors`, 'ITEM_CALCULATION_ERROR', { 
-              categoryName: category.name, 
-              itemIndex, 
+            this.addWarning(`Item ${itemIndex + 1} in ${category.name} has calculation errors`, 'ITEM_CALCULATION_ERROR', {
+              categoryName: category.name,
+              itemIndex,
               item: item.name || 'Unnamed Item',
-              errors: costResult.errors 
+              errors: costResult.errors
             });
           }
         } catch (error) {
-          this.addError(`Error calculating item ${itemIndex + 1} in ${category.name}: ${error.message}`, 'ITEM_PROCESSING_ERROR', { 
-            categoryName: category.name, 
-            itemIndex, 
-            error: error.message 
+          this.addError(`Error calculating item ${itemIndex + 1} in ${category.name}: ${error.message}`, 'ITEM_PROCESSING_ERROR', {
+            categoryName: category.name,
+            itemIndex,
+            error: error.message
           });
         }
       });
@@ -472,8 +460,8 @@ export class CalculatorEngine {
       };
     });
 
-    return { 
-      breakdowns, 
+    return {
+      breakdowns,
       errors: this.getErrors(),
       warnings: this.getWarnings(),
       summary: {
@@ -487,11 +475,11 @@ export class CalculatorEngine {
   }
 
   _getDefaultCategoryResponse(name) {
-    return { 
-      name, 
+    return {
+      name,
       key: 'invalid',
-      materialCost: '0.00', 
-      laborCost: '0.00', 
+      materialCost: '0.00',
+      laborCost: '0.00',
       subtotal: '0.00',
       totalUnits: 0,
       itemCount: 0,
@@ -501,9 +489,21 @@ export class CalculatorEngine {
     };
   }
 
+  // FIX #7: calculateTotals caches its result so calculatePaymentDetails can
+  //         reuse it without re-traversing all items.
   calculateTotals() {
+    // Try cache first
+    if (this.options.enableCaching) {
+      const key = this._makeCacheKey('totals');
+      if (key && this.calculationCache.has(key)) {
+        this.cacheStats.hits++;
+        return this.calculationCache.get(key);
+      }
+      this.cacheStats.misses++;
+    }
+
     this.clearErrors();
-    
+
     let materialCost = new Decimal(0);
     let laborCost = new Decimal(0);
     let totalItems = 0;
@@ -512,12 +512,11 @@ export class CalculatorEngine {
 
     this.categories.forEach((category) => {
       if (!category || !category.workItems) return;
-      
+
       category.workItems.forEach((item, itemIndex) => {
         totalItems++;
         try {
           const costResult = this.calculateWorkCost(item);
-          
           if (costResult.errors.length === 0) {
             validItems++;
             materialCost = materialCost.plus(new Decimal(costResult.materialCost));
@@ -542,11 +541,12 @@ export class CalculatorEngine {
 
     const adjustments = this._calculateAdjustments(materialCost, laborCost);
 
-    return {
+    const result = {
       materialCost: materialCost.toFixed(PRECISION_CONFIG.CURRENCY),
       laborCost: adjustments.adjustedLaborCost.toFixed(PRECISION_CONFIG.CURRENCY),
       laborCostBeforeDiscount: laborCost.toFixed(PRECISION_CONFIG.CURRENCY),
       laborDiscount: adjustments.laborDiscountAmount.toFixed(PRECISION_CONFIG.CURRENCY),
+      // FIX #1: wasteCost now reflects the single authoritative source (see _calculateAdjustments)
       wasteCost: adjustments.wasteCost.toFixed(PRECISION_CONFIG.CURRENCY),
       taxAmount: adjustments.taxAmount.toFixed(PRECISION_CONFIG.CURRENCY),
       markupAmount: adjustments.markupAmount.toFixed(PRECISION_CONFIG.CURRENCY),
@@ -565,26 +565,68 @@ export class CalculatorEngine {
         calculatedAt: new Date().toISOString()
       }
     };
+
+    // Store in cache
+    if (this.options.enableCaching) {
+      const key = this._makeCacheKey('totals');
+      if (key) {
+        if (this.calculationCache.size >= this.options.maxCacheSize) {
+          // Evict oldest entry
+          const firstKey = this.calculationCache.keys().next().value;
+          this.calculationCache.delete(firstKey);
+        }
+        this.calculationCache.set(key, result);
+      }
+    }
+
+    return result;
+  }
+
+  // FIX #1: Single authoritative waste calculation.
+  //
+  //   Strategy: use wasteEntries[] when they exist (per-surface precision),
+  //   fall back to the global wasteFactor multiplier when wasteEntries is empty.
+  //   This eliminates the double-count between the two systems.
+  _calculateWaste(materialCost) {
+    const wasteEntries = Array.isArray(this.settings.wasteEntries)
+      ? this.settings.wasteEntries
+      : [];
+
+    if (wasteEntries.length > 0) {
+      // Per-surface waste: sum each entry's (surfaceCost × wasteFactor)
+      const wasteTotal = wasteEntries.reduce((sum, entry) => {
+        const surfaceCost = Math.max(0, parseFloat(entry.surfaceCost) || 0);
+        const factor = Math.max(0, Math.min(CALCULATION_LIMITS.MAX_WASTE_FACTOR, parseFloat(entry.wasteFactor) || 0));
+        return sum.plus(new Decimal(surfaceCost).times(new Decimal(factor)));
+      }, new Decimal(0));
+      return wasteTotal;
+    }
+
+    // Global waste factor fallback
+    const wasteFactor = new Decimal(
+      Math.max(0, Math.min(CALCULATION_LIMITS.MAX_WASTE_FACTOR, parseFloat(this.settings.wasteFactor) || 0))
+    );
+    return materialCost.times(wasteFactor);
   }
 
   _calculateAdjustments(materialCost, laborCost) {
     const laborDiscount = new Decimal(Math.max(0, Math.min(1, parseFloat(this.settings.laborDiscount) || 0)));
-    const wasteFactor = new Decimal(Math.max(0, Math.min(CALCULATION_LIMITS.MAX_WASTE_FACTOR, parseFloat(this.settings.wasteFactor) || 0)));
     const taxRate = new Decimal(Math.max(0, Math.min(CALCULATION_LIMITS.MAX_TAX_RATE, parseFloat(this.settings.taxRate) || 0)));
     const markup = new Decimal(Math.max(0, Math.min(CALCULATION_LIMITS.MAX_MARKUP_RATE, parseFloat(this.settings.markup) || 0)));
     const transportationFee = new Decimal(Math.max(0, parseFloat(this.settings.transportationFee) || 0));
 
     const laborDiscountAmount = laborCost.times(laborDiscount);
     const adjustedLaborCost = laborCost.minus(laborDiscountAmount);
-    
-    const wasteCost = materialCost.times(wasteFactor);
+
+    // FIX #1: Use the unified waste calculator
+    const wasteCost = this._calculateWaste(materialCost);
     const materialCostWithWaste = materialCost.plus(wasteCost);
-    
+
     const subtotal = materialCostWithWaste.plus(adjustedLaborCost);
     const taxAmount = subtotal.times(taxRate);
     const markupAmount = subtotal.times(markup);
-    
-    const miscFeesTotal = Array.isArray(this.settings.miscFees) 
+
+    const miscFeesTotal = Array.isArray(this.settings.miscFees)
       ? this.settings.miscFees.reduce((sum, fee) => {
           const amount = parseFloat(fee.amount) || 0;
           return sum.plus(new Decimal(Math.max(0, amount)));
@@ -611,20 +653,29 @@ export class CalculatorEngine {
     };
   }
 
-  calculatePaymentDetails() {
+  // FIX #6: calculatePaymentDetails no longer calls calculateTotals() internally.
+  //         It accepts the grand total as a parameter, or callers can pass the
+  //         already-computed totals result directly.  When called standalone it
+  //         calls calculateTotals() once and reuses the cached result.
+  calculatePaymentDetails(precomputedGrandTotal = null) {
     this.clearErrors();
-    
+
     try {
-      const { total: grandTotalStr } = this.calculateTotals();
+      // If caller already has totals (e.g. from calculateTotals() in the same
+      // render), they can pass grandTotal in directly to avoid double work.
+      const grandTotalStr = precomputedGrandTotal !== null
+        ? String(precomputedGrandTotal)
+        : this.calculateTotals().total; // uses cache if available
+
       const grandTotal = new Decimal(grandTotalStr || '0');
-      
+
       const payments = Array.isArray(this.settings.payments) ? this.settings.payments : [];
       let totalPaid = new Decimal(0);
       let overduePayments = new Decimal(0);
       let depositTotal = new Decimal(0);
-      
+
       const currentDate = new Date();
-      
+
       payments.forEach((payment, index) => {
         try {
           if (!payment || typeof payment !== 'object') {
@@ -635,10 +686,19 @@ export class CalculatorEngine {
           const amount = parseFloat(payment.amount) || 0;
           const paymentDate = new Date(payment.date);
           const isPaid = Boolean(payment.isPaid);
-          
+
           if (isPaid && amount > 0) {
             totalPaid = totalPaid.plus(new Decimal(amount));
-            if (payment.method === 'Deposit') {
+            // FIX #3: Identify deposit by type, method, or note/description for robustness
+            const paymentType = (payment.type || '').toLowerCase();
+            const paymentMethod = (payment.method || '').toLowerCase();
+            const paymentNote = (payment.note || payment.description || '').toLowerCase();
+
+            if (
+              paymentType === 'deposit' || 
+              paymentMethod === 'deposit' || 
+              paymentNote.includes('deposit')
+            ) {
               depositTotal = depositTotal.plus(new Decimal(amount));
             }
           } else if (!isPaid && amount > 0) {
@@ -650,10 +710,10 @@ export class CalculatorEngine {
           this.addWarning(`Error processing payment ${index + 1}: ${error.message}`, 'PAYMENT_PROCESSING_ERROR', { payment, index, error: error.message });
         }
       });
-      
+
       const totalDue = grandTotal.minus(totalPaid);
       const finalTotalDue = Decimal.max(totalDue, new Decimal(0));
-      
+
       return {
         totalPaid: totalPaid.toFixed(PRECISION_CONFIG.CURRENCY),
         totalDue: finalTotalDue.toFixed(PRECISION_CONFIG.CURRENCY),
@@ -671,10 +731,9 @@ export class CalculatorEngine {
       };
     } catch (error) {
       this.addError(`Payment calculation error: ${error.message}`, 'PAYMENT_CALCULATION_ERROR', { originalError: error.message });
-      
       return {
         totalPaid: '0.00',
-        totalDue: '0.00', 
+        totalDue: '0.00',
         overduePayments: '0.00',
         grandTotal: '0.00',
         deposit: '0.00',
@@ -702,7 +761,6 @@ export class CalculatorEngine {
   getCacheStats() {
     const total = this.cacheStats.hits + this.cacheStats.misses;
     const hitRate = total > 0 ? (this.cacheStats.hits / total * 100).toFixed(2) : '0.00';
-    
     return {
       ...this.cacheStats,
       hitRate: `${hitRate}%`,

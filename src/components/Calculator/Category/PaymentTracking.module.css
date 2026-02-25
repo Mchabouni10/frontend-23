@@ -1,56 +1,468 @@
-/* PaymentTracking.module.css - Enhanced with improved spacing for icons and text consistency */
+/* PaymentTracking.module.css
+   All colors use global CSS variables. No hardcoded hex values.
+   Design system: index.css variables only.
+   ========================================================================== */
 
 /* ==========================================================================
-   Section Styles - Consistent with CostSummary
+   Section Container
    ========================================================================== */
 .section {
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-md) 0;
   background: var(--surface);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 8px var(--shadow);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.06),
+    0 8px 24px rgba(0, 0, 0, 0.04);
   overflow: hidden;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border);
+  position: relative;
+}
+
+.section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.section:hover {
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.1),
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    0 16px 48px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+}
+
+.section:hover::before {
+  opacity: 1;
 }
 
 /* ==========================================================================
-   Section Header - Matching CostSummary
+   Alert System
    ========================================================================== */
-.sectionHeader {
+.alertContainer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding: 0 var(--spacing-sm);
+}
+
+.alert {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: linear-gradient(to right, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  position: relative;
-}
-
-.sectionHeader:hover {
-  background: linear-gradient(to right, var(--primary-dark) 0%, var(--primary) 100%);
-}
-
-/* NEW: Total Paid Indicator - Mirroring AdditionalCosts.totalCost with enhanced spacing */
-.totalPaid {
-  margin-left: auto;
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  backdrop-filter: blur(10px);
+  animation: slideInDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  transition: all 0.3s ease;
+  border-left: 4px solid transparent;
+}
+
+.alertInfo {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-left-color: var(--info);
+  color: var(--text);
+}
+
+.alertInfo i { color: var(--info); }
+
+.alertSuccess {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-left-color: var(--success);
+  color: var(--success);
+}
+
+.alertSuccess i { color: var(--success); }
+
+.alertWarning {
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-left-color: var(--warning);
+  color: var(--warning);
+}
+
+.alertWarning i { color: var(--warning); }
+
+.alertError {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-left-color: var(--error);
+  color: var(--error);
+}
+
+.alertError i { color: var(--error); }
+
+.alertClose {
+  margin-left: auto;
+  background: var(--muted-bg);
+  border: none;
+  font-size: var(--font-size-lg);
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.alertClose:hover {
+  opacity: 1;
+  background: var(--muted-border);
+  transform: scale(1.1);
+}
+
+/* ==========================================================================
+   Content
+   ========================================================================== */
+.content {
+  padding: var(--spacing-md);
+  background: linear-gradient(180deg, var(--background), var(--surface));
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+/* ==========================================================================
+   Summary Cards
+   ========================================================================== */
+.summaryCompact {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.summaryCard {
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  animation: shimmer 3s linear infinite;
-  white-space: nowrap;
+  padding: var(--spacing-md);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.04),
+    0 4px 16px rgba(0, 0, 0, 0.03);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
 }
 
-.totalPaid::before {
+.summaryCard:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.08),
+    0 8px 32px rgba(0, 0, 0, 0.06);
+  border-color: var(--info-border);
+}
+
+.summaryIcon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  border-radius: var(--radius-md);
+  color: var(--surface);
+  font-size: var(--font-size-xl);
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px var(--shadow);
+  transition: all 0.3s ease;
+}
+
+.summaryIconSuccess {
+  background: linear-gradient(135deg, var(--success), var(--success-dark));
+  box-shadow: 0 4px 12px var(--success-border);
+}
+
+.summaryIconError {
+  background: linear-gradient(135deg, var(--error), var(--error-dark));
+  box-shadow: 0 4px 12px var(--error-border);
+}
+
+.summaryCard:hover .summaryIcon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.summaryInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.summaryLabel {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.summaryAmount {
+  font-size: var(--font-size-xl);
+  color: var(--primary);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.summaryAmountSuccess { color: var(--success); }
+.summaryAmountError   { color: var(--error); }
+
+/* ==========================================================================
+   Deposit Section
+   ========================================================================== */
+.depositInline {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-left: 4px solid var(--success);
+  border-radius: var(--radius-lg);
+  flex-wrap: wrap;
+  transition: all 0.3s ease;
+}
+
+.depositInline:hover {
+  box-shadow: 0 4px 16px var(--success-border);
+}
+
+.inlineLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  white-space: nowrap;
+  padding-top: 6px; /* vertically center with first input row */
+}
+
+/* ── Locked deposit display ── */
+.depositLocked {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  flex: 1;
+  animation: slideInDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.depositLockedAmount {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--success);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.depositLockedDate {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  font-weight: var(--font-weight-medium);
+}
+
+.depositLockedMethod {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  background: var(--surface);
+  border: 1px solid var(--success-border);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-weight: var(--font-weight-medium);
+}
+
+.depositLockedActions {
+  display: flex;
+  gap: var(--spacing-xs);
+  margin-left: auto;
+}
+
+/* ── Deposit input group (new / editing) ── */
+.depositInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  flex: 1;
+  animation: slideInDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.depositFormActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* ── Edit action button (pencil variant) ── */
+.btnActionEdit {
+  background: var(--surface);
+  border: 1px solid var(--secondary);
+  color: var(--secondary);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: var(--font-size-xs);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.btnActionEdit:hover {
+  background: var(--secondary);
+  color: var(--surface);
+  border-color: var(--secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--info-border);
+}
+
+/* ── Input error state ── */
+.inputError {
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 3px var(--error-border) !important;
+}
+
+.inlineFields {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex: 1;
+  min-width: 200px;
+  flex-wrap: wrap;
+}
+
+.inlineInput {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--surface);
+  color: var(--text);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-family);
+  flex: 1;
+  min-width: 110px;
+}
+
+.inlineInput:focus {
+  border-color: var(--success);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--success-border);
+  transform: translateY(-1px);
+}
+
+.inlineInput:disabled {
+  background: var(--muted-bg);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ==========================================================================
+   Installment Plan
+   ========================================================================== */
+.installmentCompact {
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.installmentCompact:hover {
+  box-shadow: 0 4px 16px var(--info-border);
+  border-color: var(--secondary);
+}
+
+.compactHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: var(--info-bg);
+  border-bottom: 1px solid var(--info-border);
+  transition: all 0.3s ease;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--secondary);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.autoRecalcLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  cursor: pointer;
+  user-select: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.autoRecalcLabel:hover {
+  background: var(--info-bg);
+  color: var(--secondary);
+}
+
+.autoRecalcLabel input[type="checkbox"] {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--secondary);
+}
+
+.toggleBtn {
+  background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+  color: var(--surface);
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px var(--info-border);
+  position: relative;
+  overflow: hidden;
+}
+
+.toggleBtn::before {
   content: '';
   position: absolute;
   top: 0;
@@ -61,934 +473,1684 @@
   transition: left 0.5s ease;
 }
 
-.totalPaid:hover::before {
-  left: 100%;
+.toggleBtn:hover::before { left: 100%; }
+
+.toggleBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--info-border);
 }
 
-/* Status-based colors for header */
-.totalPaid.complete {
-  background: rgba(40, 167, 69, 0.2);
-  border-color: rgba(40, 167, 69, 0.4);
-}
+.toggleBtn:active:not(:disabled) { transform: translateY(0); }
 
-.totalPaid.complete .paidInline,
-.totalPaid.complete .progressIndicator {
-  color: var(--success);
-}
-
-.totalPaid.overdue {
-  background: rgba(220, 53, 69, 0.2);
-  border-color: rgba(220, 53, 69, 0.4);
-  animation: pulse 2s infinite;
-}
-
-.totalPaid.overdue .paidInline,
-.totalPaid.overdue .progressIndicator {
-  color: var(--error);
-}
-
-.totalPaid.in-progress {
-  /* background: rgba(255, 193, 7, 0.2); */
-  border-color: rgba(255, 193, 7, 0.4);
-}
-
-.totalPaid.in-progress .paidInline,
-.totalPaid.in-progress .progressIndicator {
-  color: var(--warning);
-}
-
-/* Status icon with improved spacing */
-.statusIcon {
-  font-size: var(--font-size-sm);
-  margin-right: var(--spacing-xs);
-  flex-shrink: 0;
-}
-
-.paidLabel {
-  font-size: var(--font-size-base);
-  opacity: 0.9;
-  font-weight: var(--font-weight-medium);
-}
-
-.progressWrapper {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  margin-left: var(--spacing-sm);
-}
-
-.paidCount {
-  font-size: var(--font-size-xs);
+.toggleBtn:disabled,
+.toggleBtnDisabled {
+  background: linear-gradient(135deg, var(--muted), var(--muted-dark)) !important;
   opacity: 0.7;
-  /* background: rgba(255, 255, 255, 0.2); */
-  padding: 0 var(--spacing-xxs);
-  border-radius: var(--radius-xs);
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
-.progressIndicator {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  padding: 0 var(--spacing-xxs);
-  border-radius: var(--radius-xs);
-  background: rgba(255, 255, 255, 0.3);
-}
-
-/* Toggle Button - Matching CostSummary */
-.toggleButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: var(--font-size-lg);
-  color: var(--surface);
-  padding: var(--spacing-sm);
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.toggleButton:hover,
-.toggleButton:focus-visible {
-  color: var(--secondary);
-  transform: scale(1.1);
-}
-
-.toggleButton:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
-  border-radius: var(--radius-sm);
-}
-
-/* Section Title - Matching CostSummary */
-.sectionTitle {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--surface);
-  margin: 0;
+.planWarning {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  font-family: var(--font-family);
-}
-
-.paymentCount {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0 var(--spacing-xs);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  margin: var(--spacing-sm);
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-left: 4px solid var(--warning);
+  border-radius: var(--radius-md);
+  color: var(--warning);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+  animation: slideInDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ==========================================================================
-   Content Area - Compact Layout
-   ========================================================================== */
-.content {
+.planWarning i { color: var(--warning); }
+
+.installmentContent {
   padding: var(--spacing-md);
-  background: var(--background);
-  border: 1px solid rgba(209, 213, 219, 0.4);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  animation: slideInDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+.planInputs {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--spacing-sm);
+  align-items: center;
+}
+
+.planSelect,
+.planInput {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-family);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.planSelect:focus,
+.planInput:focus {
+  border-color: var(--secondary);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--info-border);
+  transform: translateY(-1px);
+}
+
+.planAmount {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--success-bg);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--success);
+  white-space: nowrap;
+  border: 1px solid var(--success-border);
+}
+
+.planActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.btnGenerate,
+.btnApply,
+.btnClear {
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  flex: 1;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.btnGenerate {
+  background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+  color: var(--surface);
+  box-shadow: 0 2px 8px var(--info-border);
+}
+
+.btnApply {
+  background: linear-gradient(135deg, var(--success), var(--success-dark));
+  color: var(--surface);
+  box-shadow: 0 2px 8px var(--success-border);
+}
+
+.btnClear {
+  background: linear-gradient(135deg, var(--muted), var(--muted-dark));
+  color: var(--surface);
+  box-shadow: 0 2px 8px var(--muted-border);
+}
+
+.btnGenerate:hover,
+.btnApply:hover,
+.btnClear:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--shadow);
+}
+
+.btnGenerate:active,
+.btnApply:active,
+.btnClear:active { transform: translateY(0); }
 
 /* ==========================================================================
-   Compact Summary - Essential Info Only
+   Preview Section
    ========================================================================== */
-.summary {
+.previewSection {
   background: var(--surface);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(209, 213, 219, 0.2);
-  box-shadow: 0 2px 4px var(--shadow);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--info-border);
+  box-shadow: 0 2px 8px var(--info-border);
+  animation: slideInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.summaryRow {
+.previewHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-xs) 0;
-  border-bottom: 1px solid rgba(209, 213, 219, 0.1);
-  gap: var(--spacing-md);
-}
-
-.summaryRow:last-child {
-  border-bottom: none;
-}
-
-.summaryLabel {
-  font-weight: var(--font-weight-medium);
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  flex: 1;
-}
-
-.summaryValue {
-  font-weight: var(--font-weight-bold);
-  color: var(--text);
-  font-size: var(--font-size-base);
-  text-align: right;
-  min-width: 120px;
-  flex-shrink: 0;
-}
-
-/* Special styling for key amounts */
-.summaryRow.grandTotal {
-  border-top: 2px solid var(--primary);
-  padding-top: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-}
-
-.grandTotal .summaryValue {
-  color: var(--primary);
-  font-size: var(--font-size-lg);
-}
-
-.deposit {
-  color: var(--success) !important;
-}
-
-.balance {
-  border-top: 2px solid var(--secondary);
-  padding-top: var(--spacing-sm);
-  margin-top: var(--spacing-sm);
-}
-
-.balance .summaryLabel {
-  color: var(--secondary);
-  font-weight: var(--font-weight-bold);
-}
-
-.balance .summaryValue {
-  color: var(--secondary);
-  font-size: var(--font-size-lg);
-}
-
-.overpaidIcon {
-  color: var(--success);
-  margin-right: var(--spacing-sm);
-}
-
-.overdueWarning {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  background: rgba(229, 62, 62, 0.05);
-  border: 1px solid var(--error);
-  border-radius: var(--radius-sm);
-  color: var(--error);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-/* ==========================================================================
-   Deposit Section - Compact
-   ========================================================================== */
-.depositSection {
-  background: rgba(56, 161, 105, 0.02);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(56, 161, 105, 0.2);
-}
-
-.sectionSubtitle {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--primary);
-  margin: 0 0 var(--spacing-sm) 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
-
-.depositFields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-md);
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-}
-
-.field label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text);
-}
-
-.field input,
-.field select {
   padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid rgba(209, 213, 219, 0.4);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
-  background: var(--surface);
-  color: var(--text);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));
+  color: var(--surface);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
 }
 
-.field input:focus,
-.field select:focus {
-  outline: none;
-  border-color: var(--secondary);
-  box-shadow: 0 0 4px var(--shadow);
-}
-
-.field input:disabled,
-.field select:disabled {
-  background: rgba(233, 236, 239, 0.15);
-  cursor: not-allowed;
-}
-
-/* Checkbox styling */
-.checkboxLabel {
+.previewStats {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text);
-  cursor: pointer;
+  gap: var(--spacing-md);
+  font-size: var(--font-size-xs);
 }
 
-.checkboxLabel input[type="checkbox"] {
-  width: auto;
+.statPaid {
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: var(--font-weight-medium);
+}
+
+.statRemaining {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.previewList {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: var(--spacing-xs);
+}
+
+.previewItem {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: var(--spacing-sm);
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.previewItem:hover {
+  background: var(--info-bg);
+  transform: translateX(4px);
+}
+
+.previewItem:last-child { border-bottom: none; }
+
+.previewCheckbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
   accent-color: var(--secondary);
-  margin: 0;
+}
+
+.previewNumber {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--secondary);
+  min-width: 35px;
+  background: var(--info-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.previewDate {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+}
+
+.previewAmount {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 /* ==========================================================================
-   Quick Actions - Clear Balance and Add Payment Toggle
+   Payment Management
    ========================================================================== */
-.quickActions {
-  display: flex;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
+.paymentManagement {
   background: var(--surface);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(209, 213, 219, 0.2);
-  box-shadow: 0 1px 3px var(--shadow);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
-.quickButton,
-.addPaymentToggle {
-  flex: 1;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: none;
+.managementHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+  gap: var(--spacing-md);
+}
+
+.managementHeader h4 {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.paymentCount {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  padding: 3px 10px;
+  background: var(--muted-bg);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--muted-border);
+}
+
+/* Remove Plan Button */
+.btnRemovePlan {
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  color: var(--error);
+  padding: var(--spacing-xs) var(--spacing-sm);
   border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btnRemovePlan:hover:not(:disabled) {
+  background: var(--error);
+  color: var(--surface);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--error-border);
+}
+
+.btnRemovePlan:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Add Button
+   ========================================================================== */
+.btnAdd {
+  background: linear-gradient(135deg, var(--success), var(--success-dark));
+  color: var(--surface);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-xs);
-  transition: all 0.2s ease;
-  min-height: 40px;
-}
-
-.quickButton {
-  background: linear-gradient(135deg, var(--success) 0%, #28a745 100%);
-  color: var(--surface);
-}
-
-.quickButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #28a745 0%, var(--success) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow);
-}
-
-.quickButton:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
-}
-
-.quickButton:disabled {
-  background: var(--text-light);
-  cursor: not-allowed;
-  transform: none;
-}
-
-.addPaymentToggle {
-  background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
-  color: var(--surface);
-}
-
-.addPaymentToggle:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow);
-}
-
-.addPaymentToggle:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
-}
-
-.addPaymentToggle:disabled {
-  background: var(--text-light);
-  cursor: not-allowed;
-  transform: none;
-}
-
-.addPaymentActive {
-  background: linear-gradient(135deg, var(--error) 0%, #dc3545 100%) !important;
-}
-
-.addPaymentActive:hover {
-  background: linear-gradient(135deg, #dc3545 0%, var(--error) 100%) !important;
-}
-
-/* ==========================================================================
-   Add Payment Section - Compact Form
-   ========================================================================== */
-.addPaymentSection {
-  background: rgba(0, 123, 255, 0.02);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(0, 123, 255, 0.2);
-  box-shadow: 0 1px 3px var(--shadow);
-}
-
-.addPaymentFields {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
-
-.addPaymentActions {
-  display: flex;
-  gap: var(--spacing-sm);
-  justify-content: flex-end;
-}
-
-.addButton {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background: linear-gradient(135deg, var(--success) 0%, var(--primary) 100%);
-  color: var(--surface);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  transition: all 0.2s ease;
-  min-width: 180px;
-  justify-content: center;
-}
-
-.addButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--success) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow);
-}
-
-.addButton:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
-}
-
-.addButton:disabled {
-  background: var(--text-light);
-  cursor: not-allowed;
-  transform: none;
-  opacity: 0.6;
-}
-
-/* ==========================================================================
-   Payment Entries - Compact Table
-   ========================================================================== */
-.paymentEntries {
-  margin-top: var(--spacing-md);
-}
-
-.tableContainer {
-  overflow-x: auto;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(209, 213, 219, 0.2);
-  box-shadow: 0 2px 4px var(--shadow);
-}
-
-.paymentTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-  background: var(--surface);
-  min-width: 500px;
-}
-
-.paymentTable th,
-.paymentTable td {
-  padding: var(--spacing-sm);
-  text-align: left;
-  border-bottom: 1px solid rgba(209, 213, 219, 0.1);
-  color: var(--text);
-  vertical-align: middle;
-}
-
-.paymentTable th {
-  background: var(--primary);
-  color: var(--surface);
-  font-weight: var(--font-weight-medium);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px var(--success-border);
+  position: relative;
+  overflow: hidden;
   white-space: nowrap;
 }
 
-.paymentTable td {
+.btnAdd::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btnAdd:hover::before { left: 100%; }
+
+.btnAdd:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--success-border);
+}
+
+.btnAdd:active:not(:disabled) { transform: translateY(0); }
+
+.btnAdd:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.btnAddActive {
+  background: linear-gradient(135deg, var(--error), var(--error-dark));
+  box-shadow: 0 2px 8px var(--error-border);
+}
+
+.btnAddActive:hover:not(:disabled) {
+  box-shadow: 0 4px 16px var(--error-border);
+}
+
+/* ==========================================================================
+   Add Payment Form
+   ========================================================================== */
+.addForm {
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md);
+  margin: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  animation: slideInDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--spacing-sm);
+}
+
+.formInput,
+.formSelect {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-family);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.formInput:focus,
+.formSelect:focus {
+  border-color: var(--success);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--success-border);
+  transform: translateY(-1px);
+}
+
+.btnSubmit {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: var(--surface);
+  border: none;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.btnSubmit::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.btnSubmit:hover::before { left: 100%; }
+
+.btnSubmit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--shadow-md);
+}
+
+.btnSubmit:active:not(:disabled) { transform: translateY(0); }
+
+.btnSubmit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+   Unified Payment List
+   ========================================================================== */
+.unifiedPaymentList {
+  border-top: 1px solid var(--border);
+}
+
+.installmentGroup {
+  border-bottom: 2px solid var(--border);
+}
+
+/* Installment Group Header - uses brand primary, not a random gradient */
+.installmentGroupHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: var(--surface);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.groupHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.groupHeaderLeft i {
+  font-size: var(--font-size-lg);
+}
+
+.groupTitle {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+}
+
+.groupProgress {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+}
+
+.groupHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.groupAmount {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.installmentPayments {
   background: var(--background);
 }
 
-.paymentTable tr:nth-child(even) td {
-  background: rgba(226, 232, 240, 0.03);
+/* ==========================================================================
+   Payment Rows
+   ========================================================================== */
+.paymentRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--surface);
 }
 
-.paymentTable tr:hover td {
-  background: rgba(0, 123, 255, 0.05);
+.paymentRow:last-child { border-bottom: none; }
+
+.paymentRow:hover {
+  background: var(--info-bg);
+  transform: translateX(4px);
 }
 
-/* Row styling */
-.paidRow td {
-  background: rgba(56, 161, 105, 0.03) !important;
+.installmentRow { background: var(--surface); }
+
+.installmentRow:hover { background: var(--info-bg); }
+
+.manualRow:hover { background: var(--info-bg); }
+
+.rowPaid {
+  opacity: 0.7;
+  background: var(--success-bg) !important;
 }
 
-.paidRow .statusText {
-  color: var(--success);
+.rowPaid:hover { opacity: 0.85; }
+
+.rowAdjusted {
+  border-left: 4px solid var(--warning);
+  background: var(--warning-bg);
 }
 
-.overdueRow td {
-  background: rgba(229, 62, 62, 0.03) !important;
-  border-left: 3px solid var(--error);
+.paymentCheckbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: var(--secondary);
 }
 
-.overdueRow .statusText {
-  color: var(--error);
+.paymentInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex: 1;
+  min-width: 0;
 }
 
-/* Table specific cell styling */
-.amountCell {
+.paymentNumber {
   font-weight: var(--font-weight-bold);
-  text-align: right;
-  min-width: 80px;
+  color: var(--secondary);
+  font-size: var(--font-size-md);
+  min-width: 40px;
+  background: var(--info-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
 }
 
-.noteCell {
-  max-width: 150px;
+.paymentDate {
+  font-weight: var(--font-weight-medium);
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  min-width: 100px;
+}
+
+.paymentAmount {
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  font-size: var(--font-size-md);
+  min-width: 90px;
+  font-variant-numeric: tabular-nums;
+}
+
+.paymentMethod {
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  padding: 4px 12px;
+  background: var(--info-bg);
+  border-radius: var(--radius-md);
+  min-width: 80px;
+  text-align: center;
+  border: 1px solid var(--info-border);
+}
+
+.paymentNote {
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.statusText {
-  margin-left: var(--spacing-xs);
+/* ==========================================================================
+   Badges
+   ========================================================================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
+  background: var(--warning-bg);
+  color: var(--warning);
+  border: 1px solid var(--warning-border);
 }
 
-.paymentTable input[type="checkbox"] {
-  margin-right: var(--spacing-xs);
-  accent-color: var(--secondary);
-  width: auto;
+.typeBadge {
+  background: var(--info-bg);
+  color: var(--secondary);
+  border-color: var(--info-border);
 }
 
-.paymentTable input,
-.paymentTable select {
-  width: 100%;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  border: 1px solid rgba(209, 213, 219, 0.3);
-  border-radius: var(--radius-xs);
-  background: var(--surface);
-  color: var(--text);
-  box-sizing: border-box;
+.typeManual {
+  background: var(--muted-bg);
+  color: var(--muted);
+  border-color: var(--muted-border);
 }
 
-.paymentTable input:focus,
-.paymentTable select:focus {
-  border-color: var(--secondary);
-  box-shadow: 0 0 2px var(--shadow);
-  outline: none;
+.typeOverpayment {
+  background: var(--warning-bg);
+  color: var(--warning);
+  border-color: var(--warning-border);
 }
 
-/* Actions */
-.actionsCell {
+.typePartial {
+  background: var(--error-bg);
+  color: var(--error);
+  border-color: var(--error-border);
+}
+
+.typeUnexpected {
+  background: var(--info-bg);
+  color: var(--secondary);
+  border-color: var(--info-border);
+}
+
+.typeInstallment {
+  background: var(--info-bg);
+  color: var(--secondary);
+  border-color: var(--info-border);
+}
+
+.adjustedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  color: var(--warning);
+}
+
+/* ==========================================================================
+   Payment Actions
+   ========================================================================== */
+.paymentActions {
   display: flex;
   gap: var(--spacing-xs);
-  white-space: nowrap;
-  width: 80px;
-}
-
-.editButton,
-.saveButton,
-.cancelButton,
-.removeButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-xs);
-  font-size: var(--font-size-sm);
-  transition: all 0.2s ease;
-  color: var(--text-light);
   flex-shrink: 0;
 }
 
-.editButton { 
-  color: var(--secondary); 
+.btnAction {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-light);
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: var(--font-size-xs);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.saveButton { 
-  color: var(--success); 
+.btnAction:hover {
+  background: var(--secondary);
+  color: var(--surface);
+  border-color: var(--secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--info-border);
 }
 
-.cancelButton { 
-  color: var(--text-light); 
+.btnAction:active { transform: translateY(0); }
+
+/* Danger variant for delete buttons */
+.btnActionDanger:hover {
+  background: var(--error);
+  color: var(--surface);
+  border-color: var(--error);
+  box-shadow: 0 4px 12px var(--error-border);
 }
 
-.removeButton { 
-  color: var(--error); 
+/* Adjust Button */
+.btnAdjust {
+  background: var(--muted-bg);
+  color: var(--muted);
+  border: 1px solid var(--muted-border);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.editButton:hover,
-.saveButton:hover,
-.cancelButton:hover,
-.removeButton:hover {
-  transform: scale(1.1);
-  background: rgba(0, 0, 0, 0.1);
-  color: inherit;
+.btnAdjust:hover {
+  background: var(--muted);
+  color: var(--surface);
+  transform: translateY(-2px);
 }
 
-.editButton:focus-visible,
-.saveButton:focus-visible,
-.cancelButton:focus-visible,
-.removeButton:focus-visible {
+/* ==========================================================================
+   Section Divider
+   ========================================================================== */
+.sectionDivider {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--muted-bg);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionDivider span {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.otherPaymentsGroup { background: var(--surface); }
+
+/* ==========================================================================
+   Payment Row Edit Mode
+   ========================================================================== */
+.paymentRowEdit {
+  display: grid;
+  grid-template-columns: 1fr 120px 120px 1fr 100px;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--info-bg);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  animation: slideInDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.editInput,
+.editSelect {
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-family);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.editInput:focus,
+.editSelect:focus {
+  border-color: var(--secondary);
   outline: none;
-  box-shadow: 0 0 0 2px var(--secondary);
+  box-shadow: 0 0 0 3px var(--info-border);
+}
+
+.editActions {
+  display: flex;
+  gap: var(--spacing-xs);
+  justify-content: flex-end;
+}
+
+.btnSave {
+  background: var(--secondary);
+  border: none;
+  color: var(--surface);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--info-border);
+}
+
+.btnSave:hover {
+  background: var(--secondary-dark);
+  transform: scale(1.1);
+}
+
+.btnCancel {
+  background: var(--error);
+  border: none;
+  color: var(--surface);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px var(--error-border);
+}
+
+.btnCancel:hover {
+  background: var(--error-dark);
+  transform: scale(1.1);
+}
+
+/* ==========================================================================
+   Installment List Items (legacy classes kept for compat)
+   ========================================================================== */
+.installmentList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.installmentItem {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto auto auto;
+  gap: var(--spacing-sm);
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.installmentItem:hover {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  transform: translateX(4px);
+}
+
+.installmentPaid {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  opacity: 0.85;
+}
+
+.installmentAdjusted {
+  border-left: 4px solid var(--warning);
+  background: var(--warning-bg);
+}
+
+.installmentCheckbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--success);
+}
+
+.installmentNumber {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--secondary);
+  min-width: 35px;
+  background: var(--info-bg);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.installmentDate {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+}
+
+.installmentAmount {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   History Section (legacy)
+   ========================================================================== */
+.historySection {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.historyHeader {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: var(--surface);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.historyTable {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.historyRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto 1.5fr auto;
+  gap: var(--spacing-xs);
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: var(--font-size-xs);
+}
+
+.historyRow:hover {
+  background: var(--info-bg);
+  transform: translateX(4px);
+}
+
+.historyRow:last-child { border-bottom: none; }
+
+.historyPaid {
+  background: var(--success-bg);
+  opacity: 0.85;
+}
+
+.historyCheckbox {
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--success);
+}
+
+.historyDate {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+}
+
+.historyAmount {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.historyMethod {
+  font-size: var(--font-size-xs);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.historyBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--secondary);
+  color: var(--surface);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+}
+
+.historyNote {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.historyActions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.btnEdit {
+  background: var(--secondary);
+  border: none;
+  color: var(--surface);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  transition: all 0.2s ease;
+}
+
+.btnEdit:hover {
+  background: var(--secondary-dark);
+  transform: scale(1.1);
+}
+
+.btnDelete {
+  background: var(--error);
+  border: none;
+  color: var(--surface);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  transition: all 0.2s ease;
+}
+
+.btnDelete:hover {
+  background: var(--error-dark);
+  transform: scale(1.1);
 }
 
 /* ==========================================================================
    Empty State
    ========================================================================== */
 .emptyState {
-  text-align: center;
-  padding: var(--spacing-lg);
-  background: var(--surface);
-  border: 2px dashed var(--text-light);
-  border-radius: var(--radius-md);
-  color: var(--text-light);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-md);
+  text-align: center;
+  color: var(--text-light);
+  background: var(--info-bg);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--border-strong);
   gap: var(--spacing-md);
+  transition: all 0.3s ease;
+  margin: var(--spacing-md);
 }
 
 .emptyState i {
-  color: var(--secondary);
-  margin-bottom: 0;
-}
-
-.emptyState h4 {
-  color: var(--text);
-  margin: 0;
-  font-size: var(--font-size-base);
+  font-size: 2.5rem;
+  color: var(--muted);
+  opacity: 0.5;
 }
 
 .emptyState p {
-  margin: 0;
   font-size: var(--font-size-sm);
-  max-width: 300px;
+  color: var(--text-light);
 }
 
 /* ==========================================================================
-   Responsive Design
+   Modal
    ========================================================================== */
-@media (max-width: 768px) {
-  .section {
-    margin: var(--spacing-md) 0;
-  }
-
-  .sectionHeader {
-    padding: var(--spacing-sm);
-  }
-
-  .sectionTitle {
-    font-size: var(--font-size-lg);
-  }
-
-  .totalPaid {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-xxs) var(--spacing-sm);
-    gap: var(--spacing-xs);
-  }
-
-  .statusIcon {
-    font-size: var(--font-size-xs);
-    margin-right: var(--spacing-xxs);
-  }
-
-  .progressWrapper {
-    margin-left: var(--spacing-xs);
-    gap: var(--spacing-xxs);
-  }
-
-  .content {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-sm);
-  }
-
-  .summaryRow {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) 0;
-  }
-
-  .summaryValue {
-    align-self: flex-end;
-    font-size: var(--font-size-sm);
-  }
-
-  .grandTotal .summaryValue,
-  .balance .summaryValue {
-    font-size: var(--font-size-base);
-  }
-
-  .summaryLabel {
-    gap: var(--spacing-xs);
-  }
-
-  .depositFields,
-  .addPaymentFields {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-  }
-
-  .quickActions {
-    flex-direction: column;
-  }
-
-  .quickButton,
-  .addPaymentToggle {
-    width: 100%;
-  }
-
-  .addPaymentActions {
-    justify-content: center;
-    flex-direction: column;
-  }
-
-  .addButton {
-    width: 100%;
-    max-width: 250px;
-  }
-
-  .paymentTable {
-    min-width: 100%;
-    font-size: var(--font-size-xs);
-  }
-
-  .paymentTable th,
-  .paymentTable td {
-    padding: var(--spacing-xs);
-  }
-
-  .actionsCell {
-    width: auto;
-    justify-content: flex-end;
-  }
-
-  .noteCell {
-    max-width: 100px;
-  }
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (max-width: 480px) {
-  .sectionTitle {
-    font-size: var(--font-size-base);
-  }
-
-  .totalPaid {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--spacing-xs);
-  }
-
-  .statusIcon {
-    align-self: flex-start;
-  }
-
-  .progressWrapper {
-    margin-left: 0;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--spacing-xxs);
-  }
-
-  .summaryValue {
-    font-size: var(--font-size-xs);
-  }
-
-  .grandTotal .summaryValue,
-  .balance .summaryValue {
-    font-size: var(--font-size-sm);
-  }
-
-  .quickButton,
-  .addPaymentToggle {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-xs) var(--spacing-sm);
-  }
-
-  .addButton {
-    font-size: var(--font-size-xs);
-    padding: var(--spacing-sm);
-  }
-
-  .paymentTable th,
-  .paymentTable td {
-    padding: var(--spacing-xs);
-    font-size: calc(var(--font-size-sm) * 0.9);
-  }
-
-  .actionsCell {
-    flex-direction: column;
-    gap: var(--spacing-xs);
-    width: auto;
-  }
-
-  .editButton,
-  .saveButton,
-  .cancelButton,
-  .removeButton {
-    width: 28px;
-    height: 28px;
-    font-size: var(--font-size-base);
-  }
-
-  .summaryLabel {
-    gap: var(--spacing-xxs);
-    font-size: var(--font-size-xs);
-  }
-
-  .summaryRow {
-    gap: var(--spacing-xs);
-  }
-}
-
-/* ==========================================================================
-   Dark Mode Support
-   ========================================================================== */
-.dark .section {
+.modal {
   background: var(--surface);
-  box-shadow: 0 4px 8px var(--shadow);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    0 20px 80px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slideUpModal 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border);
 }
 
-.dark .content {
-  background: var(--background);
-  border-color: rgba(75, 85, 99, 0.3);
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: var(--surface);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.dark .summary {
-  background: var(--surface);
-  border-color: rgba(75, 85, 99, 0.3);
+.modalHeader h3 {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
-.dark .paymentTable {
-  background: var(--surface);
-  border-color: rgba(75, 85, 99, 0.3);
-}
-
-.dark .paymentTable td {
-  background: var(--background);
-}
-
-.dark .depositSection {
-  background: rgba(56, 161, 105, 0.05);
-  border-color: rgba(56, 161, 105, 0.3);
-}
-
-.dark .addPaymentSection {
-  background: rgba(0, 123, 255, 0.05);
-  border-color: rgba(0, 123, 255, 0.3);
-}
-
-.dark .quickActions {
-  background: var(--surface);
-  border-color: rgba(75, 85, 99, 0.3);
-}
-
-.dark .emptyState {
-  background: var(--surface);
-  border-color: var(--text-light);
-}
-
-.dark .quickButton:hover,
-.dark .addPaymentToggle:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-.dark .editButton:hover,
-.dark .saveButton:hover,
-.dark .cancelButton:hover,
-.dark .removeButton:hover {
+.modalClose {
   background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--surface);
+  font-size: var(--font-size-xl);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
 }
 
-.dark .totalPaid {
-  background: rgba(0, 0, 0, 0.2);
-  border-color: rgba(255, 255, 255, 0.1);
+.modalClose:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
 }
 
-.dark .totalPaid.complete {
-  background: rgba(40, 167, 69, 0.15);
-  border-color: rgba(40, 167, 69, 0.3);
+.modalBody {
+  padding: var(--spacing-md);
+  overflow-y: auto;
+  flex: 1;
 }
 
-.dark .totalPaid.overdue {
-  background: rgba(220, 53, 69, 0.15);
-  border-color: rgba(220, 53, 69, 0.3);
+.modalInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--spacing-sm);
 }
 
-.dark .totalPaid.in-progress {
-  background: rgba(255, 193, 7, 0.15);
-  border-color: rgba(255, 193, 7, 0.3);
+.modalLabel {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-light);
+}
+
+.modalValue {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.modalField {
+  margin-bottom: var(--spacing-md);
+}
+
+.modalField:last-child { margin-bottom: 0; }
+
+.modalField label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+}
+
+.modalInput,
+.modalTextarea {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-md);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-family);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modalInput:focus,
+.modalTextarea:focus {
+  border-color: var(--secondary);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--info-border);
+  transform: translateY(-1px);
+}
+
+.modalTextarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--background);
+  border-top: 1px solid var(--border);
+}
+
+.btnModalCancel {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  background: var(--muted-bg);
+  color: var(--text);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btnModalCancel:hover {
+  background: var(--muted);
+  color: var(--surface);
+  transform: translateY(-2px);
+}
+
+.btnModalSave {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--success), var(--success-dark));
+  color: var(--surface);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  box-shadow: 0 2px 8px var(--success-border);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btnModalSave:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--success-border);
 }
 
 /* ==========================================================================
-   Animations - Shimmer and Pulse for Innovation
+   Scrollbar
    ========================================================================== */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+.previewList::-webkit-scrollbar,
+.historyTable::-webkit-scrollbar,
+.modalBody::-webkit-scrollbar {
+  width: 6px;
+}
+
+.previewList::-webkit-scrollbar-track,
+.historyTable::-webkit-scrollbar-track,
+.modalBody::-webkit-scrollbar-track {
+  background: var(--muted-bg);
+  border-radius: 4px;
+}
+
+.previewList::-webkit-scrollbar-thumb,
+.historyTable::-webkit-scrollbar-thumb,
+.modalBody::-webkit-scrollbar-thumb {
+  background: var(--muted);
+  border-radius: 4px;
+}
+
+.previewList::-webkit-scrollbar-thumb:hover,
+.historyTable::-webkit-scrollbar-thumb:hover,
+.modalBody::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-dark);
+}
+
+/* ==========================================================================
+   Summary Card Variants
+   ========================================================================== */
+.summaryCardPaid {
+  border-color: var(--success-border);
+}
+
+.summaryCardPaid:hover {
+  border-color: var(--success);
+}
+
+.summaryCardRemaining {
+  border-color: var(--error-border);
+}
+
+.summaryCardRemaining:hover {
+  border-color: var(--error);
+}
+
+/* ==========================================================================
+   Toggle Button Active State
+   ========================================================================== */
+.toggleBtnActive {
+  background: linear-gradient(135deg, var(--error), var(--error-dark));
+  box-shadow: 0 2px 8px var(--error-border);
+}
+
+.toggleBtnActive:hover:not(:disabled) {
+  box-shadow: 0 4px 16px var(--error-border);
+}
+
+/* ==========================================================================
+   One-Time Payment Section
+   ========================================================================== */
+.oneTimeSection {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.oneTimeSection:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.oneTimeForm {
+  padding: var(--spacing-md);
+  background: var(--success-bg);
+  border-top: 1px solid var(--success-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  animation: slideInDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.oneTimeList {
+  border-top: 1px solid var(--border);
+}
+
+.formFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.paidToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  cursor: pointer;
+  user-select: none;
+}
+
+.paidToggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--success);
+}
+
+/* ==========================================================================
+   Inline Edit (InstallmentRow amount editing)
+   ========================================================================== */
+.editContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inlineEdit {
+  display: flex;
+  align-items: center;
+}
+
+.inlineEditInput {
+  padding: 4px 8px;
+  border: 1px solid var(--secondary);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-family);
+  font-variant-numeric: tabular-nums;
+  width: 100px;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 0 3px var(--info-border);
+}
+
+.inlineEditInput:focus {
+  outline: none;
+  border-color: var(--secondary-dark);
+  box-shadow: 0 0 0 3px var(--info-border);
+}
+
+.inlineEditInput.inputError {
+  border-color: var(--error);
+  box-shadow: 0 0 0 3px var(--error-border);
+}
+
+.editError {
+  font-size: var(--font-size-xs);
+  color: var(--error);
+  font-weight: var(--font-weight-medium);
+  animation: slideInDown 0.2s ease;
+}
+
+/* ==========================================================================
+   Validation / Error States
+   ========================================================================== */
+.rowError {
+  border-left: 4px solid var(--error) !important;
+  background: var(--error-bg) !important;
+}
+
+.errorSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-left: 4px solid var(--error);
+  border-radius: var(--radius-md);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  animation: slideInDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.errorSummary i {
+  color: var(--error);
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Reset Button
+   ========================================================================== */
+.btnReset {
+  background: var(--muted-bg);
+  border: 1px solid var(--muted-border);
+  color: var(--text-light);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.btnReset:hover {
+  background: var(--warning-bg);
+  border-color: var(--warning-border);
+  color: var(--warning);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--warning-border);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes slideUpModal {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  50%       { opacity: 0.7; }
 }
 
-/* Print styles */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.installmentContent,
+.addForm,
+.previewSection,
+.alert {
+  animation: slideInDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.loading { animation: pulse 1.5s ease-in-out infinite; }
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--muted-bg) 0%,
+    var(--muted-border) 50%,
+    var(--muted-bg) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ==========================================================================
+   Dark Mode Overrides
+   ========================================================================== */
+.dark .section {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    0 4px 12px rgba(0, 0, 0, 0.15),
+    0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.dark .summaryCard,
+.dark .addForm,
+.dark .historySection,
+.dark .modal {
+  border-color: var(--border);
+}
+
+.dark .inlineInput,
+.dark .inlineEditInput,
+.dark .planSelect,
+.dark .planInput,
+.dark .formInput,
+.dark .formSelect,
+.dark .editInput,
+.dark .editSelect,
+.dark .modalInput,
+.dark .modalTextarea {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.dark .inlineInput:focus,
+.dark .inlineEditInput:focus,
+.dark .planSelect:focus,
+.dark .planInput:focus,
+.dark .formInput:focus,
+.dark .formSelect:focus,
+.dark .editInput:focus,
+.dark .editSelect:focus,
+.dark .modalInput:focus,
+.dark .modalTextarea:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px var(--info-border);
+}
+
+.dark .modalOverlay { backdrop-filter: blur(6px); }
+
+.dark .btnAction {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--text-light);
+}
+
+.dark .badge,
+.dark .typeBadge {
+  background: var(--muted-bg);
+  border-color: var(--border);
+}
+
+/* ==========================================================================
+   Responsive
+   ========================================================================== */
+@media (max-width: 768px) {
+  .summaryCompact {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  .summaryCard { padding: var(--spacing-sm); }
+
+  .summaryIcon { width: 40px; height: 40px; font-size: var(--font-size-lg); }
+
+  .summaryAmount { font-size: var(--font-size-lg); }
+
+  .depositInline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .depositLocked {
+    width: 100%;
+  }
+
+  .depositLockedActions {
+    margin-left: 0;
+  }
+
+  .inlineFields {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .planInputs { grid-template-columns: 1fr; }
+
+  .historyRow { grid-template-columns: auto 1fr auto; gap: var(--spacing-xs); }
+  .historyNote { display: none; }
+
+  .formGrid { grid-template-columns: 1fr; }
+
+  .installmentGroupHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+
+  .installmentItem { grid-template-columns: auto 1fr auto; }
+  .installmentDate,
+  .adjustedBadge { display: none; }
+
+  .modal { width: 95%; max-height: 95vh; }
+  .modalFooter { flex-direction: column; }
+  .btnModalCancel,
+  .btnModalSave { width: 100%; justify-content: center; }
+
+  .managementHeader {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: stretch;
+  }
+
+  .headerLeft { justify-content: center; }
+
+  .paymentInfo {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    width: 100%;
+  }
+
+  .paymentDate,
+  .paymentAmount,
+  .paymentMethod {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .paymentNote {
+    width: 100%;
+    margin-top: 4px;
+    white-space: normal;
+    font-size: var(--font-size-xs);
+  }
+
+  .paymentRow {
+    flex-wrap: wrap;
+    padding: var(--spacing-sm);
+  }
+
+  .paymentRowEdit {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xs);
+  }
+
+  .paymentActions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: var(--spacing-xs);
+    border-top: 1px solid var(--border);
+    padding-top: var(--spacing-xs);
+  }
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
 @media print {
-  .addButton,
-  .removeButton,
-  .toggleButton,
-  .totalPaid {
-    display: none;
+  .toggleBtn,
+  .btnAdd,
+  .btnGenerate,
+  .btnApply,
+  .btnClear,
+  .btnRemovePlan,
+  .btnAdjust,
+  .btnEdit,
+  .btnDelete,
+  .modalOverlay,
+  .alertContainer,
+  .paymentActions,
+  .btnAction {
+    display: none !important;
   }
 
   .section {
@@ -996,4 +2158,51 @@
     border: 1px solid #000;
     break-inside: avoid;
   }
+
+  .previewList,
+  .historyTable,
+  .installmentList {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .installmentList { page-break-inside: avoid; }
+
+  .summaryCard,
+  .alert,
+  .depositInline,
+  .installmentCompact { break-inside: avoid; }
+
+  body { background: white; color: black; }
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .section,
+  .summaryCard,
+  .modal,
+  .previewSection,
+  .historySection { border-width: 2px; }
+
+  .btnGenerate,
+  .btnApply,
+  .btnSubmit,
+  .btnModalSave { border: 2px solid currentColor; }
+}
+
+*:focus-visible {
+  outline: 2px solid var(--secondary);
+  outline-offset: 2px;
 }

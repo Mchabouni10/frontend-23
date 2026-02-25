@@ -301,9 +301,16 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
             projects: [],
             totalGrandTotal: 0,
             totalAmountRemaining: 0,
-            totalAdditionalRevenue: 0, // NEW field
+            totalAdditionalRevenue: 0,
             earliestStartDate: null,
             latestFinishDate: null,
+            // ── New computed fields ──────────────────────────────────────────
+            nextDueInstallment: null, // { date, amount, installmentNumber }
+            depositPaid: false, // true if any project has a paid deposit
+            totalCategories: 0, // sum of categories across all projects
+            totalWorkItems: 0, // sum of work items across all projects
+            paidInstallments: 0, // installments already paid
+            totalInstallments: 0, // all installments (excl. deposit)
           });
         }
 
@@ -336,6 +343,54 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
             ? new Date(Math.max(customer.latestFinishDate, finishDate))
             : finishDate;
         }
+
+        // ── Installment & deposit analysis ────────────────────────────────
+        const payments = project.settings?.payments ?? [];
+        payments.forEach((pmt) => {
+          const paymentType = (pmt.type || "").toLowerCase();
+          const paymentMethod = (pmt.method || "").toLowerCase();
+          const paymentNote = (pmt.note || pmt.description || "").toLowerCase();
+
+          const isDepositPayment =
+            paymentType === "deposit" ||
+            paymentMethod === "deposit" ||
+            paymentNote.includes("deposit");
+
+          if (isDepositPayment && pmt.isPaid) {
+            customer.depositPaid = true;
+          }
+          const isInstallmentPayment =
+            paymentType === "installment" || paymentMethod === "installment";
+
+          if (isInstallmentPayment) {
+            customer.totalInstallments += 1;
+            if (pmt.isPaid) {
+              customer.paidInstallments += 1;
+            } else if (pmt.date) {
+              const d = new Date(pmt.date);
+              if (!isNaN(d.getTime())) {
+                if (
+                  !customer.nextDueInstallment ||
+                  d < customer.nextDueInstallment.date
+                ) {
+                  customer.nextDueInstallment = {
+                    date: d,
+                    amount: parseFloat(pmt.amount ?? 0),
+                    installmentNumber: pmt.installmentNumber ?? null,
+                  };
+                }
+              }
+            }
+          }
+        });
+
+        // ── Scope: categories & work items ────────────────────────────────
+        const cats = project.categories ?? [];
+        customer.totalCategories += cats.length;
+        customer.totalWorkItems += cats.reduce(
+          (sum, cat) => sum + (cat.workItems?.length ?? 0),
+          0,
+        );
       });
 
       return Array.from(customerMap.values()).map((customer) => ({
@@ -573,6 +628,75 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
             }
           }
         }
+
+        // ── Installment Payment Notifications ────────────────────────────────
+        // Walk every installment in the project's payment plan and surface
+        // upcoming (due within DUE_SOON_DAYS) and missed (past-due) ones.
+        const payments = project.settings?.payments ?? [];
+        payments.forEach((payment) => {
+          const pType = (payment.type || "").toLowerCase();
+          const pMethod = (payment.method || "").toLowerCase();
+          const isInstallmentPayment =
+            pType === "installment" || pMethod === "installment";
+
+          if (!isInstallmentPayment || payment.isPaid || !payment.date) {
+            return;
+          }
+
+          const dueDate = new Date(payment.date);
+          if (isNaN(dueDate.getTime())) return;
+
+          const daysUntilDue = (dueDate - today) / (1000 * 60 * 60 * 24);
+          const amount = parseFloat(payment.amount ?? 0);
+          const label = payment.installmentNumber
+            ? `Installment #${payment.installmentNumber}`
+            : "Installment";
+          const formattedAmount = amount.toLocaleString("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+
+          if (daysUntilDue < 0) {
+            // Overdue installment
+            const message = `${customerName}: ${label} of $${formattedAmount} was due on ${formatDate(
+              dueDate,
+            )} and has not been paid`;
+            if (!seenMessages.has(message)) {
+              notificationList.push({
+                message,
+                overdue: true,
+                nearDue: false,
+                type: "installment-overdue",
+                dueDate,
+                amount,
+              });
+              seenMessages.add(message);
+            }
+          } else if (daysUntilDue <= DUE_SOON_DAYS) {
+            // Coming up soon
+            const daysLabel =
+              daysUntilDue === 0
+                ? "today"
+                : daysUntilDue === 1
+                ? "tomorrow"
+                : `in ${Math.ceil(daysUntilDue)} days`;
+            const message = `${customerName}: ${label} of $${formattedAmount} is due ${daysLabel} (${formatDate(
+              dueDate,
+            )})`;
+            if (!seenMessages.has(message)) {
+              notificationList.push({
+                message,
+                overdue: false,
+                nearDue: true,
+                type: "installment-due-soon",
+                dueDate,
+                amount,
+              });
+              seenMessages.add(message);
+            }
+          }
+        });
+        // ─────────────────────────────────────────────────────────────────────
       });
     });
 
@@ -589,12 +713,17 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
       });
     }
 
-    // Sort notifications: errors first, then overdue, then due soon
+    // Sort notifications:
+    // 1. Errors first
+    // 2. Overdue (project overdue + overdue installments)
+    // 3. Due soon / starting soon (including upcoming installments, sorted by date)
     return notificationList.sort((a, b) => {
       if (a.type === "error" && b.type !== "error") return -1;
       if (a.type !== "error" && b.type === "error") return 1;
       if (a.overdue && !b.overdue) return -1;
       if (!a.overdue && b.overdue) return 1;
+      // Among installment notifications of the same urgency, sort by due date ascending
+      if (a.dueDate && b.dueDate) return a.dueDate - b.dueDate;
       return 0;
     });
   }, [

@@ -1,937 +1,587 @@
-/* src/components/Calculator/Category/CostSummary.module.css */
+/* CostSummary.module.css - Cleaned up without header styles */
 
-/* Section Styles */
+/* ==========================================================================
+   Section Container
+   ========================================================================== */
 .section {
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-md) 0;
   background: var(--surface);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  transition: background-color var(--transition-duration), box-shadow var(--transition-duration);
+  transition: all 0.3s ease;
 }
 
-/* Section Header */
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: linear-gradient(to right, var(--primary), var(--primary-dark));
-  color: var(--surface);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  cursor: pointer;
-  transition: background var(--transition-duration);
-}
-
-.sectionHeader:hover {
-  background: linear-gradient(to right, var(--primary-dark), var(--primary));
-}
-
-.headerInline {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  font-size: var(--font-size-sm);
-}
-
-.headerTotal {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--surface);
-  white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-.headerStats {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  color: var(--surface);
-  opacity: 0.95;
-  white-space: nowrap;
-}
-
-.headerStats i {
-  font-size: var(--font-size-sm);
-}
-
-/* Toggle Button */
-.toggleButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: var(--font-size-lg);
-  color: var(--surface);
-  padding: var(--spacing-sm);
-  transition: color var(--transition-duration), transform var(--transition-duration);
-}
-
-.toggleButton:hover,
-.toggleButton:focus-visible {
-  color: var(--secondary);
-  transform: scale(1.1);
-}
-
-.toggleButton:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-  border-radius: var(--radius-sm);
-}
-
-/* Section Title */
-.sectionTitle {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--surface);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-family: var(--font-family);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-}
-
-/* Summary Content */
+/* ==========================================================================
+   Summary Content
+   ========================================================================== */
 .summaryContent {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   background: var(--background);
-  border: 1px solid var(--border-light);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
-/* Metrics Row - Enhanced */
+/* ==========================================================================
+   Metrics Row
+   ========================================================================== */
 .metricsRow {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  background: linear-gradient(135deg, var(--surface), rgba(var(--primary-rgb), 0.03));
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  background: var(--surface);
   border-radius: var(--radius-md);
-  border: 1px solid var(--border-light);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border: 1px solid rgba(209, 213, 219, 0.3);
+  margin-bottom: var(--spacing-sm);
 }
 
 .metricItem {
   display: flex;
-  flex-direction: column;
   align-items: center;
   gap: var(--spacing-sm);
-  padding: var(--spacing-lg);
-  background: var(--surface);
-  border-radius: var(--radius-md);
-  border: 2px solid transparent;
-  transition: all var(--transition-duration);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
 }
 
-.metricItem::before {
+.metricItem::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
   right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
-  transform: scaleX(0);
-  transition: transform var(--transition-duration);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 60%;
+  background: rgba(209, 213, 219, 0.3);
+}
+
+.metricItem:last-child::after {
+  display: none;
 }
 
 .metricItem:hover {
-  transform: translateY(-4px);
-  border-color: var(--primary);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-}
-
-.metricItem:hover::before {
-  transform: scaleX(1);
+  background: rgba(44, 62, 80, 0.05);
+  transform: translateY(-1px);
 }
 
 .metricItem i {
-  font-size: 2.5rem;
+  font-size: 1.5rem;
   color: var(--primary);
-  opacity: 0.9;
-  transition: all var(--transition-duration);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(44, 62, 80, 0.1);
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
-.metricItem:hover i {
-  color: var(--secondary);
-  transform: scale(1.1) rotateY(360deg);
+.metricContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
 }
 
 .metricValue {
-  font-size: var(--font-size-xl);
+  font-size: var(--font-size-lg);
   font-weight: var(--font-weight-bold);
   color: var(--text);
-  transition: color var(--transition-duration);
-}
-
-.metricItem:hover .metricValue {
-  color: var(--primary);
+  line-height: 1.2;
 }
 
 .metricItem small {
-  font-size: var(--font-size-sm);
+  font-size: 0.75rem;
   color: var(--text-light);
-  text-align: center;
-  font-weight: var(--font-weight-medium);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-/* Waste Details Section - Fixed Full Width */
-.wasteDetailsSection {
-  width: 100%;
-  margin: 0;
-  padding: var(--spacing-md);
-  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.05), rgba(var(--secondary-rgb), 0.05));
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-sm);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-  animation: expandDown 0.3s ease-out;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
-}
-
-@keyframes expandDown {
-  from { 
-    opacity: 0; 
-    max-height: 0;
-    transform: scaleY(0.95);
-  }
-  to { 
-    opacity: 1; 
-    max-height: 500px;
-    transform: scaleY(1);
-  }
-}
-
-.wasteDetailRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  border-left: 3px solid var(--primary);
-  transition: all var(--transition-duration);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-}
-
-.wasteDetailRow:hover {
-  background: var(--hover-bg);
-  border-left-color: var(--secondary);
-  transform: translateX(4px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.wasteDetailLabel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  font-size: var(--font-size-base);
-  color: var(--text);
-  flex: 1;
   font-weight: var(--font-weight-medium);
 }
 
-.wasteDetailLabel i {
-  font-size: var(--font-size-sm);
+/* Specific metric types */
+.materialMetric i {
+  background: rgba(33, 150, 243, 0.1);
   color: var(--primary);
-  margin-right: var(--spacing-xs);
 }
 
-.wasteDetailLabel small {
-  font-size: var(--font-size-sm);
-  color: var(--text-light);
-  font-weight: var(--font-weight-normal);
-  margin-left: var(--spacing-lg);
+.laborMetric i {
+  background: rgba(76, 175, 80, 0.1);
+  color: var(--success);
 }
 
-.wasteDetailValue {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--primary);
-  text-align: right;
-  min-width: 120px;
-  transition: all var(--transition-duration);
-}
-
-.wasteDetailRow:hover .wasteDetailValue {
+.totalMetric i {
+  background: rgba(156, 39, 176, 0.1);
   color: var(--secondary);
-  transform: scale(1.05);
 }
 
-/* Detail Toggle Button */
-.detailToggle {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  border: none;
-  color: var(--surface);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  margin-left: var(--spacing-md);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-duration);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.detailToggle:hover {
-  background: linear-gradient(135deg, var(--secondary), var(--primary));
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.detailToggle:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-/* Empty State */
-.emptyState {
-  text-align: center;
-  padding: var(--spacing-xl);
-  background: var(--surface);
-  border: 2px dashed var(--border-light);
-  border-radius: var(--radius-md);
-  margin: var(--spacing-lg) 0;
-}
-
-.helpMessage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-md);
-}
-
-.helpMessage i {
-  font-size: 3rem;
-  color: var(--primary);
-  opacity: 0.6;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.helpMessage h4 {
-  font-size: var(--font-size-lg);
-  color: var(--text);
-  margin: 0 0 var(--spacing-sm);
-}
-
-.helpMessage p {
-  color: var(--text-light);
-  margin: 0;
-}
-
-/* Error Section */
-.errorSection {
-  background: var(--error-bg);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  border: 1px solid var(--error);
-  border-left: 4px solid var(--error);
-  animation: shake 0.5s ease-out;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
-}
-
-.errorSection h4 {
-  margin: 0 0 var(--spacing-sm);
-  font-size: var(--font-size-base);
-  color: var(--error);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-weight: var(--font-weight-bold);
-}
-
-.errorSection ul {
-  margin: 0;
-  padding-left: var(--spacing-lg);
-}
-
-.errorSection li {
-  color: var(--error);
-  font-size: var(--font-size-sm);
-  line-height: 1.6;
-  margin-bottom: var(--spacing-xs);
-  position: relative;
-}
-
-.errorSection li::before {
-  content: '⚠ ';
-  margin-right: var(--spacing-sm);
-}
-
-/* Summary Grid - Enhanced Visual Hierarchy */
+/* ==========================================================================
+   Summary Grid
+   ========================================================================== */
+/* ==========================================================================
+   Summary Grid
+   ========================================================================== */
 .summaryGrid {
   display: flex;
   flex-direction: column;
-  min-width: 650px; /* Slightly wider */
+  min-width: 100%; /* Widen to full container width */
   margin: 0 auto;
-  font-size: var(--font-size-base);
-  color: var(--text);
+  font-size: var(--font-size-sm);
   background: var(--surface);
   border-radius: var(--radius-md);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  border: 1px solid var(--border-light);
+  border: 1px solid rgba(209, 213, 219, 0.3);
 }
 
-/* Enhanced Sticky Header */
+/* Sticky Header */
 .stickyHeader {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--spacing-lg);
+  font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
   color: var(--surface);
-  /* Updated background: deeper, modern gradient */
-  background: linear-gradient(135deg, #4a6cf7, #6d5dfc); /* Example: indigo-to-purple */
-  padding: var(--spacing-md) var(--spacing-xl);
-  font-size: var(--font-size-sm);
-  letter-spacing: 1px;
+  background: var(--primary-dark);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-/* Enhanced Summary Items */
+.stickyHeader .summaryLabel,
+.stickyHeader .summaryValue {
+  color: var(--surface) !important;
+}
+
+/* ==========================================================================
+   Summary Items
+   ========================================================================== */
 .summaryItem {
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--spacing-lg);
   align-items: center;
-  padding: var(--spacing-md) var(--spacing-xl);
-  border-bottom: 1px solid var(--border-light);
-  transition: all var(--transition-duration) ease;
-  background: var(--surface);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-bottom: 1px solid rgba(209, 213, 219, 0.2);
+  transition: background-color 0.2s ease;
+  min-height: 44px;
 }
 
 .summaryItem:hover {
-  background-color: var(--surface-hover); /* Assumes you have this var; fallback below */
-  transform: translateX(4px);
+  background: rgba(44, 62, 80, 0.03);
 }
 
-/* Optional fallback if --surface-hover isn't defined */
-.summaryItem:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-}
 
-.summaryItem:nth-child(even) {
-  background: rgba(var(--primary-rgb), 0.02);
-}
-
-.summaryItem:last-child {
-  border-bottom: none;
-}
-
-.summaryItem:hover {
-  background: var(--hover-bg);
-  transform: translateX(2px);
-}
-
-.summaryItem::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  width: 4px;
-  background: linear-gradient(to bottom, var(--primary), var(--secondary));
-  opacity: 0;
-  transition: opacity var(--transition-duration);
-}
-
-.summaryItem:hover::before {
-  opacity: 1;
-}
-
-/* Enhanced Labels with Better Contrast */
 .summaryLabel {
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-medium);
   color: var(--text);
-  text-align: left;
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  transition: all var(--transition-duration);
-  font-size: var(--font-size-base);
-  line-height: 1.5;
+  font-size: var(--font-size-sm);
 }
 
 .summaryLabel i {
   color: var(--primary);
-  font-size: var(--font-size-lg);
-  width: 24px;
+  font-size: var(--font-size-sm);
+  width: 20px;
   text-align: center;
-  transition: all var(--transition-duration);
 }
 
-.summaryItem:hover .summaryLabel {
-  color: var(--primary);
-  transform: translateX(2px);
-}
-
-.summaryItem:hover .summaryLabel i {
-  color: var(--secondary);
-  transform: scale(1.15) rotate(5deg);
-}
-
-/* Enhanced Values with Better Visibility */
 .summaryValue {
   font-weight: var(--font-weight-bold);
   color: var(--primary);
   text-align: right;
   white-space: nowrap;
-  transition: all var(--transition-duration);
-  min-width: 140px;
-  font-size: var(--font-size-lg);
-  letter-spacing: 0.5px;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: var(--font-size-md);
 }
 
-.summaryItem:hover .summaryValue {
-  color: var(--secondary);
+/* ==========================================================================
+   Detail Toggle
+   ========================================================================== */
+.detailToggle {
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.toggleIcon {
+  font-size: 0.75rem;
+  margin-left: auto;
+  color: var(--text-light);
+}
+
+.discountBadge {
+  display: inline-block;
+  background: rgba(56, 161, 105, 0.1);
+  color: var(--success);
+  font-size: 0.75rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
   font-weight: var(--font-weight-bold);
-  transform: scale(1.05);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
-/* Highlighted Rows - Enhanced */
-.total, .balance {
-  background: linear-gradient(135deg, rgba(var(--primary-rgb), 0.15), rgba(var(--secondary-rgb), 0.08)) !important;
-  font-size: var(--font-size-lg);
-  padding: var(--spacing-lg) var(--spacing-xl) !important;
-  border-left: 6px solid var(--primary) !important;
-  margin: var(--spacing-sm) 0;
+/* ==========================================================================
+   Details Section
+   ========================================================================== */
+.detailsSection {
+  background: rgba(44, 62, 80, 0.03);
+  border-left: 3px solid var(--primary);
+  margin: 6px 0;
+  padding: var(--spacing-sm);
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+  }
+}
+
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px var(--spacing-sm);
+  font-size: 0.75rem;
+}
+
+.detailLabel {
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.detailLabel i {
+  font-size: 0.75rem;
+  color: var(--primary);
+}
+
+.detailValue {
+  font-weight: var(--font-weight-medium);
+  color: var(--text);
+}
+
+.detailValue.discount {
+  color: var(--success);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ==========================================================================
+   Highlighted Rows
+   ========================================================================== */
+/* Highlighted Rows - Total & Balance Types */
+.total {
+  background: linear-gradient(135deg, rgba(44, 62, 80, 0.1), rgba(52, 152, 219, 0.05));
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-left: 4px solid var(--primary);
+  margin: 6px 0;
   border-radius: var(--radius-sm);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
-.total::before,
-.balance::before {
-  opacity: 1 !important;
-  width: 6px;
+.amountDue {
+  background: linear-gradient(135deg, rgba(229, 62, 62, 0.1), rgba(229, 62, 62, 0.05));
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-left: 4px solid var(--error);
+  margin: 6px 0;
+  border-radius: var(--radius-sm);
 }
 
-.total .summaryLabel,
-.balance .summaryLabel {
+.overpayment {
+  background: linear-gradient(135deg, rgba(56, 161, 105, 0.1), rgba(56, 161, 105, 0.05));
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-left: 4px solid var(--success);
+  margin: 6px 0;
+  border-radius: var(--radius-sm);
+}
+
+.total .summaryLabel {
   color: var(--primary);
   font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-md);
+}
+
+.total .summaryValue {
   font-size: var(--font-size-lg);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.total .summaryLabel i,
-.balance .summaryLabel i {
-  font-size: var(--font-size-xl);
-}
-
-.total .summaryValue,
-.balance .summaryValue {
-  font-size: var(--font-size-xxl);
   font-weight: var(--font-weight-bold);
   color: var(--primary);
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.amountDue .summaryLabel,
+.amountDue .summaryValue {
+  color: var(--error); /* RED for Amount Due */
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-md);
+}
+
+.amountDue .summaryValue {
+  font-size: var(--font-size-lg);
+}
+
+.overpayment .summaryLabel,
+.overpayment .summaryValue {
+  color: var(--success); /* GREEN for Overpayment */
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-md);
+}
+
+.overpayment .summaryValue {
+  font-size: var(--font-size-lg);
 }
 
 .paid {
   color: var(--success) !important;
-  font-weight: var(--font-weight-bold);
 }
 
-/* Payment Progress Styles */
+/* ==========================================================================
+   Payment Progress
+   ========================================================================== */
 .paymentProgress {
-  width: 100%;
-  max-width: 320px;
+  width: 200px;
 }
 
 .progressBar {
   width: 100%;
-  height: 10px;
-  background: var(--border-light);
+  height: 6px;
+  background: rgba(209, 213, 219, 0.3);
   border-radius: var(--radius-sm);
   overflow: hidden;
-  position: relative;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .progressBarFill {
   height: 100%;
   background: linear-gradient(90deg, var(--success), var(--primary));
   border-radius: var(--radius-sm);
-  transition: width 0.5s ease-out;
-  position: relative;
-  overflow: hidden;
-}
-
-.progressBarFill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255,255,255,0.3),
-    transparent
-  );
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
 }
 
 .progressLabels {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-top: var(--spacing-xs);
-  font-size: var(--font-size-sm);
-  gap: var(--spacing-sm);
+  margin-top: 2px;
+  font-size: 0.75rem;
 }
 
 .progressLabel {
   color: var(--text);
-  font-weight: var(--font-weight-semibold);
 }
 
 .overdueLabel {
   color: var(--error);
   font-weight: var(--font-weight-bold);
-  padding: 2px var(--spacing-xs);
-  background: var(--error-bg);
-  border-radius: var(--radius-sm);
-  animation: pulse 2s ease-in-out infinite;
 }
 
-/* Notices - Enhanced */
+/* ==========================================================================
+   Notices - Single Line
+   ========================================================================== */
 .overpaymentNotice,
 .dueAmountNotice {
   display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-lg);
-  font-size: var(--font-size-base);
-  background: var(--surface);
-  border: 2px solid transparent;
-  border-radius: var(--radius-md);
-  padding: var(--spacing-lg);
-  margin-top: var(--spacing-md);
-  transition: all var(--transition-duration);
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.overpaymentNotice::before,
-.dueAmountNotice::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 4px;
-  height: 100%;
-  transition: width var(--transition-duration);
-}
-
-.overpaymentNotice:hover::before,
-.dueAmountNotice:hover::before {
-  width: 8px;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-lg); /* Reduced vertical padding */
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  margin-top: 6px;
 }
 
 .overpaymentNotice {
-  border-color: var(--success);
-  background: linear-gradient(135deg, var(--success-bg), rgba(var(--success-rgb), 0.05));
+  background: rgba(56, 161, 105, 0.1);
+  border: 1px solid var(--success);
   color: var(--success);
 }
 
-.overpaymentNotice::before {
-  background: var(--success);
-}
-
 .dueAmountNotice {
-  border-color: var(--error);
-  background: linear-gradient(135deg, var(--error-bg), rgba(var(--error-rgb), 0.05));
+  background: rgba(229, 62, 62, 0.1);
+  border: 1px solid var(--error);
   color: var(--error);
-}
-
-.dueAmountNotice::before {
-  background: var(--error);
-}
-
-.overpaymentNotice:hover,
-.dueAmountNotice:hover {
-  transform: translateX(4px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 .overpaymentNotice i,
 .dueAmountNotice i {
-  font-size: 2.5rem;
-  flex-shrink: 0;
-  animation: pulse 2s ease-in-out infinite;
+  font-size: var(--font-size-md);
+  margin-right: 4px;
 }
 
-@keyframes pulse {
-  0%, 100% { 
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% { 
-    transform: scale(1.1);
-    opacity: 0.8;
-  }
+.noticeContent {
+  flex: 1;
+  display: flex; /* Flex layout for single line */
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap; /* Allow wrap on very small screens */
 }
 
-.overpaymentNotice strong,
-.dueAmountNotice strong {
-  font-size: var(--font-size-lg);
+.noticeContent strong {
+  display: inline; /* Inline */
   font-weight: var(--font-weight-bold);
-  display: block;
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 0;
 }
 
-.overpaymentNotice p,
-.dueAmountNotice p {
+.noticeContent strong::after {
+  content: " - "; /* Separator */
+  margin-left: 2px;
+}
+
+.noticeContent p {
   margin: 0;
-  font-size: var(--font-size-base);
-  line-height: 1.6;
-  color: inherit;
   opacity: 0.9;
+  display: inline; /* Inline */
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .section {
-    margin: var(--spacing-md) 0;
-  }
-
-  .sectionHeader {
-    padding: var(--spacing-md) var(--spacing-sm);
-    flex-wrap: wrap;
-  }
-
-  .sectionTitle {
-    font-size: var(--font-size-lg);
-  }
-
-  .headerInline {
-    flex-direction: column;
-    align-items: flex-end;
-    gap: var(--spacing-xs);
-  }
-
-  .headerStats {
-    justify-content: flex-end;
-    width: 100%;
-  }
-
-  .summaryContent {
-    padding: var(--spacing-md);
-  }
-
-  .summaryItem {
-    padding: var(--spacing-sm) var(--spacing-md);
-    gap: var(--spacing-md);
-  }
-
-  .summaryLabel {
-    font-size: var(--font-size-sm);
-  }
-
-  .summaryValue {
-    font-size: var(--font-size-base);
-    min-width: 100px;
-  }
-
-  .total .summaryLabel,
-  .balance .summaryLabel {
-    font-size: var(--font-size-base);
-  }
-
-  .total .summaryValue,
-  .balance .summaryValue {
-    font-size: var(--font-size-xl);
-  }
-
-  .overpaymentNotice,
-  .dueAmountNotice {
-    flex-direction: column;
-    text-align: center;
-    padding: var(--spacing-md);
-  }
-
-  .metricsRow {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-sm);
-  }
-
-  .metricItem {
-    flex-direction: row;
-    justify-content: space-between;
-    padding: var(--spacing-md);
-  }
-
-  .metricItem i {
-    font-size: 2rem;
-  }
-
-  .wasteDetailsSection {
-    padding: var(--spacing-sm);
-    margin: var(--spacing-sm) 0;
-  }
-
-  .wasteDetailRow {
-    padding: var(--spacing-sm);
-  }
-
-  .paymentProgress {
-    max-width: 100%;
-  }
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+.emptyState {
+  padding: var(--spacing-lg);
+  text-align: center;
 }
 
-@media (max-width: 480px) {
-  .sectionHeader {
-    padding: var(--spacing-sm);
-  }
-
-  .sectionTitle {
-    font-size: var(--font-size-base);
-  }
-
-  .toggleButton {
-    font-size: var(--font-size-base);
-  }
-
-  .summaryContent {
-    padding: var(--spacing-sm);
-  }
-
-  .summaryGrid {
-    font-size: var(--font-size-sm);
-  }
-
-  .summaryItem {
-    padding: var(--spacing-sm);
-  }
-
-  .total .summaryValue,
-  .balance .summaryValue {
-    font-size: var(--font-size-lg);
-  }
-
-  .headerInline {
-    gap: var(--spacing-xs);
-  }
-
-  .headerTotal {
-    font-size: var(--font-size-base);
-  }
-
-  .headerStats {
-    font-size: var(--font-size-xxs);
-    gap: var(--spacing-xs);
-  }
-
-  .wasteDetailsSection {
-    padding: var(--spacing-xs);
-  }
-
-  .metricItem {
-    padding: var(--spacing-sm);
-  }
+.helpMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
-/* Dark Mode Support */
-.dark .section {
-  background: var(--surface-dark);
-  box-shadow: var(--shadow-md);
-}
-
-.dark .summaryContent {
-  background: var(--background-dark);
-  border-color: var(--border-dark);
-}
-
-.dark .summaryGrid {
-  background: var(--surface-dark);
-  border-color: var(--border-dark);
-}
-
-.dark .summaryItem {
-  background: var(--surface-dark);
-}
-
-.dark .summaryItem:nth-child(even) {
-  background: rgba(var(--primary-rgb), 0.05);
-}
-
-.dark .summaryLabel {
-  color: var(--text-dark);
-}
-
-.dark .summaryValue {
+.helpMessage i {
+  font-size: 2rem;
   color: var(--primary);
 }
 
-.dark .emptyState {
-  background: var(--surface-dark);
-  border-color: var(--border-dark);
+.helpMessage h4 {
+  font-size: var(--font-size-md);
+  margin: 0;
 }
 
-.dark .helpMessage i {
-  color: var(--secondary);
+.helpMessage p {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  margin: 0;
 }
 
-.dark .overpaymentNotice,
-.dark .dueAmountNotice {
-  background: var(--surface-dark);
+/* ==========================================================================
+   Error Section
+   ========================================================================== */
+.errorSection {
+  background: rgba(229, 62, 62, 0.1);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  border: 1px solid var(--error);
+  font-size: 0.75rem;
 }
 
-.dark .metricsRow {
-  background: var(--surface-dark);
-  border-color: var(--border-dark);
+.errorSection h4 {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-.dark .wasteDetailsSection {
-  background: var(--surface-dark);
-  border-color: var(--border-dark);
+.errorSection ul {
+  margin: 0;
+  padding-left: var(--spacing-md);
 }
 
-.dark .headerInline {
-  color: var(--surface);
+.errorSection li {
+  margin-bottom: 2px;
 }
 
-.dark .metricItem {
-  background: var(--surface-dark);
-  border-color: var(--border-dark);
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (max-width: 768px) {
+  .metricsRow {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .metricItem::after {
+    display: none;
+  }
+  
+  .summaryGrid {
+    min-width: 100%;
+    font-size: 0.75rem;
+  }
+  
+  .summaryItem {
+    padding: 6px var(--spacing-sm);
+  }
+  
+  .summaryLabel,
+  .summaryValue {
+    font-size: var(--font-size-sm);
+  }
+  
+  .total .summaryValue,
+  .balance .summaryValue {
+    font-size: var(--font-size-md);
+  }
+  
+  .paymentProgress {
+    width: 150px;
+  }
 }
 
-.dark .wasteDetailRow {
-  background: var(--surface-dark);
+/* ==========================================================================
+   Dark Mode
+   ========================================================================== */
+.dark .section {
+  background: var(--surface);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.dark .summaryContent {
+  background: var(--background);
+}
+
+.dark .metricsRow,
+.dark .summaryGrid {
+  background: var(--surface);
+  border-color: rgba(209, 213, 219, 0.2);
+}
+
+.dark .summaryItem:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dark .summaryItem:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+@media print {
+  .section {
+    box-shadow: none;
+    border: 1px solid #000;
+    break-inside: avoid;
+  }
+
+  .summaryGrid {
+    box-shadow: none;
+  }
 }

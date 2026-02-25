@@ -1,90 +1,264 @@
-/* src/components/UserLogOut/UserLogOut.module.css */
+/* UserLogOut.module.css — Elevated Profile / Logout Card */
+
+/* ============================================================
+   CARD WRAPPER
+   ============================================================ */
 .userLogOut {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: clamp(1rem, 2vw, var(--spacing-lg)); /* Responsive gap, max 1.5rem */
-  padding: clamp(var(--spacing-lg), 3vw, var(--spacing-xl)); /* Responsive padding, 1.5rem to 2rem */
-  background: rgba(255, 255, 255, 0.05); /* Light mode default, semi-transparent */
-  backdrop-filter: blur(15px);
-  border-radius: var(--radius-lg); /* 12px */
-  border: 1px solid rgba(226, 232, 240, 0.2); /* Subtle border, variable opacity */
-  box-shadow: 0 8px 32px var(--shadow); /* Uses --shadow */
-  width: min(100%, 400px); /* Responsive width */
-  margin: var(--spacing-xl) auto; /* 2rem */
-  animation: fadeIn 0.5s ease-in;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-strong);
+  box-shadow:
+    0 4px 6px var(--shadow),
+    0 16px 48px var(--shadow-md);
+  width: min(100%, 400px);
+  margin: var(--spacing-xl) auto;
+  animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  position: relative;
+  overflow: hidden;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
-:global(.dark) .userLogOut {
-  background: rgba(148, 163, 184, 0.1); /* Dark mode semi-transparent based on --text-light */
-  border: 1px solid rgba(226, 232, 240, 0.1); /* Lighter border for dark mode */
+/* Top accent line */
+.userLogOut::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
+  background-size: 200% 100%;
+  animation: shimmer 4s linear infinite;
 }
 
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+:global(.dark) .userLogOut {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  box-shadow:
+    0 4px 6px var(--shadow),
+    0 16px 48px var(--shadow-lg),
+    0 0 0 1px var(--border);
+}
+
+/* ============================================================
+   AVATAR — initials circle
+   ============================================================ */
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  font-weight: var(--font-weight-extrabold);
+  color: #ffffff;
+  letter-spacing: -1px;
+  box-shadow: 0 4px 20px var(--shadow-md);
+  flex-shrink: 0;
+  position: relative;
+}
+
+:global(.dark) .avatar {
+  box-shadow: 0 4px 20px var(--glow-primary);
+}
+
+/* Online status indicator */
+.avatar::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  right: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--success);
+  border: 2.5px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--success-border);
+}
+
+:global(.dark) .avatar::after {
+  border-color: var(--surface);
+  box-shadow: 0 0 8px var(--glow-success);
+}
+
+/* ============================================================
+   USER DETAILS
+   ============================================================ */
 .userDetails {
   text-align: center;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .userName {
-  font-size: clamp(var(--font-size-lg), 3vw, var(--font-size-xl)); /* 1.25rem to 1.5rem */
-  color: var(--text-light); /* #6b7280 in light mode, #94a3b8 in dark mode */
-  margin-bottom: var(--spacing-sm); /* 0.75rem */
-  font-weight: var(--font-weight-bold); /* 600 */
-  background: linear-gradient(45deg, var(--primary), var(--secondary)); /* Uses --primary and --secondary */
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+:global(.dark) .userName {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
 .userEmail {
-  font-size: clamp(var(--font-size-sm), 2vw, var(--font-size-base)); /* 0.875rem to 1rem */
-  color: var(--text); /* #2d3748 in light mode, #e2e8f0 in dark mode (replaced --text-dark) */
-  opacity: 0.8;
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  opacity: 0.9;
+  margin: 0;
 }
 
-.label {
-  color: var(--text); /* #2d3748 in light mode, #e2e8f0 in dark mode (replaced --text-dark) */
-  font-size: var(--font-size-sm); /* 0.875rem */
-  opacity: 0.6;
-  margin-right: var(--spacing-sm); /* 0.5rem */
+:global(.dark) .userEmail {
+  color: var(--text-light);
+}
+
+/* ============================================================
+   ROLE / STATUS BADGE
+   ============================================================ */
+.roleBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 12px;
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--secondary);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  margin-top: var(--spacing-xs);
 }
 
+.roleBadge i {
+  font-size: 0.8em;
+}
+
+:global(.dark) .roleBadge {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+  color: var(--secondary);
+}
+
+/* ============================================================
+   DIVIDER
+   ============================================================ */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border-strong);
+}
+
+:global(.dark) .divider {
+  background: var(--border-strong);
+}
+
+/* ============================================================
+   INFO ROW — session info, last login, etc.
+   ============================================================ */
+.infoRow {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--font-size-xs);
+  padding: 6px 10px;
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+:global(.dark) .infoItem {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+
+.infoLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-light);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.infoLabel i {
+  color: var(--secondary);
+  font-size: 0.85em;
+  width: 12px;
+  text-align: center;
+}
+
+:global(.dark) .infoLabel {
+  color: var(--text-light);
+}
+
+.infoValue {
+  color: var(--text);
+  font-weight: var(--font-weight-bold);
+}
+
+:global(.dark) .infoValue {
+  color: var(--text);
+}
+
+/* ============================================================
+   LOGOUT BUTTON
+   ============================================================ */
 .logoutButton {
   display: flex;
   align-items: center;
-  justify-content: center; /* Center content horizontally */
-  gap: var(--spacing-sm); /* 0.75rem */
+  justify-content: center;
+  gap: var(--spacing-sm);
   width: 100%;
-  padding: var(--spacing-md); /* 1rem */
+  padding: 0.8rem var(--spacing-md);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2); /* Light mode default */
-  border-radius: var(--radius-md); /* 8px */
-  color: var(--text-light); /* #6b7280 in light mode, #94a3b8 in dark mode */
-  font-size: var(--font-size-base); /* 1rem */
-  font-weight: var(--font-weight-bold); /* 600 */
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-light);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.8px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
 }
 
-:global(.dark) .logoutButton {
-  border: 1px solid rgba(148, 163, 184, 0.3); /* Dark mode border based on --text-light */
-}
-
-.logoutButton:hover {
-  background: linear-gradient(45deg, var(--primary), var(--secondary)); /* Uses --primary and --secondary */
-  border-color: transparent;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px var(--shadow); /* Uses --shadow */
-  color: var(--surface); /* White text on hover */
-}
-
+/* Shine effect */
 .logoutButton::after {
   content: '';
   position: absolute;
@@ -92,42 +266,116 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
   transition: left 0.5s ease;
-}
-
-:global(.dark) .logoutButton::after {
-  background: linear-gradient(90deg, transparent, rgba(148, 163, 184, 0.3), transparent); /* Dark mode shine */
 }
 
 .logoutButton:hover::after {
   left: 100%;
 }
 
+.logoutButton:hover {
+  background: linear-gradient(135deg, var(--error) 0%, var(--error-dark) 100%);
+  border-color: transparent;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--shadow-md);
+}
+
+:global(.dark) .logoutButton {
+  border-color: var(--border-strong);
+  color: var(--text-light);
+}
+
+:global(.dark) .logoutButton:hover {
+  background: linear-gradient(135deg, var(--error) 0%, var(--error-dark) 100%);
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: 0 6px 20px var(--glow-error);
+}
+
+.logoutButton:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Icon slides right on hover */
 .logoutIcon {
-  font-size: 1.2rem;
-  transition: transform 0.3s ease;
+  font-size: 1rem;
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
 }
 
 .logoutButton:hover .logoutIcon {
-  transform: translateX(5px);
+  transform: translateX(4px);
 }
 
-/* Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ============================================================
+   LOADING STATE
+   ============================================================ */
+.logoutButton.loading {
+  pointer-events: none;
+  opacity: 0.7;
 }
 
-/* Media query for smaller screens */
+.loader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   LABEL (legacy support)
+   ============================================================ */
+.label {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  opacity: 0.7;
+  margin-right: var(--spacing-sm);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 480px) {
   .userLogOut {
-    padding: var(--spacing-lg); /* 1.5rem */
-    margin: var(--spacing-md) auto; /* 1rem */
+    padding: var(--spacing-lg);
+    margin: var(--spacing-md) auto;
+    gap: var(--spacing-md);
+  }
+
+  .avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 1.3rem;
   }
 
   .logoutButton {
-    padding: var(--spacing-sm); /* 0.75rem */
-    font-size: var(--font-size-sm); /* 0.875rem */
+    padding: 0.65rem var(--spacing-md);
+    font-size: var(--font-size-sm);
   }
 }

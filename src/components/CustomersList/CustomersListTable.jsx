@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEye,
@@ -15,6 +15,8 @@ import {
   faCalendarAlt,
   faDollarSign,
   faDownload,
+  faClock,
+  faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "./CustomersList.module.css";
 
@@ -48,6 +50,90 @@ export default function CustomersListTable({
         })
       : "N/A";
 
+  // Relative "time ago / in X days" label for last activity
+  const formatRelativeDate = (date) => {
+    if (!date) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const d = new Date(date);
+    if (isNaN(d.getTime())) return null;
+
+    d.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((d - today) / (1000 * 60 * 60 * 24));
+
+    // Ultra-compact labels for table (single line)
+    if (diffDays === 0) return "0d";
+    if (diffDays === 1) return "1d";
+    if (diffDays === -1) return "-1d";
+    return `${diffDays}d`;
+  };
+
+  // Choose a compact "last activity" date based on project dates / installments
+  const getLastActivityInfo = (customer) => {
+    const { earliestStartDate, latestFinishDate, nextDueInstallment } =
+      customer;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const candidates = [];
+
+    if (latestFinishDate instanceof Date) {
+      candidates.push({ type: "Last", date: latestFinishDate });
+    }
+    if (earliestStartDate instanceof Date) {
+      candidates.push({ type: "Start", date: earliestStartDate });
+    }
+    if (nextDueInstallment?.date instanceof Date) {
+      candidates.push({ type: "Next", date: nextDueInstallment.date });
+    }
+
+    if (!candidates.length) return null;
+
+    // Prefer the most recent past date; if none, the nearest future date
+    const past = candidates.filter((c) => c.date <= today);
+    const future = candidates.filter((c) => c.date > today);
+
+    const pickClosest = (list) =>
+      list.reduce((best, current) => {
+        if (!best) return current;
+        const diffCurrent = Math.abs(current.date - today);
+        const diffBest = Math.abs(best.date - today);
+        return diffCurrent < diffBest ? current : best;
+      }, null);
+
+    const chosen = past.length ? pickClosest(past) : pickClosest(future);
+    if (!chosen) return null;
+
+    const shortLabel = formatRelativeDate(chosen.date);
+    if (!shortLabel) return null;
+
+    // Human-readable phrase for tooltip, reusing the existing "today"
+    const d = new Date(chosen.date);
+    d.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((d - today) / (1000 * 60 * 60 * 24));
+
+    let phrase;
+    if (diffDays === 0) {
+      phrase = "Today";
+    } else if (diffDays === 1) {
+      phrase = "Tomorrow";
+    } else if (diffDays === -1) {
+      phrase = "Yesterday";
+    } else if (diffDays > 1) {
+      phrase = `in ${diffDays} days`;
+    } else {
+      phrase = `${Math.abs(diffDays)} days ago`;
+    }
+
+    return {
+      type: chosen.type,
+      label: shortLabel,
+      tooltip: `${chosen.type} project date: ${phrase}`,
+    };
+  };
+
   // Calculate payment progress percentage - memoized to avoid recalculation
   const getPaymentProgress = useMemo(
     () => (customer) => {
@@ -58,6 +144,31 @@ export default function CustomersListTable({
     },
     [],
   );
+
+  // Build rich payment tooltip data for the remaining column
+  const getPaymentTooltipData = (customer) => {
+    const total = customer.totalGrandTotal || 0;
+    const remaining = customer.totalAmountRemaining || 0;
+    const paid = total - remaining;
+    const depositPaid = customer.depositPaid;
+    const paidInst = customer.paidInstallments || 0;
+    const totalInst = customer.totalInstallments || 0;
+    const pendingInst = totalInst - paidInst;
+    const progress = total > 0 ? Math.round((paid / total) * 100) : 0;
+    return {
+      total,
+      remaining,
+      paid,
+      depositPaid,
+      paidInst,
+      totalInst,
+      pendingInst,
+      progress,
+    };
+  };
+
+  const [activeTooltip, setActiveTooltip] = useState(null);
+  const [tooltipPositions, setTooltipPositions] = useState({});
 
   return (
     <>
@@ -176,6 +287,10 @@ export default function CustomersListTable({
                   <FontAwesomeIcon icon={faDollarSign} aria-hidden="true" />{" "}
                   Total
                 </th>
+                <th scope="col">
+                  <FontAwesomeIcon icon={faLayerGroup} aria-hidden="true" />{" "}
+                  Scope
+                </th>
                 <th scope="col">Actions</th>
               </tr>
             </thead>
@@ -189,7 +304,95 @@ export default function CustomersListTable({
                 return (
                   <tr key={customerId}>
                     <td>{customer.customerInfo.firstName || "N/A"}</td>
-                    <td>{customer.customerInfo.lastName || "N/A"}</td>
+                    {/* Last Name with tooltip */}
+                    <td>
+                      {(() => {
+                        const nameTooltipId = `name-tooltip-${customerId}`;
+                        const handleNameMouseEnter = (e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setTooltipPositions((prev) => ({
+                            ...prev,
+                            [nameTooltipId]: {
+                              top: rect.bottom + 8,
+                              left: rect.left + rect.width / 2 - 140,
+                            },
+                          }));
+                          setActiveTooltip(nameTooltipId);
+                        };
+
+                        const tooltipPos = tooltipPositions[nameTooltipId] || {
+                          top: 0,
+                          left: 0,
+                        };
+
+                        return (
+                          <div
+                            style={{
+                              position: "relative",
+                              display: "inline-block",
+                            }}
+                            onMouseEnter={handleNameMouseEnter}
+                            onMouseLeave={() => setActiveTooltip(null)}
+                          >
+                            <span style={{ cursor: "help" }}>
+                              {customer.customerInfo.lastName || "N/A"}
+                            </span>
+                            {activeTooltip === nameTooltipId && (
+                              <div
+                                className={styles.nameTooltip}
+                                role="tooltip"
+                                style={{
+                                  top: `${tooltipPos.top}px`,
+                                  left: `${tooltipPos.left}px`,
+                                }}
+                              >
+                                <div className={styles.nameTooltipRow}>
+                                  <span className={styles.nameTooltipLabel}>
+                                    📍 Address
+                                  </span>
+                                  <span>
+                                    {customer.customerInfo.street || "N/A"}
+                                    {customer.customerInfo.city &&
+                                      `, ${customer.customerInfo.city}`}
+                                    {customer.customerInfo.state &&
+                                      `, ${customer.customerInfo.state}`}
+                                    {customer.customerInfo.zipCode &&
+                                      ` ${customer.customerInfo.zipCode}`}
+                                  </span>
+                                </div>
+                                {customer.projects &&
+                                  customer.projects.length > 0 && (
+                                    <div
+                                      className={styles.nameTooltipRow}
+                                      style={{ marginTop: "8px" }}
+                                    >
+                                      <span className={styles.nameTooltipLabel}>
+                                        🏢 Projects
+                                      </span>
+                                      <div className={styles.projectsList}>
+                                        {customer.projects.map((proj, idx) => {
+                                          const projectName =
+                                            proj.projectName ||
+                                            proj.customerInfo?.projectName ||
+                                            `Project ${idx + 1}`;
+                                          return (
+                                            <div
+                                              key={idx}
+                                              className={styles.projectItem}
+                                            >
+                                              {projectName}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td>
                       <a
                         href={`tel:${customer.customerInfo.phone}`}
@@ -207,16 +410,38 @@ export default function CustomersListTable({
                     <td>{formatDateDisplay(customer.earliestStartDate)}</td>
                     <td>{formatDateDisplay(customer.latestFinishDate)}</td>
                     <td>
-                      <span
-                        className={`${styles.status} ${
-                          styles[
-                            customer.status.toLowerCase().replace(/\s+/g, "")
-                          ]
-                        }`}
-                        data-tooltip={customer.status}
-                      >
-                        {customer.status}
-                      </span>
+                      <div className={styles.statusCell}>
+                        <span
+                          className={`${styles.status} ${
+                            styles[
+                              customer.status.toLowerCase().replace(/\s+/g, "")
+                            ]
+                          }`}
+                          data-tooltip={customer.status}
+                        >
+                          {customer.status}
+                        </span>
+                        {(() => {
+                          const info = getLastActivityInfo(customer);
+                          if (!info) return null;
+                          return (
+                            <span
+                              className={styles.lastActivityChip}
+                              title={
+                                info.type === "Next"
+                                  ? info.tooltip
+                                  : info.tooltip
+                              }
+                            >
+                              <FontAwesomeIcon
+                                icon={faClock}
+                                aria-hidden="true"
+                              />
+                              <span aria-hidden="true">{info.label}</span>
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </td>
                     <td
                       className={
@@ -225,33 +450,443 @@ export default function CustomersListTable({
                           : styles.amountPaid
                       }
                     >
-                      <div className={styles.progressContainer}>
-                        <div
-                          className={styles.progressBarContainer}
-                          role="progressbar"
-                          aria-valuenow={progress}
-                          aria-valuemin="0"
-                          aria-valuemax="100"
-                          aria-label={`Payment progress: ${progress}%`}
-                        >
+                      {(() => {
+                        const ttData = getPaymentTooltipData(customer);
+                        const tooltipId = `payment-tooltip-${customerId}`;
+
+                        const handlePaymentMouseEnter = (e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setTooltipPositions((prev) => ({
+                            ...prev,
+                            [tooltipId]: {
+                              top: rect.bottom + 8,
+                              left: rect.left + rect.width / 2 - 140,
+                            },
+                          }));
+                          setActiveTooltip(tooltipId);
+                        };
+
+                        const tooltipPos = tooltipPositions[tooltipId] || {
+                          top: 0,
+                          left: 0,
+                        };
+
+                        return (
                           <div
-                            className={styles.progressBar}
-                            style={{ width: `${progress}%` }}
-                          />
-                          <span
-                            className={styles.progressText}
-                            aria-hidden="true"
+                            className={styles.progressContainer}
+                            style={{ position: "relative" }}
+                            onMouseEnter={handlePaymentMouseEnter}
+                            onMouseLeave={() => {
+                              // Only hide if we're actually leaving the entire container
+                              setTimeout(() => {
+                                if (activeTooltip === tooltipId) {
+                                  setActiveTooltip(null);
+                                }
+                              }, 100);
+                            }}
                           >
-                            {progress}%
-                          </span>
-                        </div>
-                        <span className={styles.amountDisplay}>
-                          ${customer.totalAmountRemaining.toFixed(2)}
-                        </span>
-                      </div>
+                            <div
+                              className={styles.progressBarContainer}
+                              role="progressbar"
+                              aria-valuenow={progress}
+                              aria-valuemin="0"
+                              aria-valuemax="100"
+                              aria-label={`Payment progress: ${progress}%`}
+                            >
+                              <div
+                                className={styles.progressBar}
+                                style={{ width: `${progress}%` }}
+                              />
+                              <span
+                                className={styles.progressText}
+                                aria-hidden="true"
+                              >
+                                {progress}%
+                              </span>
+                            </div>
+                            <span className={styles.amountDisplay}>
+                              ${customer.totalAmountRemaining.toFixed(2)}
+                            </span>
+
+                            {/* Rich payment breakdown tooltip */}
+                            {activeTooltip === tooltipId && (
+                              <div
+                                className={styles.paymentTooltip}
+                                role="tooltip"
+                                onMouseEnter={() => setActiveTooltip(tooltipId)}
+                                onMouseLeave={() => setActiveTooltip(null)}
+                                style={{
+                                  top: `${tooltipPos.top}px`,
+                                  left: `${tooltipPos.left}px`,
+                                }}
+                              >
+                                {/* Grand Total */}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    padding: "4px 0",
+                                    color: "#333",
+                                  }}
+                                >
+                                  <span style={{ fontWeight: "bold" }}>
+                                    Grand Total
+                                  </span>
+                                  <span style={{ fontWeight: "bold" }}>
+                                    ${ttData.total.toFixed(2)}
+                                  </span>
+                                </div>
+
+                                {/* Total Paid */}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    padding: "4px 0",
+                                    color: "green",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  <span>Total Paid</span>
+                                  <span>−${ttData.paid.toFixed(2)}</span>
+                                </div>
+
+                                {/* Payment Status */}
+                                {ttData.totalInst > 0 && (
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                      padding: "4px 0",
+                                      borderTop: "1px solid var(--border)",
+                                      marginTop: "4px",
+                                      paddingTop: "4px",
+                                      color: "var(--text-color)",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    <span>Payment Installments</span>
+                                    <div style={{ textAlign: "right" }}>
+                                      <div>
+                                        {ttData.paidInst} received,{" "}
+                                        {ttData.pendingInst} due
+                                      </div>
+
+                                      {(() => {
+                                        let overdueCount = 0;
+                                        customer.projects.forEach((project) => {
+                                          if (
+                                            project.settings &&
+                                            project.settings.payments
+                                          ) {
+                                            project.settings.payments.forEach(
+                                              (payment) => {
+                                                const pType = (
+                                                  payment.type || ""
+                                                ).toLowerCase();
+                                                const pMethod = (
+                                                  payment.method || ""
+                                                ).toLowerCase();
+                                                const isInst =
+                                                  pType === "installment" ||
+                                                  pMethod === "installment";
+
+                                                if (
+                                                  isInst &&
+                                                  new Date(payment.date) <
+                                                    new Date() &&
+                                                  !payment.isPaid
+                                                ) {
+                                                  overdueCount++;
+                                                }
+                                              },
+                                            );
+                                          }
+                                        });
+                                        return overdueCount > 0 ? (
+                                          <div style={{ color: "red" }}>
+                                            {overdueCount} overdue
+                                          </div>
+                                        ) : null;
+                                      })()}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Amount Due */}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    padding: "4px 0",
+                                    borderTop: "1px solid #ddd",
+                                    marginTop: "4px",
+                                    paddingTop: "4px",
+                                    color: "red",
+                                    fontWeight: "bold",
+                                  }}
+                                >
+                                  <span>Amount Due</span>
+                                  <span>${ttData.remaining.toFixed(2)}</span>
+                                </div>
+
+                                {/* Deposit Status */}
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    padding: "4px 0",
+                                    color: "#333",
+                                  }}
+                                >
+                                  <span>Deposit</span>
+                                  <span
+                                    style={{
+                                      color: ttData.depositPaid
+                                        ? "green"
+                                        : "red",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    {ttData.depositPaid
+                                      ? "✓ Received"
+                                      : "✗ Pending"}
+                                  </span>
+                                </div>
+
+                                {/* Individual Installments */}
+                                {(() => {
+                                  const installments = [];
+                                  customer.projects.forEach((project) => {
+                                    if (
+                                      project.settings &&
+                                      project.settings.payments
+                                    ) {
+                                      project.settings.payments.forEach(
+                                        (payment) => {
+                                          const pType = (
+                                            payment.type || ""
+                                          ).toLowerCase();
+                                          const pMethod = (
+                                            payment.method || ""
+                                          ).toLowerCase();
+                                          if (
+                                            pType === "installment" ||
+                                            pMethod === "installment"
+                                          ) {
+                                            installments.push({
+                                              date: new Date(payment.date),
+                                              amount: parseFloat(
+                                                payment.amount,
+                                              ),
+                                              isPaid: payment.isPaid || false,
+                                            });
+                                          }
+                                        },
+                                      );
+                                    }
+                                  });
+
+                                  return installments.length > 0 ? (
+                                    <>
+                                      <div
+                                        style={{
+                                          borderTop: `1px solid var(--border)`,
+                                          margin: "8px 0",
+                                          paddingTop: "8px",
+                                        }}
+                                      >
+                                        <div
+                                          style={{
+                                            fontSize: "0.7rem",
+                                            fontWeight: "bold",
+                                            color: "var(--text-light)",
+                                            marginBottom: "6px",
+                                            textTransform: "uppercase",
+                                          }}
+                                        >
+                                          Installment Details
+                                        </div>
+                                        {installments.map((inst, idx) => {
+                                          const isPaid = inst.isPaid || false;
+                                          const isOverdue =
+                                            inst.date < new Date() && !isPaid;
+                                          return (
+                                            <div
+                                              key={idx}
+                                              className={`${
+                                                styles.paymentTooltipRow
+                                              } ${
+                                                isPaid
+                                                  ? styles.paymentTooltipPaid
+                                                  : isOverdue
+                                                  ? styles.paymentTooltipDue
+                                                  : ""
+                                              }`}
+                                              style={{ fontSize: "0.73rem" }}
+                                            >
+                                              <span>
+                                                #{idx + 1} -{" "}
+                                                {inst.date.toLocaleDateString(
+                                                  "en-US",
+                                                  {
+                                                    month: "short",
+                                                    day: "numeric",
+                                                  },
+                                                )}
+                                              </span>
+                                              <span>
+                                                {isPaid
+                                                  ? "✓ "
+                                                  : isOverdue
+                                                  ? "⚠ "
+                                                  : "→ "}
+                                                ${inst.amount.toFixed(2)}
+                                              </span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </>
+                                  ) : null;
+                                })()}
+
+                                {/* Progress Bar */}
+                                <div
+                                  className={styles.paymentTooltipProgress}
+                                  style={{ marginTop: "10px" }}
+                                >
+                                  <div
+                                    className={
+                                      styles.paymentTooltipProgressFill
+                                    }
+                                    style={{ width: `${ttData.progress}%` }}
+                                  />
+                                  <span>{ttData.progress}% complete</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className={styles.grandTotal}>
                       ${customer.totalGrandTotal.toFixed(2)}
+                    </td>
+                    {/* Scope column: categories · work items with hover tooltip */}
+                    <td className={styles.scopeCell}>
+                      {(() => {
+                        const scopeTooltipId = `scope-tooltip-${customerId}`;
+                        // Build categories and work types list from projects
+                        const categoriesSet = new Set();
+                        const workTypesSet = new Set();
+                        customer.projects.forEach((project) => {
+                          if (project.categories) {
+                            project.categories.forEach((cat) => {
+                              if (cat.name) categoriesSet.add(cat.name);
+                              if (cat.workItems) {
+                                cat.workItems.forEach((item) => {
+                                  if (
+                                    item.type &&
+                                    item.type !== "custom-work-type"
+                                  ) {
+                                    workTypesSet.add(
+                                      item.type
+                                        .split("-")
+                                        .map(
+                                          (w) =>
+                                            w.charAt(0).toUpperCase() +
+                                            w.slice(1),
+                                        )
+                                        .join(" "),
+                                    );
+                                  }
+                                });
+                              }
+                            });
+                          }
+                        });
+                        const categories = Array.from(categoriesSet);
+                        const workTypes = Array.from(workTypesSet);
+
+                        const handleMouseEnter = (e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          setTooltipPositions((prev) => ({
+                            ...prev,
+                            [scopeTooltipId]: {
+                              top: rect.bottom + 8,
+                              left: rect.left + rect.width / 2 - 140,
+                            },
+                          }));
+                          setActiveTooltip(scopeTooltipId);
+                        };
+
+                        const tooltipPos = tooltipPositions[scopeTooltipId] || {
+                          top: 0,
+                          left: 0,
+                        };
+
+                        return (
+                          <div
+                            style={{ position: "relative" }}
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={() => setActiveTooltip(null)}
+                          >
+                            <span className={styles.scopeCount}>
+                              {customer.totalCategories}c ·{" "}
+                              {customer.totalWorkItems}w
+                            </span>
+                            {/* Scope details tooltip */}
+                            {activeTooltip === scopeTooltipId && (
+                              <div
+                                className={styles.scopeTooltip}
+                                role="tooltip"
+                                style={{
+                                  top: `${tooltipPos.top}px`,
+                                  left: `${tooltipPos.left}px`,
+                                }}
+                              >
+                                {categories.length > 0 && (
+                                  <>
+                                    <div className={styles.scopeTooltipHeader}>
+                                      📋 Categories
+                                    </div>
+                                    {categories.map((cat, idx) => (
+                                      <div
+                                        key={idx}
+                                        className={styles.scopeTooltipRow}
+                                      >
+                                        {cat}
+                                      </div>
+                                    ))}
+                                  </>
+                                )}
+                                {workTypes.length > 0 && (
+                                  <>
+                                    <div
+                                      className={styles.scopeTooltipHeader}
+                                      style={{
+                                        marginTop:
+                                          categories.length > 0 ? 8 : 0,
+                                      }}
+                                    >
+                                      🔧 Work Types
+                                    </div>
+                                    {workTypes.map((type, idx) => (
+                                      <div
+                                        key={idx}
+                                        className={styles.scopeTooltipRow}
+                                      >
+                                        {type}
+                                      </div>
+                                    ))}
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td className={styles.actions}>
                       <button

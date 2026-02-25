@@ -30,12 +30,14 @@ import {
   faTimes,
   faSearch,
   faWallet,
+  faEye,
+  faArrowUp,
+  faArrowDown,
 } from "@fortawesome/free-solid-svg-icons";
 import * as expensesAPI from "../../utilities/expenses-api";
 import { getProjects } from "../../services/projectService";
 import {
   calculateAdditionalRevenue,
-  calculateYearlyAdditionalRevenue,
   isProjectFullyPaid,
   getProjectAdditionalRevenue,
 } from "../../constants/additionalRevenueCalculator";
@@ -104,7 +106,6 @@ const CATEGORIES = [
 export default function CompanyExpenses() {
   const [expenses, setExpenses] = useState([]);
   const [projects, setProjects] = useState([]);
-  const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -140,7 +141,7 @@ export default function CompanyExpenses() {
   const [searchTerm, setSearchTerm] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Load expenses and dashboard data on mount
+  // Load expenses and projects data on mount
   useEffect(() => {
     loadData();
   }, []);
@@ -150,15 +151,13 @@ export default function CompanyExpenses() {
       setLoading(true);
       setError(null);
 
-      const [expensesData, dashboardData, projectsData] = await Promise.all([
+      const [expensesData, projectsData] = await Promise.all([
         expensesAPI.getAllExpenses(),
-        expensesAPI.getDashboard(),
         getProjects(),
       ]);
 
-      setExpenses(expensesData);
-      setDashboard(dashboardData);
-      setProjects(projectsData);
+      setExpenses(expensesData || []);
+      setProjects(projectsData || []);
     } catch (err) {
       console.error("Error loading data:", err);
       setError("Failed to load expenses. Please try again.");
@@ -282,20 +281,6 @@ export default function CompanyExpenses() {
     searchTerm,
   ]);
 
-  // Calculate total additional revenue (Markup + Transportation) - FULLY PAID ONLY
-  // Using shared utility to ensure consistency across all pages
-  const totalAdditionalRevenue = useMemo(() => {
-    const result = calculateAdditionalRevenue(projects);
-    return result.total;
-  }, [projects]);
-
-  // Calculate yearly additional revenue (Markup + Transportation) - FULLY PAID ONLY
-  const currentYear = new Date().getFullYear();
-  const yearlyAdditionalRevenue = useMemo(() => {
-    const result = calculateYearlyAdditionalRevenue(projects);
-    return result.total;
-  }, [projects]);
-
   // Calculate filtered statistics
   const filteredStats = useMemo(() => {
     const total = filteredExpenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -322,6 +307,63 @@ export default function CompanyExpenses() {
     });
     return Array.from(years).sort((a, b) => b.localeCompare(a));
   }, [expenses]);
+
+  // ============================================================
+  // YEAR-SPECIFIC OVERHEAD COVERAGE ANALYSIS
+  // ============================================================
+
+  // Get additional revenue for SELECTED year only (from fully paid projects completed in that year)
+  const yearSpecificRevenue = useMemo(() => {
+    return calculateAdditionalRevenue(projects, {
+      year: parseInt(selectedYear),
+    });
+  }, [projects, selectedYear]);
+
+  // Get expenses for SELECTED year only
+  const yearSpecificExpenses = useMemo(() => {
+    return expenses
+      .filter((exp) => exp.date.startsWith(selectedYear))
+      .reduce((sum, exp) => sum + exp.amount, 0);
+  }, [expenses, selectedYear]);
+
+  // Get projects completed in selected year (for detailed breakdown)
+  const projectsCompletedInYear = useMemo(() => {
+    return projects.filter((p) => {
+      const startDate = p.customerInfo?.startDate;
+      if (!startDate) return false;
+      const projectYear = new Date(startDate).getFullYear();
+      return projectYear === parseInt(selectedYear) && isProjectFullyPaid(p);
+    });
+  }, [projects, selectedYear]);
+
+  // Calculate year-over-year trend data
+  const yearOverYearData = useMemo(() => {
+    const years = availableYears.slice(0, 5); // Last 5 years max
+    return years.map((year) => {
+      const revenue = calculateAdditionalRevenue(projects, {
+        year: parseInt(year),
+      });
+      const expenses_yr = expenses
+        .filter((e) => e.date.startsWith(year))
+        .reduce((sum, e) => sum + e.amount, 0);
+
+      return {
+        year,
+        revenue: revenue.total,
+        expenses: expenses_yr,
+        net: revenue.total - expenses_yr,
+        isCovered: revenue.total >= expenses_yr,
+        projectCount: revenue.projectCount,
+      };
+    });
+  }, [projects, expenses, availableYears]);
+
+  const isCovered = yearSpecificRevenue.total >= yearSpecificExpenses;
+  const difference = Math.abs(yearSpecificRevenue.total - yearSpecificExpenses);
+  const coveragePercentage =
+    yearSpecificExpenses > 0
+      ? (yearSpecificRevenue.total / yearSpecificExpenses) * 100
+      : 0;
 
   const handleExportCSV = () => {
     const headers = ["Date", "Category", "Description", "Amount"];
@@ -403,82 +445,6 @@ export default function CompanyExpenses() {
           <button onClick={() => setError(null)}>×</button>
         </div>
       )}
-
-      {/* Dashboard Cards */}
-      {dashboard && (
-        <div className={styles.dashboard}>
-          <div className={styles.card}>
-            <div
-              className={styles.cardIcon}
-              style={{
-                background: "linear-gradient(135deg, #3498db, #2980b9)",
-              }}
-            >
-              <FontAwesomeIcon icon={faCalendarAlt} />
-            </div>
-            <div className={styles.cardContent}>
-              <span className={styles.cardTitle}>Daily Total</span>
-              <span className={styles.cardAmount}>
-                ${dashboard.periodTotals.daily.toFixed(2)}
-              </span>
-              <span className={styles.cardTrend}>Today's spending</span>
-            </div>
-          </div>
-          <div className={styles.card}>
-            <div
-              className={styles.cardIcon}
-              style={{
-                background: "linear-gradient(135deg, #9b59b6, #8e44ad)",
-              }}
-            >
-              <FontAwesomeIcon icon={faChartLine} />
-            </div>
-            <div className={styles.cardContent}>
-              <span className={styles.cardTitle}>Weekly Total</span>
-              <span className={styles.cardAmount}>
-                ${dashboard.periodTotals.weekly.toFixed(2)}
-              </span>
-              <span className={styles.cardTrend}>This week</span>
-            </div>
-          </div>
-          <div className={styles.card}>
-            <div
-              className={styles.cardIcon}
-              style={{
-                background: "linear-gradient(135deg, #e67e22, #d35400)",
-              }}
-            >
-              <FontAwesomeIcon icon={faMoneyBillWave} />
-            </div>
-            <div className={styles.cardContent}>
-              <span className={styles.cardTitle}>Monthly Total</span>
-              <span className={styles.cardAmount}>
-                ${dashboard.periodTotals.monthly.toFixed(2)}
-              </span>
-              <span className={styles.cardTrend}>This month</span>
-            </div>
-          </div>
-          <div className={styles.card}>
-            <div
-              className={styles.cardIcon}
-              style={{
-                background: "linear-gradient(135deg, #2ecc71, #27ae60)",
-              }}
-            >
-              <FontAwesomeIcon icon={faFileInvoiceDollar} />
-            </div>
-            <div className={styles.cardContent}>
-              <span className={styles.cardTitle}>Yearly Total</span>
-              <span className={styles.cardAmount}>
-                ${dashboard.periodTotals.yearly.toFixed(2)}
-              </span>
-              <span className={styles.cardTrend}>This year</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Sections Removed as requested */}
 
       {/* Add Expense Form */}
       <section className={styles.formSection}>
@@ -827,316 +793,398 @@ export default function CompanyExpenses() {
         </div>
       </section>
 
-      {/* Additional Revenue Breakdown Section */}
-      {dashboard && (
-        <section className={styles.revenueBreakdownSection}>
-          <h2 className={styles.sectionTitle}>
-            <FontAwesomeIcon icon={faWallet} />
-            Additional Revenue (Fully Paid Projects Only)
-          </h2>
-          <div className={styles.revenueBreakdownCard}>
-            <div className={styles.revenueBreakdownGrid}>
-              <div className={styles.revenueItem}>
-                <div className={styles.revenueLabel}>
-                  <FontAwesomeIcon
-                    icon={faChartLine}
-                    style={{ color: "#3498db" }}
-                  />
-                  <span>Total Markup</span>
-                </div>
-                <div className={styles.revenueAmount}>
-                  $
-                  {projects
-                    .reduce((sum, p) => {
-                      if (!isProjectFullyPaid(p)) return sum;
-                      return sum + getProjectAdditionalRevenue(p).markup;
-                    }, 0)
-                    .toFixed(2)}
-                </div>
-              </div>
-              <div className={styles.revenueItem}>
-                <div className={styles.revenueLabel}>
-                  <FontAwesomeIcon
-                    icon={faTruck}
-                    style={{ color: "#2ecc71" }}
-                  />
-                  <span>Total Transportation</span>
-                </div>
-                <div className={styles.revenueAmount}>
-                  $
-                  {projects
-                    .reduce((sum, p) => {
-                      if (!isProjectFullyPaid(p)) return sum;
-                      return (
-                        sum + getProjectAdditionalRevenue(p).transportation
-                      );
-                    }, 0)
-                    .toFixed(2)}
-                </div>
-              </div>
-              <div className={`${styles.revenueItem} ${styles.revenueTotal}`}>
-                <div className={styles.revenueLabel}>
-                  <FontAwesomeIcon
-                    icon={faWallet}
-                    style={{ color: "#1abc9c" }}
-                  />
-                  <span>Total Additional Revenue</span>
-                </div>
-                <div
-                  className={styles.revenueAmount}
-                  style={{ fontSize: "1.5rem", fontWeight: "700" }}
-                >
-                  ${totalAdditionalRevenue.toFixed(2)}
-                </div>
-              </div>
-            </div>
-            <div className={styles.revenueNote}>
-              <FontAwesomeIcon icon={faReceipt} />
-              <span>
-                Only counting markup and transportation fees from projects with
-                zero outstanding balance
-              </span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Coverage Analysis Section */}
-      {dashboard && (
-        <section className={styles.coverageSection}>
+      {/* ============================================================ */}
+      {/* YEAR-SPECIFIC OVERHEAD COVERAGE ANALYSIS */}
+      {/* ============================================================ */}
+      <section className={styles.coverageSection}>
+        <div className={styles.coverageHeader}>
           <h2 className={styles.sectionTitle}>
             <FontAwesomeIcon icon={faChartLine} />
-            Overhead Coverage Analysis (This Year)
+            Overhead Coverage Analysis
           </h2>
-          <div className={styles.coverageGrid}>
-            <div className={styles.coverageCard}>
-              <div
-                className={styles.coverageHeader}
-                style={{
-                  background: "linear-gradient(135deg, #1abc9c, #16a085)",
-                }}
-              >
-                <FontAwesomeIcon icon={faWallet} />
-                <span>Additional Revenue (This Year)</span>
-              </div>
-              <div className={styles.coverageBody}>
-                <div className={styles.coverageAmount}>
-                  ${yearlyAdditionalRevenue.toFixed(2)}
-                </div>
-                <div className={styles.coverageBreakdown}>
-                  <div className={styles.coverageBreakdownItem}>
-                    <span>Markup:</span>
-                    <span>
-                      $
-                      {projects
-                        .reduce((sum, p) => {
-                          const projectDateStr = p.customerInfo?.startDate;
-                          const projectDate = projectDateStr
-                            ? new Date(projectDateStr)
-                            : new Date();
-                          if (projectDate.getFullYear() !== currentYear)
-                            return sum;
-                          if (!isProjectFullyPaid(p)) return sum;
-                          return sum + getProjectAdditionalRevenue(p).markup;
-                        }, 0)
-                        .toFixed(2)}
-                    </span>
-                  </div>
-                  <div className={styles.coverageBreakdownItem}>
-                    <span>Transportation:</span>
-                    <span>
-                      $
-                      {projects
-                        .reduce((sum, p) => {
-                          const projectDateStr = p.customerInfo?.startDate;
-                          const projectDate = projectDateStr
-                            ? new Date(projectDateStr)
-                            : new Date();
-                          if (projectDate.getFullYear() !== currentYear)
-                            return sum;
-                          if (!isProjectFullyPaid(p)) return sum;
-                          return (
-                            sum + getProjectAdditionalRevenue(p).transportation
-                          );
-                        }, 0)
-                        .toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
 
-            <div className={styles.coverageCard}>
-              <div
-                className={styles.coverageHeader}
-                style={{
-                  background: "linear-gradient(135deg, #e74c3c, #c0392b)",
-                }}
-              >
-                <FontAwesomeIcon icon={faFileInvoiceDollar} />
-                <span>Company Expenses (This Year)</span>
-              </div>
-              <div className={styles.coverageBody}>
-                <div className={styles.coverageAmount}>
-                  ${dashboard.periodTotals.yearly.toFixed(2)}
-                </div>
-                <div className={styles.coverageLabel}>Total Overhead Costs</div>
-              </div>
-            </div>
+          {/* Year Selector for Coverage Analysis */}
+          <div className={styles.coverageYearSelector}>
+            <label htmlFor="coverage-year">Select Year:</label>
+            <select
+              id="coverage-year"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className={styles.yearSelect}
+            >
+              {availableYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+              {!availableYears.includes(
+                new Date().getFullYear().toString(),
+              ) && (
+                <option value={new Date().getFullYear()}>
+                  {new Date().getFullYear()}
+                </option>
+              )}
+            </select>
+          </div>
+        </div>
 
-            <div className={styles.coverageCard}>
-              <div
-                className={styles.coverageHeader}
-                style={{
-                  background:
-                    yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
-                      ? "linear-gradient(135deg, #2ecc71, #27ae60)"
-                      : "linear-gradient(135deg, #e67e22, #d35400)",
-                }}
-              >
-                <FontAwesomeIcon
-                  icon={
-                    yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
-                      ? faChartLine
-                      : faMoneyBillWave
-                  }
-                />
-                <span>Net Position</span>
+        <div className={styles.coverageGrid}>
+          {/* Additional Revenue Card - Year Specific */}
+          <div className={styles.coverageCard}>
+            <div
+              className={styles.coverageHeader}
+              style={{
+                background: "linear-gradient(135deg, #1abc9c, #16a085)",
+              }}
+            >
+              <FontAwesomeIcon icon={faWallet} />
+              <span>Additional Revenue ({selectedYear})</span>
+            </div>
+            <div className={styles.coverageBody}>
+              <div className={styles.coverageAmount}>
+                ${yearSpecificRevenue.total.toFixed(2)}
               </div>
-              <div className={styles.coverageBody}>
-                <div
-                  className={styles.coverageAmount}
-                  style={{
-                    color:
-                      yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
-                        ? "#2ecc71"
-                        : "#e74c3c",
-                  }}
-                >
-                  {yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
-                    ? "+"
-                    : ""}
-                  $
-                  {(
-                    yearlyAdditionalRevenue - dashboard.periodTotals.yearly
-                  ).toFixed(2)}
+              <div className={styles.coverageBreakdown}>
+                <div className={styles.coverageBreakdownItem}>
+                  <span>Markup:</span>
+                  <span>${yearSpecificRevenue.totalMarkup.toFixed(2)}</span>
                 </div>
-                <div
-                  className={styles.coverageStatus}
-                  style={{
-                    color:
-                      yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
-                        ? "#2ecc71"
-                        : "#e74c3c",
-                    fontWeight: "600",
-                  }}
-                >
-                  {yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
-                    ? `✓ Expenses Covered (${(
-                        (yearlyAdditionalRevenue /
-                          dashboard.periodTotals.yearly) *
-                        100
-                      ).toFixed(1)}% coverage)`
-                    : `✗ Shortfall (${(
-                        (yearlyAdditionalRevenue /
-                          dashboard.periodTotals.yearly) *
-                        100
-                      ).toFixed(1)}% coverage)`}
+                <div className={styles.coverageBreakdownItem}>
+                  <span>Transportation:</span>
+                  <span>
+                    ${yearSpecificRevenue.totalTransportation.toFixed(2)}
+                  </span>
+                </div>
+                <div className={styles.coverageBreakdownItem}>
+                  <span>From:</span>
+                  <span>
+                    {yearSpecificRevenue.projectCount} fully paid projects
+                  </span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Pricing Guidance */}
-          {dashboard.periodTotals.yearly > 0 && (
-            <div className={styles.pricingGuidance}>
-              <h3 className={styles.pricingTitle}>
-                <FontAwesomeIcon icon={faChartLine} />
-                Pricing Guidance for Future Projects
-              </h3>
-              <div className={styles.pricingContent}>
-                <div className={styles.pricingMetric}>
-                  <span className={styles.pricingLabel}>
-                    Monthly Overhead Average:
-                  </span>
-                  <span className={styles.pricingValue}>
-                    ${(dashboard.periodTotals.yearly / 12).toFixed(2)}
-                  </span>
+          {/* Company Expenses Card - Year Specific */}
+          <div className={styles.coverageCard}>
+            <div
+              className={styles.coverageHeader}
+              style={{
+                background: "linear-gradient(135deg, #e74c3c, #c0392b)",
+              }}
+            >
+              <FontAwesomeIcon icon={faFileInvoiceDollar} />
+              <span>Company Expenses ({selectedYear})</span>
+            </div>
+            <div className={styles.coverageBody}>
+              <div className={styles.coverageAmount}>
+                ${yearSpecificExpenses.toFixed(2)}
+              </div>
+              <div className={styles.coverageLabel}>
+                {expenses.filter((e) => e.date.startsWith(selectedYear)).length}{" "}
+                expense entries
+              </div>
+              {yearSpecificExpenses > 0 && (
+                <div className={styles.coverageBreakdown}>
+                  {Object.entries(filteredStats.categoryBreakdown)
+                    .slice(0, 3)
+                    .map(([cat, amount]) => (
+                      <div key={cat} className={styles.coverageBreakdownItem}>
+                        <span>{getCategoryName(cat)}:</span>
+                        <span>${amount.toFixed(2)}</span>
+                      </div>
+                    ))}
                 </div>
-                <div className={styles.pricingMetric}>
-                  <span className={styles.pricingLabel}>
-                    Completed & Paid Projects (This Year):
-                  </span>
-                  <span className={styles.pricingValue}>
-                    {
-                      projects.filter((p) => {
-                        const projectDateStr = p.customerInfo?.startDate;
-                        const projectDate = projectDateStr
-                          ? new Date(projectDateStr)
-                          : new Date();
-                        return (
-                          projectDate.getFullYear() === currentYear &&
-                          isProjectFullyPaid(p)
-                        );
-                      }).length
-                    }{" "}
-                    projects
-                  </span>
-                </div>
-                {projects.filter((p) => {
-                  const projectDateStr = p.customerInfo?.startDate;
-                  const projectDate = projectDateStr
-                    ? new Date(projectDateStr)
-                    : new Date();
-                  return (
-                    projectDate.getFullYear() === currentYear &&
-                    isProjectFullyPaid(p)
-                  );
-                }).length > 0 && (
-                  <div className={styles.pricingMetric}>
-                    <span className={styles.pricingLabel}>
-                      Overhead per Project (Average):
-                    </span>
-                    <span className={styles.pricingValue}>
-                      $
-                      {(
-                        dashboard.periodTotals.yearly /
-                        projects.filter((p) => {
-                          const projectDateStr = p.customerInfo?.startDate;
-                          const projectDate = projectDateStr
-                            ? new Date(projectDateStr)
-                            : new Date();
-                          return (
-                            projectDate.getFullYear() === currentYear &&
-                            isProjectFullyPaid(p)
-                          );
-                        }).length
-                      ).toFixed(2)}
-                    </span>
+              )}
+            </div>
+          </div>
+
+          {/* Net Position Card - Year Specific */}
+          <div className={styles.coverageCard}>
+            <div
+              className={styles.coverageHeader}
+              style={{
+                background: isCovered
+                  ? "linear-gradient(135deg, #2ecc71, #27ae60)"
+                  : yearSpecificExpenses === 0
+                  ? "linear-gradient(135deg, #95a5a6, #7f8c8d)"
+                  : "linear-gradient(135deg, #e67e22, #d35400)",
+              }}
+            >
+              <FontAwesomeIcon
+                icon={
+                  isCovered
+                    ? faChartLine
+                    : yearSpecificExpenses === 0
+                    ? faEye
+                    : faMoneyBillWave
+                }
+              />
+              <span>Net Position ({selectedYear})</span>
+            </div>
+            <div className={styles.coverageBody}>
+              <div
+                className={styles.coverageAmount}
+                style={{
+                  color: isCovered
+                    ? "#2ecc71"
+                    : yearSpecificExpenses === 0
+                    ? "#95a5a6"
+                    : "#e74c3c",
+                }}
+              >
+                {yearSpecificExpenses === 0 ? "—" : isCovered ? "+" : "-"}$
+                {yearSpecificExpenses === 0 ? "0.00" : difference.toFixed(2)}
+              </div>
+              <div
+                className={styles.coverageStatus}
+                style={{
+                  color: isCovered
+                    ? "#2ecc71"
+                    : yearSpecificExpenses === 0
+                    ? "#95a5a6"
+                    : "#e74c3c",
+                }}
+              >
+                {yearSpecificExpenses === 0
+                  ? "No expenses recorded"
+                  : isCovered
+                  ? `✓ Fully Covered (${coveragePercentage.toFixed(1)}%)`
+                  : `✗ Shortfall (${coveragePercentage.toFixed(1)}% covered)`}
+              </div>
+              {yearSpecificExpenses > 0 &&
+                yearSpecificRevenue.projectCount > 0 && (
+                  <div className={styles.coverageBreakdown}>
+                    <div className={styles.coverageBreakdownItem}>
+                      <span>Per Project Avg:</span>
+                      <span>
+                        $
+                        {(
+                          yearSpecificExpenses /
+                          yearSpecificRevenue.projectCount
+                        ).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
                 )}
-                <div className={styles.pricingRecommendation}>
-                  <FontAwesomeIcon icon={faChartLine} />
-                  <div>
-                    <strong>Recommendation:</strong>
-                    <p>
-                      {yearlyAdditionalRevenue >= dashboard.periodTotals.yearly
-                        ? `Your current pricing structure is working well! Additional revenue is covering all overhead costs with a surplus of $${(
-                            yearlyAdditionalRevenue -
-                            dashboard.periodTotals.yearly
-                          ).toFixed(2)}.`
-                        : `Consider increasing markup or transportation fees. You need an additional $${Math.abs(
-                            yearlyAdditionalRevenue -
-                              dashboard.periodTotals.yearly,
-                          ).toFixed(2)} in revenue to cover overhead costs.`}
-                    </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Year-over-Year Trend Comparison */}
+        {yearOverYearData.length > 1 && (
+          <div className={styles.yoyComparison}>
+            <h3 className={styles.yoyTitle}>
+              <FontAwesomeIcon icon={faChartLine} />
+              Year-over-Year Trend
+            </h3>
+            <div className={styles.yoyGrid}>
+              {yearOverYearData.map((data) => (
+                <div
+                  key={data.year}
+                  className={`${styles.yoyCard} ${
+                    data.isCovered ? styles.yoyPositive : styles.yoyNegative
+                  }`}
+                  onClick={() => setSelectedYear(data.year)}
+                  style={{ cursor: "pointer" }}
+                >
+                  <div className={styles.yoyYear}>{data.year}</div>
+                  <div className={styles.yoyRevenue}>
+                    <FontAwesomeIcon
+                      icon={faArrowUp}
+                      style={{ color: "#2ecc71", fontSize: "0.8rem" }}
+                    />
+                    ${data.revenue.toFixed(2)}
                   </div>
+                  <div className={styles.yoyExpenses}>
+                    <FontAwesomeIcon
+                      icon={faArrowDown}
+                      style={{ color: "#e74c3c", fontSize: "0.8rem" }}
+                    />
+                    ${data.expenses.toFixed(2)}
+                  </div>
+                  <div className={styles.yoyNet}>
+                    {data.isCovered ? "✓" : "✗"} $
+                    {Math.abs(data.net).toFixed(2)}
+                  </div>
+                  <div className={styles.yoyProjects}>
+                    {data.projectCount} projects
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Projects List for Selected Year */}
+        {projectsCompletedInYear.length > 0 && (
+          <div className={styles.projectsList}>
+            <h4 className={styles.projectsListTitle}>
+              <FontAwesomeIcon icon={faWallet} />
+              Fully Paid Projects in {selectedYear} (
+              {projectsCompletedInYear.length})
+            </h4>
+            <div className={styles.projectsGrid}>
+              {projectsCompletedInYear.map((project, idx) => {
+                const revenue = getProjectAdditionalRevenue(project);
+                return (
+                  <div key={idx} className={styles.projectCard}>
+                    <div className={styles.projectName}>
+                      {project.customerInfo?.firstName}{" "}
+                      {project.customerInfo?.lastName}
+                    </div>
+                    <div className={styles.projectDetails}>
+                      <span>Markup: ${revenue.markup.toFixed(2)}</span>
+                      <span>
+                        Transport: ${revenue.transportation.toFixed(2)}
+                      </span>
+                      <span className={styles.projectTotal}>
+                        Total: ${revenue.total.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Pricing Guidance - Year Specific */}
+        {yearSpecificExpenses > 0 && yearSpecificRevenue.projectCount > 0 && (
+          <div className={styles.pricingGuidance}>
+            <h3 className={styles.pricingTitle}>
+              <FontAwesomeIcon icon={faChartLine} />
+              Pricing Guidance for {selectedYear}
+            </h3>
+            <div className={styles.pricingContent}>
+              <div className={styles.pricingMetric}>
+                <span className={styles.pricingLabel}>
+                  Monthly Overhead Average:
+                </span>
+                <span className={styles.pricingValue}>
+                  ${(yearSpecificExpenses / 12).toFixed(2)}
+                </span>
+              </div>
+
+              <div className={styles.pricingMetric}>
+                <span className={styles.pricingLabel}>
+                  Overhead per Project:
+                </span>
+                <span className={styles.pricingValue}>
+                  $
+                  {(
+                    yearSpecificExpenses / yearSpecificRevenue.projectCount
+                  ).toFixed(2)}
+                </span>
+              </div>
+
+              <div className={styles.pricingMetric}>
+                <span className={styles.pricingLabel}>
+                  Current Avg Markup per Project:
+                </span>
+                <span className={styles.pricingValue}>
+                  $
+                  {(
+                    yearSpecificRevenue.totalMarkup /
+                    yearSpecificRevenue.projectCount
+                  ).toFixed(2)}
+                </span>
+              </div>
+
+              <div className={styles.pricingMetric}>
+                <span className={styles.pricingLabel}>
+                  Current Avg Transport per Project:
+                </span>
+                <span className={styles.pricingValue}>
+                  $
+                  {(
+                    yearSpecificRevenue.totalTransportation /
+                    yearSpecificRevenue.projectCount
+                  ).toFixed(2)}
+                </span>
+              </div>
+
+              <div className={styles.pricingRecommendation}>
+                <FontAwesomeIcon icon={faChartLine} />
+                <div>
+                  <strong>Recommendation:</strong>
+                  <p>
+                    {isCovered
+                      ? `✅ Your markup and transportation fees are covering overhead. 
+                         To maintain this, average $${(
+                           yearSpecificExpenses /
+                           yearSpecificRevenue.projectCount
+                         ).toFixed(2)} per project.`
+                      : `⚠️ To cover your $${difference.toFixed(
+                          2,
+                        )} shortfall, you need to:`}
+                  </p>
+                  {!isCovered &&
+                    (() => {
+                      const n = yearSpecificRevenue.projectCount;
+                      // Per-project shortfall to close the gap
+                      const shortfallPerProject = n > 0 ? difference / n : 0;
+                      const halfShortfallPerProject = shortfallPerProject / 2;
+
+                      // Average markup already earned per fully-paid project
+                      // calculateAdditionalRevenue returns { totalMarkup, totalTransportation, total, projectCount }
+                      const avgMarkupPerProject =
+                        n > 0 ? yearSpecificRevenue.totalMarkup / n : 0;
+
+                      // "Increase markup by X%" = how much MORE relative to current avg markup per project
+                      // Guard: if no markup has been charged yet, show a friendly message instead of NaN
+                      const markupIncreasePercent =
+                        avgMarkupPerProject > 0
+                          ? (shortfallPerProject / avgMarkupPerProject) * 100
+                          : null;
+
+                      const markupSplitPercent =
+                        avgMarkupPerProject > 0
+                          ? (halfShortfallPerProject / avgMarkupPerProject) *
+                            100
+                          : null;
+
+                      return (
+                        <ul className={styles.recommendationList}>
+                          <li>
+                            Increase markup by{" "}
+                            <strong>
+                              {markupIncreasePercent !== null
+                                ? `${markupIncreasePercent.toFixed(1)}%`
+                                : "—"}
+                            </strong>{" "}
+                            (add ${shortfallPerProject.toFixed(2)} per project)
+                            {markupIncreasePercent === null && (
+                              <span
+                                style={{ fontSize: "0.85em", color: "#e67e22" }}
+                              >
+                                {" "}
+                                — no markup data yet for {selectedYear}
+                              </span>
+                            )}
+                          </li>
+                          <li>
+                            OR increase transportation fee by{" "}
+                            <strong>${shortfallPerProject.toFixed(2)}</strong>{" "}
+                            per project
+                          </li>
+                          <li>
+                            OR split between both:{" "}
+                            {markupSplitPercent !== null
+                              ? `+${markupSplitPercent.toFixed(1)}%`
+                              : "—"}{" "}
+                            markup and +${halfShortfallPerProject.toFixed(2)}{" "}
+                            transport
+                          </li>
+                        </ul>
+                      );
+                    })()}
                 </div>
               </div>
             </div>
-          )}
-        </section>
-      )}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

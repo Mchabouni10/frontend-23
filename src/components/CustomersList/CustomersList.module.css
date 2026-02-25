@@ -20,13 +20,14 @@
   background: var(--surface);
   border-radius: var(--radius-md);
   box-shadow: 0 3px 10px var(--shadow);
+  border: 1px solid var(--border);
   position: relative;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Page title */
 .title {
-  font-size: var(--font-size-l);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-extrabold);
   color: var(--primary);
   letter-spacing: 0.8px;
@@ -66,25 +67,24 @@
 .searchInput {
   padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
   width: 100%;
-  border: 1px solid rgba(209, 213, 219, 0.3);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
-  background-color: var(--surface);
+  background-color: var(--surface-raised);
   color: var(--text);
   transition: all 0.2s ease;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+  box-shadow: inset 0 1px 2px var(--shadow);
   font-family: var(--font-family);
 }
 
 .searchInput:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--shadow);
+  box-shadow: 0 0 0 2px var(--glow-primary, var(--shadow));
 }
 
 .searchInput::placeholder {
-  color: var(--text-light);
-  opacity: 0.7;
+  color: var(--text-muted);
 }
 
 .clearButton {
@@ -96,7 +96,7 @@
   border: none;
   border-radius: var(--radius-sm);
   background: var(--error);
-  color: var(--surface);
+  color: #fff;
   cursor: pointer;
   font-size: 0.875rem;
   width: 20px;
@@ -108,7 +108,7 @@
 }
 
 .clearButton:hover {
-  background: #c53030;
+  background: var(--error-dark);
   transform: translateY(-50%) scale(1.05);
 }
 
@@ -124,8 +124,9 @@
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
   padding: var(--spacing-sm);
-  background: var(--surface);
+  background: var(--surface-raised);
   border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
   box-shadow: 0 2px 4px var(--shadow);
 }
 
@@ -144,8 +145,9 @@
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
   padding: var(--spacing-sm);
-  background: var(--surface);
+  background: var(--surface-raised);
   border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
   box-shadow: 0 2px 4px var(--shadow);
 }
 
@@ -155,6 +157,7 @@
   border-radius: var(--radius-md);
   background: var(--surface);
   box-shadow: 0 2px 8px var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .table {
@@ -167,7 +170,7 @@
 .table td {
   padding: 0.5rem var(--spacing-sm);
   text-align: left;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+  border-bottom: 1px solid var(--border);
   font-size: var(--font-size-sm);
   color: var(--text);
 }
@@ -178,12 +181,12 @@
   font-size: var(--font-size-sm);
   text-transform: capitalize;
   letter-spacing: 0.1px;
-  color: var(--surface);
+  color: #fff;
   position: sticky;
   top: 0;
   z-index: 10;
   padding: 0.5rem var(--spacing-sm);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px var(--shadow-md);
   text-align: center;
 }
 
@@ -199,11 +202,11 @@
 }
 
 .sortable:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.15);
 }
 
 .sortable:focus-visible {
-  outline: 2px solid var(--surface);
+  outline: 2px solid rgba(255, 255, 255, 0.7);
   outline-offset: -2px;
 }
 
@@ -212,7 +215,7 @@
   font-weight: var(--font-weight-bold);
 }
 
-/* Projects column - reduced width */
+/* Projects column */
 .table td:nth-child(4),
 .table th:nth-child(4) {
   text-align: center;
@@ -229,12 +232,12 @@
   padding: 0 6px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
+  color: #fff;
   font-weight: var(--font-weight-bold);
   font-size: 0.75rem;
 }
 
-/* Date columns - more compact */
+/* Date columns */
 .table td:nth-child(5),
 .table th:nth-child(5),
 .table td:nth-child(6),
@@ -273,13 +276,13 @@
   min-width: 140px;
 }
 
-/* Row striping for better readability */
+/* Row striping */
 .table tbody tr:nth-child(even) {
-  background-color: rgba(249, 250, 251, 0.3);
+  background-color: var(--surface-raised);
 }
 
 .table tr:hover {
-  background-color: rgba(44, 62, 80, 0.08);
+  background-color: var(--muted-bg);
   transition: background-color 0.2s ease;
 }
 
@@ -306,7 +309,7 @@
 
 .grandTotal {
   font-weight: var(--font-weight-bold);
-  color: var(--primary-dark);
+  color: var(--primary);
   text-align: right;
   padding: 0.5rem var(--spacing-sm);
   font-size: var(--font-size-sm);
@@ -347,7 +350,6 @@
   font-weight: var(--font-weight-medium);
   text-transform: capitalize;
   display: inline-block;
-  color: var(--text);
   position: relative;
   font-size: var(--font-size-sm);
 }
@@ -358,52 +360,81 @@
   top: -30px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--primary-dark);
-  color: var(--surface);
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
   padding: 4px 8px;
   border-radius: var(--radius-sm);
   font-size: 0.75rem;
   white-space: nowrap;
   z-index: 100;
   pointer-events: none;
+  box-shadow: 0 4px 12px var(--shadow-md);
 }
 
-/* Status variants - Using separate color values instead of rgba with CSS vars */
+/* Status variants */
 .notstarted {
-  background: linear-gradient(135deg, rgba(149, 165, 166, 0.2) 0%, rgba(149, 165, 166, 0.1) 100%);
+  background: var(--muted-bg);
   color: var(--text-light);
 }
 
 .startingsoon {
-  background: linear-gradient(135deg, rgba(52, 152, 219, 0.2) 0%, rgba(52, 152, 219, 0.1) 100%);
+  background: var(--info-bg);
   color: var(--secondary);
 }
 
 .inprogress {
-  background: linear-gradient(135deg, rgba(44, 62, 80, 0.2) 0%, rgba(26, 38, 52, 0.1) 100%);
-  color: var(--primary-dark);
+  background: rgba(91, 141, 238, 0.12);
+  color: var(--primary);
 }
 
 .duesoon {
-  background: linear-gradient(135deg, rgba(241, 196, 15, 0.2) 0%, rgba(241, 196, 15, 0.1) 100%);
-  color: #d97706;
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
 .overdue {
-  background: linear-gradient(135deg, rgba(229, 62, 62, 0.2) 0%, rgba(229, 62, 62, 0.1) 100%);
+  background: var(--error-bg);
   color: var(--error);
 }
 
 .completed {
-  background: linear-gradient(135deg, rgba(56, 161, 105, 0.2) 0%, rgba(56, 161, 105, 0.1) 100%);
+  background: var(--success-bg);
   color: var(--success);
+}
+
+/* Status cell */
+.statusCell {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.lastActivityChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-light);
+  background: var(--muted-bg);
+}
+
+.lastActivityChip svg {
+  font-size: 0.7rem;
 }
 
 /* Actions column */
 .actions {
   display: flex;
   gap: 0.2rem;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: center;
   position: sticky;
   right: 0;
   background: var(--surface);
@@ -417,7 +448,7 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
+  color: #fff;
   font-size: 1rem;
   width: 28px;
   height: 28px;
@@ -429,7 +460,7 @@
 
 .actionButton:hover:not(:disabled) {
   transform: scale(1.05);
-  box-shadow: 0 2px 6px var(--shadow);
+  box-shadow: 0 2px 6px var(--glow-primary, var(--shadow));
 }
 
 .actionButton:focus-visible {
@@ -438,8 +469,8 @@
 }
 
 .actionButton:disabled {
-  background: #95a5a6;
-  color: #d1d5db;
+  background: var(--muted-bg);
+  color: var(--text-muted);
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
@@ -448,27 +479,30 @@
 
 /* Action button variants */
 .editButton {
-  background: linear-gradient(135deg, var(--success) 0%, #2e8b57 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
 }
 
 .editButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2e8b57 0%, var(--success) 100%);
+  background: linear-gradient(135deg, var(--success-dark) 0%, var(--success) 100%);
+  box-shadow: 0 2px 6px var(--glow-success, var(--shadow));
 }
 
 .deleteButton {
-  background: linear-gradient(135deg, var(--error) 0%, #c53030 100%);
+  background: linear-gradient(135deg, var(--error) 0%, var(--error-dark) 100%);
 }
 
 .deleteButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #c53030 0%, var(--error) 100%);
+  background: linear-gradient(135deg, var(--error-dark) 0%, var(--error) 100%);
+  box-shadow: 0 2px 6px var(--glow-error, var(--shadow));
 }
 
 .newProjectButton {
-  background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
 }
 
 .newProjectButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2980b9 0%, var(--secondary) 100%);
+  background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--secondary) 100%);
+  box-shadow: 0 2px 6px var(--glow-secondary, var(--shadow));
 }
 
 /* No results message */
@@ -478,10 +512,10 @@
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   padding: var(--spacing-lg);
-  background-color: var(--surface);
+  background-color: var(--surface-raised);
   border-radius: var(--radius-md);
   margin-top: var(--spacing-md);
-  border: 1px dashed rgba(107, 114, 128, 0.3);
+  border: 1px dashed var(--border-strong);
 }
 
 .inlineButton {
@@ -519,7 +553,7 @@
 .pagination button {
   padding: var(--spacing-sm) var(--spacing-md);
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
+  color: #fff;
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -531,11 +565,11 @@
 
 .pagination button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow);
+  box-shadow: 0 4px 8px var(--glow-primary, var(--shadow));
 }
 
 .pagination button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   transform: none;
 }
@@ -546,7 +580,7 @@
   font-weight: var(--font-weight-medium);
 }
 
-/* Compact Premium Totals Section */
+/* ── Compact Premium Totals Section ──────────────────────────────────────── */
 .premiumTotalsSection {
   margin-top: 2rem;
   display: flex;
@@ -554,12 +588,12 @@
 }
 
 .revenueCompositionCard {
-  background: rgba(255, 255, 255, 0.7);
+  background: var(--surface-raised);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 10px 25px var(--shadow-md);
   padding: 1.25rem 1.5rem;
   position: relative;
   overflow: hidden;
@@ -572,8 +606,8 @@
 
 .revenueCompositionCard:hover {
   transform: translateY(-3px);
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-  border-color: rgba(52, 152, 219, 0.3);
+  box-shadow: 0 15px 35px var(--shadow-lg);
+  border-color: var(--border-strong);
 }
 
 .cardGlow {
@@ -582,11 +616,10 @@
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(52, 152, 219, 0.03) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--glow-secondary, transparent) 0%, transparent 70%);
   pointer-events: none;
+  opacity: 0.4;
 }
-
-
 
 .compositionItems {
   display: flex;
@@ -604,7 +637,7 @@
 }
 
 .compositionItem:not(:last-child) {
-  border-bottom: 1px dashed rgba(226, 232, 240, 0.5);
+  border-bottom: 1px dashed var(--border-strong);
   padding-bottom: 0.75rem;
 }
 
@@ -612,7 +645,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #64748b;
+  color: var(--text-light);
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
@@ -637,7 +670,7 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.75rem;
-  color: #27ae60;
+  color: var(--success);
   margin-top: 2px;
   font-weight: 500;
 }
@@ -646,12 +679,10 @@
   font-size: 0.7rem;
 }
 
-
-
 /* Danger Item (Outstanding) */
 .dangerItem {
-  background: linear-gradient(135deg, rgba(231, 76, 60, 0.05) 0%, rgba(192, 57, 43, 0.08) 100%);
-  border-color: rgba(231, 76, 60, 0.2);
+  background: var(--error-bg);
+  border-color: var(--error-border);
 }
 
 .dangerItem .labelIcon,
@@ -664,15 +695,16 @@
   position: relative;
   display: inline-block;
   cursor: help;
-  color: #a0aec0;
+  color: var(--text-muted);
   font-size: 0.8rem;
 }
 
 .tooltipText {
   visibility: hidden;
   width: 180px;
-  background-color: var(--primary-dark);
-  color: #fff;
+  background-color: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
   text-align: center;
   border-radius: 8px;
   padding: 8px;
@@ -688,7 +720,7 @@
   text-transform: none;
   letter-spacing: normal;
   pointer-events: none;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 15px var(--shadow-md);
 }
 
 .tooltipText::after {
@@ -699,7 +731,7 @@
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: var(--primary-dark) transparent transparent transparent;
+  border-color: var(--surface-raised) transparent transparent transparent;
 }
 
 .tooltip:hover .tooltipText {
@@ -707,13 +739,11 @@
   opacity: 1;
 }
 
-
-
 .lastUpdated {
   width: 100%;
   text-align: right;
   font-size: 0.75rem;
-  color: #a0aec0;
+  color: var(--text-muted);
   margin-top: 0.5rem;
   font-style: italic;
 }
@@ -722,9 +752,9 @@
 .notificationsSection {
   margin: var(--spacing-md) 0;
   padding: var(--spacing-md);
-  background: var(--surface);
+  background: var(--surface-raised);
   border-radius: var(--radius-sm);
-  border: 1px solid rgba(226, 232, 240, 0.3);
+  border: 1px solid var(--border);
   transition: all 0.3s ease;
 }
 
@@ -734,12 +764,12 @@
   align-items: center;
   cursor: pointer;
   padding-bottom: var(--spacing-sm);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+  border-bottom: 1px solid var(--border);
   user-select: none;
 }
 
 .notificationsHeader:hover {
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .notificationsSection h3 {
@@ -769,7 +799,7 @@
   max-height: 200px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: var(--primary) var(--surface);
+  scrollbar-color: var(--primary) var(--surface-raised);
 }
 
 .notificationsSection ul::-webkit-scrollbar {
@@ -777,7 +807,7 @@
 }
 
 .notificationsSection ul::-webkit-scrollbar-track {
-  background: var(--surface);
+  background: var(--surface-raised);
   border-radius: var(--radius-sm);
 }
 
@@ -797,10 +827,11 @@
   display: flex;
   align-items: center;
   gap: 6px;
+  color: var(--text);
 }
 
 .nearDue {
-  color: #d97706;
+  color: var(--warning);
 }
 
 .nearDue svg,
@@ -825,9 +856,9 @@
   text-align: center;
   margin: var(--spacing-md) 0;
   padding: var(--spacing-md);
-  background: rgba(229, 62, 62, 0.1);
+  background: var(--error-bg);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--error);
+  border: 1px solid var(--error-border);
   font-weight: var(--font-weight-medium);
 }
 
@@ -839,12 +870,157 @@
   gap: var(--spacing-sm);
 }
 
+/* ── Scope column ───────────────────────────────────────────────────────── */
+.scopeCell {
+  text-align: center;
+  white-space: nowrap;
+  min-width: 80px;
+  max-width: 100px;
+  position: relative;
+  overflow: visible;
+}
+
+.scopeCount {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: var(--font-weight-medium);
+  color: var(--text-light);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.scopeCount:hover {
+  color: var(--primary);
+}
+
+/* Scope tooltip */
+.scopeTooltip {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  min-width: 280px;
+  max-width: 450px;
+  animation: slideUp 0.2s ease-out;
+  max-height: 450px;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.scopeTooltipHeader {
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 6px;
+}
+
+.scopeTooltipRow {
+  font-size: 0.7rem;
+  color: var(--text);
+  padding: 4px 0;
+  line-height: 1.4;
+  word-break: break-word;
+  white-space: normal;
+}
+
+.depositDot {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 3px;
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--success);
+  background: var(--success-bg);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+}
+
+/* ── Installment fraction inside Remaining cell ──────────────────────────── */
+.installmentFraction {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  background: rgba(91, 141, 238, 0.10);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.installmentFraction svg {
+  font-size: 0.6rem;
+  opacity: 0.8;
+}
+
+/* ── Next due chip inside Remaining cell ─────────────────────────────────── */
+.nextDueChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-sm);
+  padding: 1px 5px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.nextDueChip svg {
+  font-size: 0.6rem;
+}
+
+.nextDueUpcoming {
+  color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.nextDueOverdue {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+/* ── nth-child adjustments for Scope column ─────────────────────────────── */
+.table td:nth-child(10),
+.table th:nth-child(10) {
+  text-align: center;
+  min-width: 80px;
+  max-width: 100px;
+}
+
+.table td:nth-child(11),
+.table th:nth-child(11) {
+  text-align: center;
+  min-width: 140px;
+}
+
+/* ── Export button ──────────────────────────────────────────────────────── */
 .exportButton {
   padding: var(--spacing-sm) var(--spacing-md);
   border: none;
   border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
-  color: var(--surface);
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+  color: #fff;
   cursor: pointer;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
@@ -856,9 +1032,9 @@
 }
 
 .exportButton:hover {
-  background: linear-gradient(135deg, #2980b9 0%, var(--secondary) 100%);
+  background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--secondary) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow);
+  box-shadow: 0 4px 8px var(--glow-secondary, var(--shadow));
 }
 
 .exportButton:focus-visible {
@@ -866,12 +1042,7 @@
   outline-offset: 2px;
 }
 
-.mainContent {
-  padding: 2rem;
-  max-width: 100%;
-  margin: 0 auto;
-}
-
+/* ── Header (duplicate / alternate structure) ───────────────────────────── */
 .header {
   display: flex;
   justify-content: space-between;
@@ -879,18 +1050,13 @@
   margin-bottom: 2rem;
 }
 
-.title {
-  font-size: 2rem;
-  color: #2d3748;
-  font-weight: 700;
-}
-
 /* Controls Section */
 .controlsSection {
-  background: white;
+  background: var(--surface-raised);
   padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 4px var(--shadow);
   margin-bottom: 2rem;
   display: flex;
   flex-direction: column;
@@ -903,35 +1069,6 @@
   flex-wrap: wrap;
 }
 
-.searchWrapper {
-  flex: 1;
-  min-width: 300px;
-  position: relative;
-}
-
-.searchIcon {
-  position: absolute;
-  left: 1rem;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #a0aec0;
-}
-
-.searchInput {
-  width: 100%;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.2s;
-}
-
-.searchInput:focus {
-  outline: none;
-  border-color: #4299e1;
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
-}
-
 .filterWrapper {
   min-width: 200px;
 }
@@ -939,27 +1076,37 @@
 .statusFilter {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background-color: white;
-  font-size: 1rem;
-  color: #4a5568;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background-color: var(--surface-raised);
+  font-size: var(--font-size-base);
+  color: var(--text);
   cursor: pointer;
+  font-family: var(--font-family);
+  transition: all 0.2s ease;
+  appearance: none;
+}
+
+.statusFilter:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--glow-primary, var(--shadow));
 }
 
 /* View toggle */
 .viewToggle {
   display: flex;
-  background: #edf2f7;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
   padding: 4px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   gap: 4px;
 }
 
 .toggleButton {
   padding: var(--spacing-sm) var(--spacing-md);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
+  background: transparent;
+  color: var(--text-light);
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
@@ -970,12 +1117,14 @@
 }
 
 .toggleButton:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 6px var(--shadow);
+  background: var(--muted-bg);
+  color: var(--text);
 }
 
 .toggleButton.active {
-  background: linear-gradient(135deg, var(--success) 0%, #2e8b57 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  box-shadow: 0 2px 6px var(--glow-primary, var(--shadow));
 }
 
 .toggleButton:focus-visible {
@@ -996,11 +1145,11 @@
   position: relative;
   width: 80px;
   height: 10px;
-  background: rgba(44, 62, 80, 0.1);
+  background: var(--surface-raised);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(44, 62, 80, 0.2);
+  box-shadow: inset 0 1px 2px var(--shadow);
+  border: 1px solid var(--border);
 }
 
 .amountDisplay {
@@ -1020,7 +1169,7 @@
   overflow: hidden;
 }
 
-/* Glow effect animation */
+/* Glow shimmer animation */
 .progressBar::after {
   content: "";
   position: absolute;
@@ -1030,24 +1179,19 @@
   height: 100%;
   background: linear-gradient(90deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 255, 255, 0.25) 50%,
       transparent 100%);
-  animation: glow 2s infinite ease-in-out;
+  animation: shimmer 2s infinite ease-in-out;
 }
 
-@keyframes glow {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(100%);
-  }
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 /* Overdue progress bar variant */
 .amountDue .progressBar {
-  background: linear-gradient(90deg, var(--error) 0%, #c53030 100%);
+  background: linear-gradient(90deg, var(--error) 0%, var(--error-dark) 100%);
 }
 
 /* Progress percentage text */
@@ -1057,8 +1201,8 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: 0.65rem;
-  color: var(--surface);
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  color: #fff;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
   font-weight: var(--font-weight-bold);
   z-index: 1;
   pointer-events: none;
@@ -1068,9 +1212,9 @@
 .filterSelect {
   margin-left: var(--spacing-sm);
   padding: 4px var(--spacing-sm);
-  border: 1px solid rgba(107, 114, 128, 0.3);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  background: var(--surface);
+  background: var(--surface-raised);
   font-size: var(--font-size-sm);
   color: var(--text);
   cursor: pointer;
@@ -1081,10 +1225,10 @@
 .filterSelect:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px var(--shadow);
+  box-shadow: 0 0 0 2px var(--glow-primary, var(--shadow));
 }
 
-/* Responsive adjustments */
+/* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .tableWrapper {
     margin: 0 -0.2rem;
@@ -1222,9 +1366,8 @@
   }
 }
 
-/* Print styles */
+/* ── Print ──────────────────────────────────────────────────────────────── */
 @media print {
-
   .searchSection,
   .notificationsSection,
   .tableHeaderActions,
@@ -1247,4 +1390,185 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+}
+/* ── Payment breakdown tooltip ──────────────────────────────────────────── */
+.paymentTooltip {
+  position: fixed;
+  z-index: 10000;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px var(--shadow-md, rgba(0,0,0,0.18));
+  padding: 12px 14px;
+  min-width: 280px;
+  max-width: 350px;
+  max-height: 500px;
+  overflow-y: auto;
+  pointer-events: auto;
+  font-size: 0.78rem;
+  color: var(--text);
+  animation: tooltipFadeIn 0.15s ease;
+}
+
+.paymentTooltip::after {
+  display: none;
+}
+
+.paymentTooltip::before {
+  display: none;
+}
+
+@keyframes tooltipFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.paymentTooltipHeader {
+  font-weight: var(--font-weight-bold);
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-align: center;
+}
+
+.paymentTooltipRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 4px 0;
+  font-size: 0.76rem;
+}
+
+.paymentTooltipLabel {
+  color: var(--text-light);
+  font-weight: var(--font-weight-medium);
+}
+
+.paymentTooltipAmount {
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+}
+
+.paymentTooltipRow span:first-child {
+  color: var(--text-light);
+}
+
+.paymentTooltipRow span:last-child {
+  font-weight: var(--font-weight-medium);
+}
+
+.paymentTooltipPaid span:last-child,
+.paymentTooltipPaid {
+  color: var(--success) !important;
+}
+
+.paymentTooltipDue span:last-child,
+.paymentTooltipDue {
+  color: var(--error) !important;
+}
+
+.paymentTooltipDivider {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin: 4px 0;
+  padding: 4px 0;
+  font-weight: var(--font-weight-bold);
+}
+
+.paymentStatusInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.paymentOverdue {
+  color: var(--error);
+  font-size: 0.7rem;
+  font-weight: var(--font-weight-bold);
+}
+
+.paymentTooltipProgress {
+  position: relative;
+  margin-top: 8px;
+  height: 14px;
+  background: var(--muted-bg);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.paymentTooltipProgressFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.paymentTooltipProgress span {
+  position: relative;
+  z-index: 1;
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  color: #fff;
+  text-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+
+/* Name Tooltip - Shows address and projects */
+.nameTooltip {
+  position: fixed;
+  z-index: 10000;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px var(--shadow-md, rgba(0,0,0,0.18));
+  padding: 12px 14px;
+  min-width: 300px;
+  max-width: 400px;
+  max-height: 400px;
+  overflow-y: auto;
+  pointer-events: auto;
+  font-size: 0.78rem;
+  color: var(--text);
+  animation: tooltipFadeIn 0.15s ease;
+}
+
+.nameTooltipRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 0;
+  font-size: 0.76rem;
+}
+
+.nameTooltipLabel {
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.projectsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 4px;
+}
+
+.projectItem {
+  padding: 4px 8px;
+  background: var(--muted-bg);
+  border-left: 2px solid var(--primary);
+  border-radius: 3px;
+  color: var(--text);
+  font-size: 0.75rem;
+  word-break: break-word;
 }

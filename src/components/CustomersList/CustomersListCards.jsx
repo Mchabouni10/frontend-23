@@ -11,6 +11,8 @@ import {
   faCalendarAlt,
   faDollarSign,
   faUser,
+  faCheckCircle,
+  faLayerGroup,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "./CustomersListCards.module.css";
 
@@ -42,7 +44,7 @@ export default function CustomersListCards({
             year: "numeric",
           })
         : "N/A",
-    []
+    [],
   );
 
   const handleCardAction = useCallback(
@@ -71,7 +73,9 @@ export default function CustomersListCards({
           if (!hasMultipleProjects && firstProject?._id) {
             if (
               window.confirm(
-                `Are you sure you want to delete ${customer.customerInfo?.firstName ?? "this customer"}'s project? This action cannot be undone.`
+                `Are you sure you want to delete ${
+                  customer.customerInfo?.firstName ?? "this customer"
+                }'s project? This action cannot be undone.`,
               )
             ) {
               handleDelete?.(firstProject._id);
@@ -85,14 +89,15 @@ export default function CustomersListCards({
           break;
       }
     },
-    [handleDetails, handleEdit, handleDelete, handleNewProject]
+    [handleDetails, handleEdit, handleDelete, handleNewProject],
   );
 
   const showErrorsForCustomer = useCallback(
     (customer = {}) => {
       const customerErrors = [];
       (customer.projects ?? []).forEach((project = {}) => {
-        const projectId = project.id ?? JSON.stringify(project.customerInfo ?? {});
+        const projectId =
+          project.id ?? JSON.stringify(project.customerInfo ?? {});
         if (projectErrors.has(projectId)) {
           customerErrors.push(...projectErrors.get(projectId));
         }
@@ -100,7 +105,7 @@ export default function CustomersListCards({
       setSelectedErrors(customerErrors);
       setShowErrorModal(true);
     },
-    [projectErrors]
+    [projectErrors],
   );
 
   return (
@@ -121,9 +126,10 @@ export default function CustomersListCards({
                   project.id ?? JSON.stringify(project.customerInfo ?? {});
                 return projectErrors.has(projectId);
               });
-              const fullName = `${customerInfo.firstName ?? ""} ${
-                customerInfo.lastName ?? ""
-              }`.trim() || "Unknown Customer";
+              const fullName =
+                `${customerInfo.firstName ?? ""} ${
+                  customerInfo.lastName ?? ""
+                }`.trim() || "Unknown Customer";
 
               return (
                 <article
@@ -190,12 +196,18 @@ export default function CustomersListCards({
                       </span>
                     </p>
                     <p>
-                      <FontAwesomeIcon icon={faCalendarAlt} aria-hidden="true" />
+                      <FontAwesomeIcon
+                        icon={faCalendarAlt}
+                        aria-hidden="true"
+                      />
                       <span className={styles.label}>Start:</span>{" "}
                       {formatDateWithoutTime(customer.earliestStartDate)}
                     </p>
                     <p>
-                      <FontAwesomeIcon icon={faCalendarAlt} aria-hidden="true" />
+                      <FontAwesomeIcon
+                        icon={faCalendarAlt}
+                        aria-hidden="true"
+                      />
                       <span className={styles.label}>End:</span>{" "}
                       {formatDateWithoutTime(customer.latestFinishDate)}
                     </p>
@@ -208,7 +220,7 @@ export default function CustomersListCards({
                         aria-valuemin="0"
                         aria-valuemax="100"
                         aria-label={`Payment progress: ${Math.round(
-                          progress
+                          progress,
                         )} percent complete`}
                       >
                         <div
@@ -233,7 +245,7 @@ export default function CustomersListCards({
                             {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
-                            }
+                            },
                           )}
                         </span>
                         <span className={styles.amountTotal}>
@@ -247,11 +259,59 @@ export default function CustomersListCards({
                             {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
-                            }
+                            },
                           )}
                         </span>
                       </div>
                     </div>
+                  </div>
+
+                  <div className={styles.cardMeta}>
+                    {/* Deposit indicator */}
+                    <span
+                      className={`${styles.depositBadge} ${
+                        customer.depositPaid
+                          ? styles.depositPaid
+                          : styles.depositPending
+                      }`}
+                      title={
+                        customer.depositPaid
+                          ? "Deposit received"
+                          : "No deposit on record"
+                      }
+                    >
+                      <FontAwesomeIcon
+                        icon={faCheckCircle}
+                        aria-hidden="true"
+                      />
+                      {customer.depositPaid ? "Deposit ✓" : "No Deposit"}
+                    </span>
+
+                    {/* Scope summary */}
+                    {(customer.totalCategories > 0 ||
+                      customer.totalWorkItems > 0) && (
+                      <span
+                        className={styles.scopeBadge}
+                        title={`${customer.totalCategories} categories, ${customer.totalWorkItems} work items`}
+                      >
+                        <FontAwesomeIcon
+                          icon={faLayerGroup}
+                          aria-hidden="true"
+                        />
+                        {customer.totalCategories}c · {customer.totalWorkItems}w
+                      </span>
+                    )}
+
+                    {/* Installment fraction */}
+                    {customer.totalInstallments > 0 && (
+                      <span
+                        className={styles.installmentBadge}
+                        title={`${customer.paidInstallments} of ${customer.totalInstallments} installments paid`}
+                      >
+                        {customer.paidInstallments}/{customer.totalInstallments}{" "}
+                        paid
+                      </span>
+                    )}
                   </div>
 
                   <div

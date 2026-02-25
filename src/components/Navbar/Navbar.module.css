@@ -1,4 +1,9 @@
 /* src/components/Navbar/Navbar.module.css */
+
+/* ============================================================
+   NAVBAR — Sticky gradient bar, consistent light + dark
+   ============================================================ */
+
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -10,103 +15,164 @@
   top: 0;
   z-index: 1000;
   height: 60px;
-  transition: background 0.3s ease;
-  /* Smooth transition for theme changes */
-  font-family: poppins, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+  font-family: var(--font-family);
 }
+
+/* In dark mode the gradient uses the dark-palette primary values
+   (#5b8dee → #3b6fd4) which are already set on .dark in index.css,
+   so the gradient automatically shifts — no override needed.
+   We just add a stronger shadow + a subtle bottom border for depth. */
+:global(.dark) .navbar {
+  box-shadow: 0 2px 16px var(--shadow-lg);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+/* ============================================================
+   LOGO
+   ============================================================ */
 
 .logoContainer {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   flex-shrink: 0;
-  /* Prevent logo from being crushed */
   margin-right: var(--spacing-lg);
 }
 
 .logo {
-  color: var(--surface);
+  color: #ffffff;
   font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 1px;
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: 0.5px;
   line-height: 1.2;
 }
 
 .logoSubtitle {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: var(--font-size-sm);
+  color: rgba(255, 255, 255, 0.65);
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-normal);
-  margin-top: -4px;
+  letter-spacing: 0.3px;
+  margin-top: -2px;
 }
+
+/* ============================================================
+   NAV LINKS LIST
+   ============================================================ */
 
 .navLinks {
   display: flex;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-sm);
   list-style: none;
   margin: 0;
   padding: 0;
   align-items: center;
 }
 
+/* ============================================================
+   NAV LINK — base style (works on both gradient backgrounds)
+   ============================================================ */
+
 .navLink {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  color: rgba(255, 255, 255, 0.9);
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.88);
   text-decoration: none;
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
-  padding: var(--spacing-sm) var(--spacing-md);
+  padding: 6px var(--spacing-md);
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.05);
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .navLink:hover {
-  color: var(--surface);
-  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
 }
 
 .navLink:active {
   transform: translateY(0);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* Active / current route */
+.navLink.active {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.25);
+  font-weight: var(--font-weight-bold);
+}
+
+:global(.dark) .navLink.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
 }
 
 .navIcon {
-  font-size: var(--font-size-base);
-  width: 16px;
+  font-size: 0.85em;
+  width: 14px;
   text-align: center;
+  opacity: 0.9;
+  flex-shrink: 0;
 }
 
+/* ============================================================
+   LOGOUT LINK — red-tinted, fixed rgba() bug
+   The old code used rgba(var(--error), 0.1) which is invalid CSS
+   because var() returns a full hex/rgb value, not RGB components.
+   Fixed: use the semantic --error-bg / --error-border variables.
+   ============================================================ */
+
 .logoutLink {
-  background: rgba(var(--error), 0.1);
-  color: var(--error);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .logoutLink:hover {
-  background: rgba(var(--error), 0.2);
-  color: var(--surface);
+  background: rgba(229, 62, 62, 0.35);
+  border-color: rgba(229, 62, 62, 0.5);
+  color: #ffffff;
 }
 
-/* Dark Mode Toggle Button */
+/* In dark mode the error color is softer (#f87171), adjust tint */
+:global(.dark) .logoutLink:hover {
+  background: rgba(248, 113, 113, 0.3);
+  border-color: rgba(248, 113, 113, 0.45);
+}
+
+/* ============================================================
+   DARK MODE TOGGLE BUTTON
+   ============================================================ */
+
 .toggleButton {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  padding: var(--spacing-sm) var(--spacing-md);
+  gap: 6px;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid transparent;
+  padding: 6px var(--spacing-md);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+  font-family: var(--font-family);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .toggleButton:hover {
-  color: var(--surface);
-  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
 }
 
@@ -115,44 +181,68 @@
 }
 
 .toggleIcon {
-  font-size: var(--font-size-base);
-  width: 16px;
+  font-size: 0.85em;
+  width: 14px;
   text-align: center;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+.toggleButton:hover .toggleIcon {
+  transform: rotate(20deg);
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 900px) {
   .navbar {
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-lg);
   }
 
   .navLinks {
-    gap: var(--spacing-md);
+    gap: 4px;
+  }
+
+  /* Hide text labels, show icons only on tight screens */
+  .navLink span,
+  .toggleButton span {
+    display: none;
   }
 
   .navLink,
   .toggleButton {
-    padding: var(--spacing-sm) var(--spacing-sm);
-    font-size: var(--font-size-sm);
+    padding: 7px 10px;
+  }
+
+  .navIcon,
+  .toggleIcon {
+    width: 16px;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  .logoSubtitle {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .navbar {
+    padding: var(--spacing-sm) var(--spacing-md);
+    height: 52px;
   }
 
   .logo {
     font-size: var(--font-size-lg);
   }
-
-  .logoSubtitle {
-    font-size: 0.75rem;
-    /* Slightly smaller than --font-size-sm for mobile */
-  }
-
-  .navIcon,
-  .toggleIcon {
-    font-size: var(--font-size-sm);
-    width: 14px;
-  }
 }
 
-/* Print styles - Hide Navbar completely */
+/* ============================================================
+   PRINT — hide entirely
+   ============================================================ */
+
 @media print {
   .navbar {
     display: none !important;

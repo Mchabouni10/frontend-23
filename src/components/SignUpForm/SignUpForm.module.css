@@ -1,30 +1,95 @@
+/* SignUpForm.module.css — Elevated Auth Form (Sign Up) */
 
-
-/* Form Styles with CSS Variables */
+/* ============================================================
+   CONTAINER
+   ============================================================ */
 .formContainer {
   width: 100%;
-  padding: var(--spacing-xl); /* 2rem */
-  background: var(--surface); /* #ffffff in light mode, #2d3748 in dark mode */
-  border-radius: var(--radius-lg); /* 12px */
-  transition: background-color 0.3s ease;
+  animation: formEntrance 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* ============================================================
+   FORM
+   ============================================================ */
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg); /* 1.5rem */
+  gap: var(--spacing-md);
 }
 
+/* ============================================================
+   TITLE
+   ============================================================ */
 .title {
   text-align: center;
-  color: var(--text); /* #2d3748 in light mode, #e2e8f0 in dark mode */
-  font-size: 1.8rem;
-  font-weight: var(--font-weight-bold); /* 700 */
-  margin-bottom: var(--spacing-md); /* 1rem */
-  text-transform: uppercase;
+  color: var(--text);
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-extrabold);
+  letter-spacing: -0.5px;
+  margin-bottom: var(--spacing-sm);
 }
 
+:global(.dark) .title {
+  color: var(--text);
+}
+
+/* ============================================================
+   TWO-COLUMN ROW (for first name / last name etc.)
+   ============================================================ */
+.inputRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+}
+
+@media (max-width: 400px) {
+  .inputRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   INPUT GROUP — label + input
+   ============================================================ */
 .inputGroup {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.inputLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: color 0.2s ease;
+}
+
+.inputLabel i {
+  font-size: 0.8em;
+  color: var(--secondary);
+}
+
+.inputGroup:focus-within .inputLabel {
+  color: var(--primary);
+}
+
+:global(.dark) .inputLabel {
+  color: var(--text-light);
+}
+
+:global(.dark) .inputGroup:focus-within .inputLabel {
+  color: var(--primary);
+}
+
+/* Input wrapper */
+.inputWrapper {
   position: relative;
   display: flex;
   align-items: center;
@@ -32,98 +97,386 @@
 
 .inputIcon {
   position: absolute;
-  left: 12px; /* Keeping as is since no variable matches exactly */
-  color: var(--text-light); /* #6b7280 in light mode, #94a3b8 in dark mode */
-  font-size: 1.1rem;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 0.95rem;
+  pointer-events: none;
+  transition: color 0.2s ease;
+  z-index: 1;
 }
 
+.inputGroup:focus-within .inputIcon {
+  color: var(--primary);
+}
+
+:global(.dark) .inputGroup:focus-within .inputIcon {
+  color: var(--primary);
+}
+
+/* ============================================================
+   INPUT
+   ============================================================ */
 .input {
   width: 100%;
-  padding: 0.9rem 1rem 0.9rem 2.5rem; /* Extra padding for icon */
-  border: 1px solid rgba(209, 213, 219, 0.3); /* Subtle border with variable opacity */
-  border-radius: var(--radius-sm); /* 6px */
-  font-size: var(--font-size-base); /* 1rem */
-  color: var(--text); /* #2d3748 in light mode, #e2e8f0 in dark mode */
-  background: var(--surface); /* Matches container background */
-  transition: all 0.3s ease;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  color: var(--text);
+  background-color: var(--surface-raised);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  line-height: 1.5;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+  font-weight: var(--font-weight-normal);
 }
 
 .input:focus {
   outline: none;
-  border-color: var(--primary); /* #2c3e50 in light mode, #4a6fa5 in dark mode */
-  box-shadow: 0 0 0 2px var(--shadow); /* Uses --shadow */
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--glow-primary);
+  background-color: var(--surface);
 }
 
-.submitButton {
-  width: 100%;
-  padding: 0.9rem;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); /* Uses --primary and --primary-dark */
-  color: var(--surface); /* #ffffff in light mode, #ffffff in dark mode */
-  border: none;
-  border-radius: var(--radius-sm); /* 6px */
-  font-size: var(--font-size-base); /* 1rem */
-  font-weight: var(--font-weight-bold); /* 600 */
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.input:hover:not(:focus):not(:disabled) {
+  border-color: var(--primary);
 }
 
+.input:disabled {
+  background-color: var(--muted-bg);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+:global(.dark) .input {
+  background-color: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+:global(.dark) .input::placeholder {
+  color: var(--text-muted);
+}
+
+:global(.dark) .input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--glow-primary);
+  background-color: var(--surface-raised);
+}
+
+:global(.dark) .input:hover:not(:focus):not(:disabled) {
+  border-color: var(--border-strong);
+}
+
+/* ============================================================
+   PASSWORD STRENGTH INDICATOR
+   ============================================================ */
+.passwordStrength {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.strengthBar {
+  display: flex;
+  gap: 4px;
+}
+
+.strengthSegment {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  transition: background-color 0.3s ease;
+}
+
+.strengthSegment.weak   { background: var(--error); }
+.strengthSegment.fair   { background: var(--warning); }
+.strengthSegment.good   { background: var(--secondary); }
+.strengthSegment.strong { background: var(--success); }
+
+.strengthLabel {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-weight: var(--font-weight-medium);
+}
+
+.strengthLabel.weak   { color: var(--error); }
+.strengthLabel.fair   { color: var(--warning); }
+.strengthLabel.good   { color: var(--secondary); }
+.strengthLabel.strong { color: var(--success); }
+
+:global(.dark) .strengthSegment {
+  background: var(--border-strong);
+}
+
+/* ============================================================
+   PASSWORD TOGGLE
+   ============================================================ */
 .passwordToggleIcon {
   position: absolute;
   right: 12px;
-  color: var(--text-light); /* #6b7280 in light mode, #94a3b8 in dark mode */
-  font-size: 1.1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 0.95rem;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  z-index: 1;
+}
+
+.passwordToggleIcon:hover {
+  color: var(--primary);
+  background: var(--info-bg);
+}
+
+:global(.dark) .passwordToggleIcon {
+  color: var(--text-light);
+}
+
+:global(.dark) .passwordToggleIcon:hover {
+  color: var(--primary);
+  background: var(--surface-raised);
+}
+
+/* ============================================================
+   TERMS CHECKBOX
+   ============================================================ */
+.termsRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  line-height: 1.5;
+}
+
+.termsRow input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  accent-color: var(--primary);
   cursor: pointer;
 }
 
+.termsLink {
+  color: var(--secondary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.termsLink:hover {
+  color: var(--primary);
+}
+
+:global(.dark) .termsRow {
+  color: var(--text-light);
+}
+
+:global(.dark) .termsLink {
+  color: var(--secondary);
+}
+
+/* ============================================================
+   DIVIDER
+   ============================================================ */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-strong);
+}
+
+/* ============================================================
+   SUBMIT BUTTON
+   ============================================================ */
+.submitButton {
+  width: 100%;
+  padding: 0.8rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  position: relative;
+  overflow: hidden;
+  margin-top: var(--spacing-xs);
+}
+
+.submitButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  transition: left 0.5s ease;
+}
+
+.submitButton:hover:not(:disabled)::before {
+  left: 100%;
+}
+
 .submitButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%); /* Reversed gradient */
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px var(--shadow); /* Uses --shadow */
+  box-shadow: 0 6px 20px var(--shadow-md);
+}
+
+:global(.dark) .submitButton:hover:not(:disabled) {
+  box-shadow: 0 6px 20px var(--glow-primary);
+}
+
+.submitButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .submitButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
+/* ============================================================
+   DARK MODE — CONTAINER BORDER
+   ============================================================ */
+:global(.dark) .formContainer {
+  /* inherits from parent surface card */
+}
+
+/* ============================================================
+   LOADING SPINNER
+   ============================================================ */
 .loader {
-  width: 20px;
-  height: 20px;
-  border: 3px solid var(--surface); /* Matches button text color */
-  border-top: 3px solid transparent;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
-  display: inline-block;
+  animation: spin 0.75s linear infinite;
+  flex-shrink: 0;
 }
 
+/* ============================================================
+   ERROR MESSAGE
+   ============================================================ */
 .errorMessage {
-  color: var(--error); /* #e53e3e in light mode, #f87171 in dark mode */
-  text-align: center;
-  font-size: var(--font-size-sm); /* 0.875rem */
-  margin-top: var(--spacing-sm); /* 0.5rem */
-  animation: shake 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0.65rem var(--spacing-md);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  animation: shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
-/* Animations */
+.errorMessage i {
+  font-size: 0.9em;
+  flex-shrink: 0;
+}
+
+:global(.dark) .errorMessage {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+/* ============================================================
+   SWITCH PROMPT
+   ============================================================ */
+.switchPrompt {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+}
+
+.switchPrompt button {
+  background: none;
+  border: none;
+  color: var(--secondary);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  padding: 0;
+  font-size: inherit;
+  font-family: inherit;
+  transition: color 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.switchPrompt button:hover {
+  color: var(--primary);
+}
+
+:global(.dark) .switchPrompt {
+  color: var(--text-light);
+}
+
+:global(.dark) .switchPrompt button {
+  color: var(--secondary);
+}
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes shake {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  50% { transform: translateX(5px); }
-  75% { transform: translateX(-5px); }
-  100% { transform: translateX(0); }
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
 }
 
-/* Dark Mode Adjustments (if needed beyond variables) */
-.dark .formContainer {
-  border: 1px solid rgba(226, 232, 240, 0.1); /* Slightly lighter border for dark mode */
-}
-
-.dark .input {
-  border: 1px solid rgba(148, 163, 184, 0.3); /* Matches --text-light opacity */
+@keyframes formEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

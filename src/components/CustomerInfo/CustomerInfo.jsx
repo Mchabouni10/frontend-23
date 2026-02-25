@@ -123,32 +123,32 @@ const constructStreetAddress = ({
 
 // Address direction options
 const DIRECTIONS = [
-  { value: "", label: "Select Direction" },
-  { value: "N", label: "North (N)" },
-  { value: "S", label: "South (S)" },
-  { value: "E", label: "East (E)" },
-  { value: "W", label: "West (W)" },
-  { value: "NE", label: "Northeast (NE)" },
-  { value: "NW", label: "Northwest (NW)" },
-  { value: "SE", label: "Southeast (SE)" },
-  { value: "SW", label: "Southwest (SW)" },
+  { value: "", label: "Dir" },
+  { value: "N", label: "N" },
+  { value: "S", label: "S" },
+  { value: "E", label: "E" },
+  { value: "W", label: "W" },
+  { value: "NE", label: "NE" },
+  { value: "NW", label: "NW" },
+  { value: "SE", label: "SE" },
+  { value: "SW", label: "SW" },
 ];
 
 // Street type options
 const STREET_TYPES = [
-  { value: "", label: "Select Type" },
-  { value: "St", label: "Street (St)" },
-  { value: "Ave", label: "Avenue (Ave)" },
-  { value: "Blvd", label: "Boulevard (Blvd)" },
-  { value: "Dr", label: "Drive (Dr)" },
-  { value: "Rd", label: "Road (Rd)" },
-  { value: "Ln", label: "Lane (Ln)" },
-  { value: "Ct", label: "Court (Ct)" },
-  { value: "Cir", label: "Circle (Cir)" },
-  { value: "Pl", label: "Place (Pl)" },
+  { value: "", label: "Type" },
+  { value: "St", label: "St" },
+  { value: "Ave", label: "Ave" },
+  { value: "Blvd", label: "Blvd" },
+  { value: "Dr", label: "Dr" },
+  { value: "Rd", label: "Rd" },
+  { value: "Ln", label: "Ln" },
+  { value: "Ct", label: "Ct" },
+  { value: "Cir", label: "Cir" },
+  { value: "Pl", label: "Pl" },
   { value: "Way", label: "Way" },
-  { value: "Pkwy", label: "Parkway (Pkwy)" },
-  { value: "Ter", label: "Terrace (Ter)" },
+  { value: "Pkwy", label: "Pkwy" },
+  { value: "Ter", label: "Ter" },
   { value: "Trail", label: "Trail" },
 ];
 
@@ -243,26 +243,30 @@ export default function CustomerInfo({
         console.error("Error fetching busy dates:", err);
       }
     };
-    if (!disabled) fetchBusyDates();
-  }, [disabled]);
 
-  const isDateBusy = (date) => {
-    if (!date) return false;
-    const normalizedDate = safeParseDate(date);
-    if (!normalizedDate) return false;
-    return busyDatesDetails.some(
-      (busy) =>
-        normalizedDate >= busy.startDate && normalizedDate <= busy.finishDate,
-    );
+    fetchBusyDates();
+  }, []);
+
+  const toggleSection = (section) => {
+    setOpenSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
   };
 
-  const getBusyDetailsForDate = (date) => {
-    const normalizedDate = safeParseDate(date);
-    if (!normalizedDate) return [];
-    return busyDatesDetails.filter(
-      (busy) =>
-        normalizedDate >= busy.startDate && normalizedDate <= busy.finishDate,
-    );
+  const toggleBusyDates = () => {
+    setIsBusyDatesOpen((prev) => !prev);
+  };
+
+  const validateEmail = (email) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+  };
+
+  const validatePhone = (phone) => {
+    // US phone number validation (10 digits)
+    const cleaned = phone.replace(/\D/g, "");
+    return cleaned.length === 11; // Including country code
   };
 
   const getBusyDateRanges = () => {
@@ -272,150 +276,79 @@ export default function CustomerInfo({
     }));
   };
 
-  const handleDateChange = (field, date) => {
-    if (disabled) return;
-    const parsedDate = safeParseDate(date);
-    if (!parsedDate) {
-      setCustomer({ ...customer, [field]: null });
-      return;
-    }
-    if (isDateBusy(parsedDate)) {
-      const conflicts = getBusyDetailsForDate(parsedDate);
-      const conflictDetails = conflicts
-        .map(
-          (busy) =>
-            `${busy.customerName} - ${
-              busy.projectName
-            } (${busy.startDate.toLocaleDateString()} to ${busy.finishDate.toLocaleDateString()})`,
-        )
+  const isDateBusy = (date) => {
+    return busyDatesDetails.some((busy) => {
+      const checkDate = safeParseDate(date);
+      if (!checkDate) return false;
+      return checkDate >= busy.startDate && checkDate <= busy.finishDate;
+    });
+  };
+
+  const getBusyDateDetails = (date) => {
+    const checkDate = safeParseDate(date);
+    if (!checkDate) return [];
+
+    return busyDatesDetails.filter(
+      (busy) => checkDate >= busy.startDate && checkDate <= busy.finishDate,
+    );
+  };
+
+  const renderDayContents = (day, date) => {
+    const isBusy = isDateBusy(date);
+    const details = getBusyDateDetails(date);
+
+    if (isBusy) {
+      const tooltipText = details
+        .map((d) => `${d.customerName} - ${d.projectName}`)
         .join("\n");
-      alert(
-        `Warning: ${parsedDate.toLocaleDateString()} overlaps with:\n${conflictDetails}`,
+
+      return (
+        <div className={styles.dayWrapper} title={tooltipText}>
+          <span className={styles.busyDay}>{day}</span>
+          <div className={styles.busyIndicator}></div>
+        </div>
       );
     }
+
+    return <span>{day}</span>;
+  };
+
+  const handleDateChange = (field, date) => {
+    if (disabled) return;
+
+    const parsedDate = safeParseDate(date);
+
     if (field === "startDate") {
       setCustomer({
         ...customer,
         startDate: parsedDate,
         finishDate:
-          customer.finishDate && parsedDate > safeParseDate(customer.finishDate)
+          parsedDate && customer.finishDate && customer.finishDate < parsedDate
             ? null
             : customer.finishDate,
       });
-    } else {
-      setCustomer({ ...customer, [field]: parsedDate });
+    } else if (field === "finishDate") {
+      setCustomer({ ...customer, finishDate: parsedDate });
     }
-  };
-
-  const handleZipChange = (value) => {
-    if (disabled) return;
-    const numericValue = value.replace(/\D/g, "");
-    if (numericValue.length <= 5) {
-      setCustomer({ ...customer, zipCode: numericValue });
-    }
-  };
-
-  const handleZipBlur = () => {
-    if (disabled) return;
-    const zipRegex = /^\d{5}$/;
-    if (customer.zipCode && !zipRegex.test(customer.zipCode)) {
-      setCustomer({ ...customer, zipCode: "" });
-      alert("ZIP Code must be exactly 5 digits.");
-    }
-  };
-
-  const handleNameChange = (field, value) => {
-    if (disabled) return;
-    const capitalized = value.charAt(0).toUpperCase() + value.slice(1);
-    setCustomer({ ...customer, [field]: capitalized });
-  };
-
-  const handleAddressComponentChange = (component, value) => {
-    if (disabled) return;
-
-    let updatedComponents;
-    if (component === "addressNumber") {
-      const numericValue = value.replace(/\D/g, "");
-      updatedComponents = { ...addressComponents, [component]: numericValue };
-    } else {
-      updatedComponents = { ...addressComponents, [component]: value };
-    }
-
-    setAddressComponents(updatedComponents);
-
-    // Update the combined street field
-    const street = constructStreetAddress(updatedComponents);
-
-    setCustomer({
-      ...customer,
-      street,
-      [component]: updatedComponents[component],
-    });
-  };
-
-  const handleCityChange = (value) => {
-    if (disabled) return;
-    const formatted = value
-      .split(" ")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(" ");
-    setCustomer({ ...customer, city: formatted });
-  };
-
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const validatePhone = (phone) => {
-    const cleaned = phone.replace(/\D/g, "");
-    return cleaned.length === 11 && cleaned.startsWith("1");
-  };
-
-  const toggleBusyDates = () => setIsBusyDatesOpen(!isBusyDatesOpen);
-
-  const toggleSection = (section) => {
-    setOpenSections((prev) => ({ ...prev, [section]: !prev[section] }));
-  };
-
-  const renderDayContents = (day, date) => {
-    const isBusy = isDateBusy(date);
-    const busyDetails = getBusyDetailsForDate(date);
-    return (
-      <div className={`${styles.dayWrapper} ${isBusy ? styles.busyDay : ""}`}>
-        <span>{day}</span>
-        {isBusy && (
-          <>
-            <div className={styles.busyIndicator} />
-            <div className={styles.busyTooltip}>
-              {busyDetails.map((busy, index) => (
-                <div key={index} className={styles.tooltipItem}>
-                  <span className={styles.tooltipCustomer}>
-                    {busy.customerName}
-                  </span>
-                  <span className={styles.tooltipProject}>
-                    ({busy.projectName})
-                  </span>
-                  <span className={styles.tooltipRange}>
-                    {busy.startDate.toLocaleDateString()} -{" "}
-                    {busy.finishDate.toLocaleDateString()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    );
   };
 
   const getDateValue = (date) => {
-    return safeParseDate(date);
+    const parsed = safeParseDate(date);
+    return parsed && !isNaN(parsed.getTime()) ? parsed : null;
+  };
+
+  // Handle address component changes
+  const handleAddressComponentChange = (field, value) => {
+    const newComponents = { ...addressComponents, [field]: value };
+    setAddressComponents(newComponents);
+    const newStreet = constructStreetAddress(newComponents);
+    setCustomer({ ...customer, street: newStreet });
   };
 
   return (
     <div className={styles.customerInfo}>
       <h2 className={styles.title}>Customer Information</h2>
+
       <div className={styles.form}>
         {/* Personal Information */}
         <CollapsibleSection
@@ -432,7 +365,9 @@ export default function CustomerInfo({
             <input
               type="text"
               value={customer.firstName || ""}
-              onChange={(e) => handleNameChange("firstName", e.target.value)}
+              onChange={(e) =>
+                setCustomer({ ...customer, firstName: e.target.value })
+              }
               className={`${styles.input} ${
                 !customer.firstName && !disabled && styles.error
               }`}
@@ -448,7 +383,9 @@ export default function CustomerInfo({
             <input
               type="text"
               value={customer.lastName || ""}
-              onChange={(e) => handleNameChange("lastName", e.target.value)}
+              onChange={(e) =>
+                setCustomer({ ...customer, lastName: e.target.value })
+              }
               className={`${styles.input} ${
                 !customer.lastName && !disabled && styles.error
               }`}
@@ -465,166 +402,129 @@ export default function CustomerInfo({
           isOpen={openSections.address}
           toggleOpen={() => toggleSection("address")}
         >
-          {/* Street Address Line - Professional Layout */}
-          <div className={styles.addressRow}>
-            <div className={styles.addressFieldSmall}>
-              <label className={styles.label}>
-                <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Number{" "}
-                <span className={styles.required}>*</span>
-              </label>
-              <input
-                type="text"
-                value={addressComponents.addressNumber || ""}
-                onChange={(e) =>
-                  handleAddressComponentChange("addressNumber", e.target.value)
-                }
-                className={`${styles.input} ${
-                  !addressComponents.addressNumber && !disabled && styles.error
-                }`}
-                disabled={disabled}
-                placeholder="123"
-              />
-            </div>
-            <div className={styles.addressFieldSmall}>
-              <label className={styles.label}>
-                <FontAwesomeIcon
-                  icon={faMapMarkerAlt}
-                  className={styles.icon}
-                />{" "}
-                Direction
-              </label>
-              <select
-                value={addressComponents.direction || ""}
-                onChange={(e) =>
-                  handleAddressComponentChange("direction", e.target.value)
-                }
-                className={styles.input}
-                disabled={disabled}
-              >
-                {DIRECTIONS.map((dir) => (
-                  <option key={dir.value} value={dir.value}>
-                    {dir.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className={styles.addressFieldLarge}>
-              <label className={styles.label}>
-                <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Street
-                Name <span className={styles.required}>*</span>
-              </label>
-              <input
-                type="text"
-                value={addressComponents.streetName || ""}
-                onChange={(e) =>
-                  handleAddressComponentChange("streetName", e.target.value)
-                }
-                className={`${styles.input} ${
-                  !addressComponents.streetName && !disabled && styles.error
-                }`}
-                disabled={disabled}
-                placeholder="Main"
-              />
-            </div>
-            <div className={styles.addressFieldMedium}>
-              <label className={styles.label}>
-                <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Type{" "}
-                <span className={styles.required}>*</span>
-              </label>
-              <select
-                value={addressComponents.streetType || ""}
-                onChange={(e) =>
-                  handleAddressComponentChange("streetType", e.target.value)
-                }
-                className={`${styles.input} ${
-                  !addressComponents.streetType && !disabled && styles.error
-                }`}
-                disabled={disabled}
-              >
-                {STREET_TYPES.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
+          {/* Street Address Row - All in one line */}
+          <div className={styles.field}>
+            <label className={styles.label}>
+              <FontAwesomeIcon icon={faRoad} className={styles.icon} /> Street
+              Address <span className={styles.required}>*</span>
+            </label>
+            <div className={styles.addressRow}>
+              <div className={styles.addressFieldSmall}>
+                <input
+                  type="text"
+                  value={addressComponents.addressNumber}
+                  onChange={(e) =>
+                    handleAddressComponentChange("addressNumber", e.target.value)
+                  }
+                  className={`${styles.input} ${styles.compactInput} ${
+                    !addressComponents.addressNumber && !disabled && styles.error
+                  }`}
+                  disabled={disabled}
+                  placeholder="No."
+                />
+              </div>
+              <div className={styles.addressFieldSmall}>
+                <select
+                  value={addressComponents.direction}
+                  onChange={(e) =>
+                    handleAddressComponentChange("direction", e.target.value)
+                  }
+                  className={`${styles.input} ${styles.compactInput}`}
+                  disabled={disabled}
+                >
+                  {DIRECTIONS.map((dir) => (
+                    <option key={dir.value} value={dir.value}>
+                      {dir.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.addressFieldLarge}>
+                <input
+                  type="text"
+                  value={addressComponents.streetName}
+                  onChange={(e) =>
+                    handleAddressComponentChange("streetName", e.target.value)
+                  }
+                  className={`${styles.input} ${styles.compactInput} ${
+                    !addressComponents.streetName && !disabled && styles.error
+                  }`}
+                  disabled={disabled}
+                  placeholder="Street Name"
+                />
+              </div>
+              <div className={styles.addressFieldMedium}>
+                <select
+                  value={addressComponents.streetType}
+                  onChange={(e) =>
+                    handleAddressComponentChange("streetType", e.target.value)
+                  }
+                  className={`${styles.input} ${styles.compactInput} ${
+                    !addressComponents.streetType && !disabled && styles.error
+                  }`}
+                  disabled={disabled}
+                >
+                  {STREET_TYPES.map((type) => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
-          {/* City, Unit, State, ZIP Row */}
-          <div className={styles.addressRow}>
-            <div className={styles.addressFieldLarge}>
-              <label className={styles.label}>
-                <FontAwesomeIcon icon={faCity} className={styles.icon} /> City{" "}
-                <span className={styles.required}>*</span>
-              </label>
-              <input
-                type="text"
-                value={customer.city || ""}
-                onChange={(e) => handleCityChange(e.target.value)}
-                className={`${styles.input} ${
-                  !customer.city && !disabled && styles.error
-                }`}
-                disabled={disabled}
-                placeholder="Chicago"
-              />
-            </div>
-            <div className={styles.addressFieldSmall}>
-              <label className={styles.label}>
-                <FontAwesomeIcon icon={faHome} className={styles.icon} /> Unit
-              </label>
-              <input
-                type="text"
-                value={customer.unit || ""}
-                onChange={(e) =>
-                  setCustomer({ ...customer, unit: e.target.value })
-                }
-                className={styles.input}
-                disabled={disabled}
-                placeholder="Apt 4B"
-              />
-            </div>
-            <div className={styles.addressFieldSmall}>
-              <label className={styles.label}>
-                <FontAwesomeIcon
-                  icon={faMapMarkerAlt}
-                  className={styles.icon}
-                />{" "}
-                State
-              </label>
-              <select
-                value={customer.state || "IL"}
-                onChange={(e) =>
-                  setCustomer({ ...customer, state: e.target.value })
-                }
-                className={styles.input}
-                disabled={disabled}
-              >
-                <option value="IL">Illinois</option>
-                <option value="IN">Indiana</option>
-                <option value="WI">Wisconsin</option>
-              </select>
-            </div>
-            <div className={styles.addressFieldSmall}>
-              <label className={styles.label}>
-                <FontAwesomeIcon
-                  icon={faMapMarkerAlt}
-                  className={styles.icon}
-                />{" "}
-                ZIP <span className={styles.required}>*</span>
-              </label>
-              <input
-                type="text"
-                value={customer.zipCode || ""}
-                onChange={(e) => handleZipChange(e.target.value)}
-                onBlur={handleZipBlur}
-                className={`${styles.input} ${
-                  !customer.zipCode && !disabled && styles.error
-                }`}
-                maxLength="5"
-                disabled={disabled}
-                placeholder="60601"
-              />
-            </div>
+          <div className={styles.field}>
+            <label className={styles.label}>
+              <FontAwesomeIcon icon={faCity} className={styles.icon} /> City{" "}
+              <span className={styles.required}>*</span>
+            </label>
+            <input
+              type="text"
+              value={customer.city || ""}
+              onChange={(e) =>
+                setCustomer({ ...customer, city: e.target.value })
+              }
+              className={`${styles.input} ${
+                !customer.city && !disabled && styles.error
+              }`}
+              disabled={disabled}
+              placeholder="Enter city"
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>
+              <FontAwesomeIcon icon={faMapMarkerAlt} className={styles.icon} />{" "}
+              State <span className={styles.required}>*</span>
+            </label>
+            <input
+              type="text"
+              value={customer.state || ""}
+              onChange={(e) =>
+                setCustomer({ ...customer, state: e.target.value })
+              }
+              className={`${styles.input} ${
+                !customer.state && !disabled && styles.error
+              }`}
+              disabled={disabled}
+              placeholder="Enter state"
+            />
+          </div>
+          <div className={styles.field}>
+            <label className={styles.label}>
+              <FontAwesomeIcon icon={faMapMarkerAlt} className={styles.icon} />{" "}
+              ZIP Code <span className={styles.required}>*</span>
+            </label>
+            <input
+              type="text"
+              value={customer.zipCode || ""}
+              onChange={(e) => setCustomer({ ...customer, zipCode: e.target.value })}
+              className={`${styles.input} ${
+                !customer.zipCode && !disabled && styles.error
+              }`}
+              disabled={disabled}
+              placeholder="Enter ZIP code"
+            />
           </div>
         </CollapsibleSection>
 
@@ -821,7 +721,7 @@ export default function CustomerInfo({
                 setCustomer({ ...customer, notes: e.target.value })
               }
               className={styles.input}
-              rows="3"
+              rows="2"
               disabled={disabled}
               placeholder="Add any notes"
             />

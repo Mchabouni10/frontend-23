@@ -1,23 +1,23 @@
 // src/components/Navbar/Navbar.jsx
 import { Link, useLocation } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faSignOutAlt, 
-  faUsers, 
-  faPlusCircle, 
-  faFileAlt, 
-  faMoon, 
-  faSun, 
+import {
+  faSignOutAlt,
+  faUsers,
+  faPlusCircle,
+  faFileAlt,
+  faMoon,
+  faSun,
   faChartPie,
   faPencilRuler,
-  faReceipt
+  faMoneyBillWave // Changed icon for expenses
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './Navbar.module.css';
 
 export default function Navbar({ user, setUser, toggleDarkMode, isDarkMode }) {
   const location = useLocation();
   // Fix the regex to capture project ID correctly
-  const projectId = location.pathname.match(/\/home\/(customer|edit)\/([^/]+)/)?.[2];
+  const projectId = location.pathname.match(/\/home\/(customer|edit)\/([^/]+)\/?$/)?.[2];
 
   return (
     <nav className={styles.navbar}>
@@ -30,39 +30,39 @@ export default function Navbar({ user, setUser, toggleDarkMode, isDarkMode }) {
         <li>
           <Link to="/home/customers" className={styles.navLink}>
             <FontAwesomeIcon icon={faUsers} className={styles.navIcon} />
-            <span>Customers</span>
+            <span>Customers</span> {/* Kept concise */}
           </Link>
         </li>
         <li>
           <Link to="/home/new-customer-project" className={styles.navLink}>
             <FontAwesomeIcon icon={faPlusCircle} className={styles.navIcon} />
-            <span>New Project</span>
+            <span>New Project</span> {/* Concise */}
           </Link>
         </li>
         <li>
           <Link to="/home/sketch" className={styles.navLink}>
             <FontAwesomeIcon icon={faPencilRuler} className={styles.navIcon} />
-            <span>Sketch</span>
+            <span>Sketch</span> {/* Already concise */}
           </Link>
         </li>
         {projectId && (
           <li>
             <Link to={`/home/print/${projectId}`} className={styles.navLink}>
               <FontAwesomeIcon icon={faFileAlt} className={styles.navIcon} />
-              <span>PrintEstimate</span>
+              <span>Print</span> {/* Shortened from PrintEstimate */}
             </Link>
           </li>
         )}
         <li>
           <Link to="/home/finance" className={styles.navLink}>
             <FontAwesomeIcon icon={faChartPie} className={styles.navIcon} />
-            <span>Finance Data</span>
+            <span>Finance</span> {/* Shortened from Finance Data */}
           </Link>
         </li>
         <li>
           <Link to="/home/company-expenses" className={styles.navLink}>
-            <FontAwesomeIcon icon={faReceipt} className={styles.navIcon} />
-            <span>Expenses</span>
+            <FontAwesomeIcon icon={faMoneyBillWave} className={styles.navIcon} /> {/* Updated icon */}
+            <span>Expenses</span> {/* Kept concise */}
           </Link>
         </li>
         <li>

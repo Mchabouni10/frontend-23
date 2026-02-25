@@ -5,6 +5,7 @@ import { useCategories } from "../../../../context/CategoriesContext";
 import styles from "./SquareFootageInput.module.css";
 import commonStyles from "../../../../styles/common.module.css";
 import { validateNumber } from "../../utils/validation";
+import { MEASUREMENT_TYPES } from "../../../../constants/measurementTypes";
 
 const MIN_DIMENSION = 0.1;
 const MAX_DIMENSION = 1000;
@@ -28,7 +29,6 @@ export default function SquareFootageInput({
   const [widthInputValue, setWidthInputValue] = useState("");
   const [heightInputValue, setHeightInputValue] = useState("");
   const [sqftInputValue, setSqftInputValue] = useState("");
-  // FIXED: Use manualSqft flag from surface if it exists, otherwise detect from data structure
   const [isManual, setIsManual] = useState(
     surface.manualSqft !== undefined
       ? surface.manualSqft
@@ -43,14 +43,12 @@ export default function SquareFootageInput({
     surface.subtype || defaultSubtype || "",
   );
 
-  // FIXED: Only update input values, don't change isManual from external updates
   useEffect(() => {
     if (surface?.width !== undefined)
       setWidthInputValue(surface.width.toString());
     if (surface?.height !== undefined)
       setHeightInputValue(surface.height.toString());
     if (surface?.sqft !== undefined) setSqftInputValue(surface.sqft.toString());
-    // FIXED: Only set isManual if manualSqft flag exists in surface
     if (surface?.manualSqft !== undefined) {
       setIsManual(surface.manualSqft);
     }
@@ -97,11 +95,10 @@ export default function SquareFootageInput({
           const baseFields = {
             id: newSurfaces[surfIndex].id,
             name: newSurfaces[surfIndex].name,
-            measurementType: "sqft",
+            measurementType: MEASUREMENT_TYPES.SQUARE_FOOT,
             subtype: selectedSubtype,
           };
 
-          // FIXED: Always set manualSqft flag so we know the mode
           newSurfaces[surfIndex] = manualMode
             ? {
                 ...baseFields,
@@ -190,21 +187,17 @@ export default function SquareFootageInput({
     ],
   );
 
-  // FIXED: When toggling, immediately update the surface with the correct structure
   const handleToggleChange = useCallback(() => {
     const newManualMode = !isManual;
     setIsManual(newManualMode);
 
-    // Immediately update the surface structure to match the new mode
     if (newManualMode) {
-      // Switching to manual mode - keep sqft, clear dimensions
       const currentSqft =
         parseFloat(surface?.sqft) ||
         parseFloat(surface?.width || 0) * parseFloat(surface?.height || 0) ||
         25;
       updateSurfaceInContext({ sqft: currentSqft }, true);
     } else {
-      // Switching to dimension mode - set default dimensions if needed
       const width = parseFloat(surface?.width) || DEFAULT_DIMENSION;
       const height = parseFloat(surface?.height) || DEFAULT_DIMENSION;
       const sqft = parseFloat((width * height).toFixed(2));
@@ -248,32 +241,34 @@ export default function SquareFootageInput({
   );
 
   const handleInputChange = useCallback(
-    (setter) => (e) => setter(e.target.value),
+    (setter) => (e) => {
+      setter(e.target.value);
+    },
     [],
   );
+
   const handleBlur = useCallback(
     (field, value) => () => {
-      if (value) handleDimensionChange(field, value);
+      handleDimensionChange(field, value);
+      if (field === "width") setWidthInputValue("");
+      else if (field === "height") setHeightInputValue("");
+      else if (field === "sqft") setSqftInputValue("");
     },
     [handleDimensionChange],
   );
 
-  const currentWidth = useMemo(() => {
-    const w = parseFloat(surface?.width);
-    return !isNaN(w) && w >= MIN_DIMENSION ? w : DEFAULT_DIMENSION;
-  }, [surface?.width]);
-
-  const currentHeight = useMemo(() => {
-    const h = parseFloat(surface?.height);
-    return !isNaN(h) && h >= MIN_DIMENSION ? h : DEFAULT_DIMENSION;
-  }, [surface?.height]);
-
-  const currentSqft = useMemo(() => {
-    const sqft = parseFloat(surface?.sqft);
-    return !isNaN(sqft) && sqft >= MIN_SQFT
-      ? sqft
-      : currentWidth * currentHeight;
-  }, [surface?.sqft, currentWidth, currentHeight]);
+  const currentWidth = useMemo(
+    () => parseFloat(surface?.width) || DEFAULT_DIMENSION,
+    [surface?.width],
+  );
+  const currentHeight = useMemo(
+    () => parseFloat(surface?.height) || DEFAULT_DIMENSION,
+    [surface?.height],
+  );
+  const currentSqft = useMemo(
+    () => parseFloat(surface?.sqft) || currentWidth * currentHeight,
+    [surface?.sqft, currentWidth, currentHeight],
+  );
 
   const widthDisplayValue = widthInputValue || currentWidth.toString();
   const heightDisplayValue = heightInputValue || currentHeight.toString();
@@ -305,32 +300,33 @@ export default function SquareFootageInput({
 
   return (
     <div className={styles.squareFootageInput}>
-      {subtypeOptions.length > 0 && (
-        <div className={styles.field}>
-          <label
-            htmlFor={`subtype-${catIndex}-${workIndex}-${surfIndex}`}
-            className={styles.label}
-          >
-            Subtype:
-          </label>
-          <select
-            id={`subtype-${catIndex}-${workIndex}-${surfIndex}`}
-            value={selectedSubtype}
-            onChange={handleSubtypeChange}
-            disabled={disabled}
-            className={`${styles.select} ${styles.input}`}
-          >
-            <option value="">Select Subtype</option>
-            {subtypeOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
+      {/* Header row with subtype and toggle */}
+      <div className={styles.headerRow}>
+        {subtypeOptions.length > 0 && (
+          <div className={styles.subtypeField}>
+            <label
+              htmlFor={`subtype-${catIndex}-${workIndex}-${surfIndex}`}
+              className={styles.inlineLabel}
+            >
+              Type:
+            </label>
+            <select
+              id={`subtype-${catIndex}-${workIndex}-${surfIndex}`}
+              value={selectedSubtype}
+              onChange={handleSubtypeChange}
+              disabled={disabled}
+              className={styles.select}
+            >
+              <option value="">Select Type</option>
+              {subtypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
-      <div className={styles.toggleContainer}>
         <div className={styles.toggleSwitch}>
           <input
             type="checkbox"
@@ -345,147 +341,143 @@ export default function SquareFootageInput({
             className={styles.toggleLabel}
           >
             <span className={styles.toggleSlider}></span>
-            <span className={styles.toggleText}>
-              Enter square footage directly
-            </span>
+            <span className={styles.toggleText}>Manual sq ft</span>
           </label>
         </div>
       </div>
 
+      {/* Input fields */}
       {isManual ? (
-        <div className={styles.field}>
+        <div className={styles.inputRow}>
           <label
             htmlFor={`sqft-${catIndex}-${workIndex}-${surfIndex}`}
-            className={styles.label}
+            className={styles.inlineLabel}
           >
-            Square Feet:
-            <span className={styles.required} aria-label="required field">
-              *
-            </span>
+            Sq Ft<span className={styles.required}>*</span>
           </label>
-          <div
-            className={`${styles.inputWrapper} ${commonStyles.inputWrapper} ${
-              errors.sqft ? styles.errorInput : ""
-            }`}
-          >
-            <i
-              className={`fas fa-ruler-combined ${commonStyles.inputIcon}`}
-              aria-hidden="true"
-            ></i>
-            <input
-              id={`sqft-${catIndex}-${workIndex}-${surfIndex}`}
-              {...inputProps(
-                "sqft",
-                sqftDisplayValue,
-                `sqft-error-${catIndex}-${workIndex}-${surfIndex}`,
-              )}
-            />
-            <span className={styles.unit} aria-label="unit">
-              sqft
-            </span>
-          </div>
-          {errors.sqft && (
-            <div
-              id={`sqft-error-${catIndex}-${workIndex}-${surfIndex}`}
-              className={styles.errorMessage}
-              role="alert"
-              aria-live="polite"
-            >
-              <i className="fas fa-exclamation-circle" aria-hidden="true"></i>
-              {errors.sqft}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className={styles.dimensions}>
-          <div className={styles.field}>
-            <label
-              htmlFor={`width-${catIndex}-${workIndex}-${surfIndex}`}
-              className={styles.label}
-            >
-              Width:
-              <span className={styles.required} aria-label="required field">
-                *
-              </span>
-            </label>
+          <div className={styles.inputGroup}>
             <div
               className={`${styles.inputWrapper} ${commonStyles.inputWrapper} ${
-                errors.width ? styles.errorInput : ""
+                errors.sqft ? styles.errorInput : ""
               }`}
             >
               <i
-                className={`fas fa-ruler-horizontal ${commonStyles.inputIcon}`}
+                className={`fas fa-ruler-combined ${commonStyles.inputIcon}`}
                 aria-hidden="true"
               ></i>
               <input
-                id={`width-${catIndex}-${workIndex}-${surfIndex}`}
+                id={`sqft-${catIndex}-${workIndex}-${surfIndex}`}
                 {...inputProps(
-                  "width",
-                  widthDisplayValue,
-                  `width-error-${catIndex}-${workIndex}-${surfIndex}`,
+                  "sqft",
+                  sqftDisplayValue,
+                  `sqft-error-${catIndex}-${workIndex}-${surfIndex}`,
                 )}
               />
-              <span className={styles.unit} aria-label="unit">
-                ft
-              </span>
+              <span className={styles.unit}>sqft</span>
             </div>
-            {errors.width && (
+            {errors.sqft && (
               <div
-                id={`width-error-${catIndex}-${workIndex}-${surfIndex}`}
+                id={`sqft-error-${catIndex}-${workIndex}-${surfIndex}`}
                 className={styles.errorMessage}
                 role="alert"
                 aria-live="polite"
               >
                 <i className="fas fa-exclamation-circle" aria-hidden="true"></i>
-                {errors.width}
+                {errors.sqft}
               </div>
             )}
+          </div>
+        </div>
+      ) : (
+        <div className={styles.dimensionsRow}>
+          <div className={styles.inputRow}>
+            <label
+              htmlFor={`width-${catIndex}-${workIndex}-${surfIndex}`}
+              className={styles.inlineLabel}
+            >
+              Width<span className={styles.required}>*</span>
+            </label>
+            <div className={styles.inputGroup}>
+              <div
+                className={`${styles.inputWrapper} ${
+                  commonStyles.inputWrapper
+                } ${errors.width ? styles.errorInput : ""}`}
+              >
+                <i
+                  className={`fas fa-ruler-horizontal ${commonStyles.inputIcon}`}
+                  aria-hidden="true"
+                ></i>
+                <input
+                  id={`width-${catIndex}-${workIndex}-${surfIndex}`}
+                  {...inputProps(
+                    "width",
+                    widthDisplayValue,
+                    `width-error-${catIndex}-${workIndex}-${surfIndex}`,
+                  )}
+                />
+                <span className={styles.unit}>ft</span>
+              </div>
+              {errors.width && (
+                <div
+                  id={`width-error-${catIndex}-${workIndex}-${surfIndex}`}
+                  className={styles.errorMessage}
+                  role="alert"
+                  aria-live="polite"
+                >
+                  <i
+                    className="fas fa-exclamation-circle"
+                    aria-hidden="true"
+                  ></i>
+                  {errors.width}
+                </div>
+              )}
+            </div>
           </div>
 
           <span className={styles.multiply}>×</span>
 
-          <div className={styles.field}>
+          <div className={styles.inputRow}>
             <label
               htmlFor={`height-${catIndex}-${workIndex}-${surfIndex}`}
-              className={styles.label}
+              className={styles.inlineLabel}
             >
-              Height:
-              <span className={styles.required} aria-label="required field">
-                *
-              </span>
+              Height<span className={styles.required}>*</span>
             </label>
-            <div
-              className={`${styles.inputWrapper} ${commonStyles.inputWrapper} ${
-                errors.height ? styles.errorInput : ""
-              }`}
-            >
-              <i
-                className={`fas fa-ruler-vertical ${commonStyles.inputIcon}`}
-                aria-hidden="true"
-              ></i>
-              <input
-                id={`height-${catIndex}-${workIndex}-${surfIndex}`}
-                {...inputProps(
-                  "height",
-                  heightDisplayValue,
-                  `height-error-${catIndex}-${workIndex}-${surfIndex}`,
-                )}
-              />
-              <span className={styles.unit} aria-label="unit">
-                ft
-              </span>
-            </div>
-            {errors.height && (
+            <div className={styles.inputGroup}>
               <div
-                id={`height-error-${catIndex}-${workIndex}-${surfIndex}`}
-                className={styles.errorMessage}
-                role="alert"
-                aria-live="polite"
+                className={`${styles.inputWrapper} ${
+                  commonStyles.inputWrapper
+                } ${errors.height ? styles.errorInput : ""}`}
               >
-                <i className="fas fa-exclamation-circle" aria-hidden="true"></i>
-                {errors.height}
+                <i
+                  className={`fas fa-ruler-vertical ${commonStyles.inputIcon}`}
+                  aria-hidden="true"
+                ></i>
+                <input
+                  id={`height-${catIndex}-${workIndex}-${surfIndex}`}
+                  {...inputProps(
+                    "height",
+                    heightDisplayValue,
+                    `height-error-${catIndex}-${workIndex}-${surfIndex}`,
+                  )}
+                />
+                <span className={styles.unit}>ft</span>
               </div>
-            )}
+              {errors.height && (
+                <div
+                  id={`height-error-${catIndex}-${workIndex}-${surfIndex}`}
+                  className={styles.errorMessage}
+                  role="alert"
+                  aria-live="polite"
+                >
+                  <i
+                    className="fas fa-exclamation-circle"
+                    aria-hidden="true"
+                  ></i>
+                  {errors.height}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

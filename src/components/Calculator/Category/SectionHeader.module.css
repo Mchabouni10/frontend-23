@@ -1,0 +1,235 @@
+/* SectionHeader.module.css - Centralized header styling for all sections */
+
+/* ==========================================================================
+   Main Header Container
+   ========================================================================== */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: var(--surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  min-height: 58px;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================================================
+   Toggle Button
+   ========================================================================== */
+.toggleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--surface);
+  cursor: pointer;
+  font-size: var(--font-size-md);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.toggleButton:hover:not(.disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.toggleButton:active:not(.disabled) {
+  transform: translateY(0);
+}
+
+.toggleButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
+}
+
+.toggleButton.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   Title Section
+   ========================================================================== */
+.titleSection {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+  min-width: 0;
+}
+
+.icon {
+  font-size: 1.7em;
+  color: var(--surface);
+  flex-shrink: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--surface);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   Right Content Area
+   ========================================================================== */
+.rightContent {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-left: auto;
+  padding-left: var(--spacing-sm);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Stats Container & Items - CONSISTENT ACROSS ALL SECTIONS
+   ========================================================================== */
+.statsContainer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.statItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.statItem:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+
+
+.statIcon {
+  font-size: 0.9em;
+  opacity: 0.9;
+  color: var(--surface);
+  flex-shrink: 0;
+}
+
+.statValue {
+  font-weight: var(--font-weight-bold);
+  font-size: 1.1em;
+  color: var(--surface);
+}
+
+/* Status-specific value colors (for payment status, etc.) */
+.statValue.dueStatus {
+  color: #ff6b6b;
+  font-weight: var(--font-weight-bold);
+}
+
+.statValue.paidStatus {
+  color: #51cf66;
+  font-weight: var(--font-weight-bold);
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+@media (max-width: 768px) {
+  .header {
+    padding: 8px var(--spacing-sm);
+    min-height: 44px;
+    gap: var(--spacing-sm);
+  }
+
+  .toggleButton {
+    width: 28px;
+    height: 28px;
+    font-size: var(--font-size-sm);
+  }
+
+  .title {
+    font-size: var(--font-size-sm);
+  }
+
+  .icon {
+    font-size: 1em;
+  }
+
+  .rightContent {
+    gap: 4px;
+    padding-left: var(--spacing-sm);
+  }
+
+  .statsContainer {
+    gap: 4px;
+  }
+
+  .statItem {
+    padding: 4px 8px;
+    font-size: var(--font-size-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .statsContainer {
+    gap: 2px;
+  }
+
+  .statItem {
+    padding: 3px 6px;
+    gap: 4px;
+    font-size: var(--font-size-sm);
+  }
+
+  .statIcon {
+    font-size: 0.85em;
+  }
+}
+
+/* ==========================================================================
+   Dark Mode Support
+   ========================================================================== */
+.dark .header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+@media print {
+  .header {
+    background: #333;
+    border-bottom: 2px solid #000;
+  }
+
+  .toggleButton {
+    display: none;
+  }
+}

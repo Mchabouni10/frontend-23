@@ -1,89 +1,115 @@
 /* src/components/Calculator/CostBreakdown/CostBreakdown.module.css */
+/* Full dark-mode consistency pass — all hardcoded light colors replaced with variables */
 
-/* Main Container */
+/* ── Main Container ─────────────────────────────────────────────────────── */
 .costBreakdown {
-    font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-    margin-top: var(--spacing-sm);
-    padding: var(--spacing-md);
-    background: linear-gradient(135deg, var(--surface) 0%, var(--background) 100%);
-    border-radius: var(--radius-md);
-    box-shadow: 0 4px 12px var(--shadow);
-    max-width: 1200px;
+    font-family: var(--font-family);
+    margin-top: var(--spacing-xs);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 8px 32px var(--shadow);
+    max-width: 1400px;
     margin-left: auto;
     margin-right: auto;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Section Titles */
+/* ── Section Titles ─────────────────────────────────────────────────────── */
 .sectionTitle {
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
     font-weight: var(--font-weight-extrabold);
     color: var(--primary);
     text-align: center;
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    padding-bottom: var(--spacing-sm);
-    border-bottom: 2px solid var(--primary);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 2px solid transparent;
+    border-image: linear-gradient(90deg, transparent, var(--primary), transparent) 1;
+    position: relative;
+}
+
+.sectionTitle::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--primary-dark));
+    border-radius: 2px;
 }
 
 .subSectionTitle {
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-bold);
     color: var(--primary);
-    margin-bottom: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-left: 4px solid var(--primary);
-    background: linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, transparent 100%);
+    margin-bottom: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-left: 3px solid var(--primary);
+    /* Use info-bg which is already dark-mode aware */
+    background: linear-gradient(90deg, var(--info-bg) 0%, transparent 100%);
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
 }
 
-/* Sections */
+.subSectionTitle:hover {
+    background: linear-gradient(90deg, var(--info-bg) 0%, transparent 80%);
+    border-left-width: 4px;
+}
+
+/* ── Sections ───────────────────────────────────────────────────────────── */
 .categorySection,
 .totalSection,
 .paymentSection {
-    margin-bottom: var(--spacing-lg);
-    padding: var(--spacing-md);
-    background: var(--surface);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--surface-raised);
     border-radius: var(--radius-md);
-    box-shadow: 0 2px 8px var(--shadow);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 16px var(--shadow);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .categorySection:hover,
 .totalSection:hover,
 .paymentSection:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px var(--shadow);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px var(--shadow-md);
+    border-color: var(--border-strong);
 }
 
-/* Tables */
+/* ── Tables ─────────────────────────────────────────────────────────────── */
 .breakdownTable {
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
     font-size: var(--font-size-sm);
     color: var(--text);
-    margin-top: var(--spacing-sm);
+    margin-top: var(--spacing-xs);
     overflow: hidden;
     border-radius: var(--radius-sm);
 }
 
 .breakdownTable th,
 .breakdownTable td {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-bottom: 1px solid var(--border);
     text-align: left;
+    line-height: 1.4;
 }
 
 .breakdownTable th {
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: white;
+    color: #fff;
     font-weight: var(--font-weight-bold);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -91,51 +117,51 @@
     position: sticky;
     top: 0;
     z-index: 10;
+    box-shadow: 0 2px 8px var(--shadow-md);
 }
 
 .breakdownTable td {
-    background: var(--surface);
-    transition: background-color 0.2s ease;
+    background: var(--surface-raised);
+    color: var(--text);
+    transition: all 0.2s ease;
 }
 
-/* Description Cell - Full width with wrapping */
+/* ── Cell types ─────────────────────────────────────────────────────────── */
 .descriptionCell {
-    max-width: 300px;
-    min-width: 150px;
+    max-width: 350px;
+    min-width: 180px;
     font-size: var(--font-size-sm);
-    line-height: 1.6;
+    line-height: 1.4;
     white-space: normal;
     word-wrap: break-word;
-    padding: var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
     color: var(--text-light);
 }
 
-/* Item Number Cell */
 .itemNumber {
     font-weight: var(--font-weight-bold);
     color: var(--primary);
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-sm);
     white-space: nowrap;
+    background: var(--info-bg);
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-block;
 }
 
-/* Work Type Cell */
 .workTypeCell {
     font-weight: var(--font-weight-medium);
     color: var(--text);
+    font-size: var(--font-size-sm);
 }
 
-/* Alignment Utilities */
-.centerAlign {
-    text-align: center;
-}
+/* ── Alignment Utilities ────────────────────────────────────────────────── */
+.centerAlign { text-align: center; }
+.rightAlign  { text-align: right; }
 
-.rightAlign {
-    text-align: right;
-}
-
-/* Table Row Styles */
+/* ── Row Styles ─────────────────────────────────────────────────────────── */
 .categoryRow:hover td {
-    background: rgba(59, 130, 246, 0.05);
+    background: var(--info-bg);
 }
 
 .totalRow {
@@ -144,64 +170,119 @@
 
 .totalRow td {
     font-weight: var(--font-weight-bold);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+    background: var(--info-bg);
     color: var(--primary);
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-sm);
 }
 
 .subtotalRow {
-    border-top: 1px solid var(--primary);
+    border-top: 1px solid var(--border-strong);
 }
 
 .subtotalRow td {
     font-weight: var(--font-weight-bold);
     color: var(--text);
-    background: rgba(230, 240, 250, 0.2);
-    border-top: 1px solid var(--primary);
+    background: var(--muted-bg);
+    border-top: 1px solid var(--border-strong);
+    padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 .discountRow td {
     font-weight: var(--font-weight-medium);
     color: var(--error);
-    background: rgba(239, 68, 68, 0.08);
-    transition: background-color 0.2s ease;
+    background: var(--error-bg);
+    transition: all 0.2s ease;
+    padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 .discountRow:hover td {
-    background: rgba(239, 68, 68, 0.12);
+    background: var(--error-bg);
+    filter: brightness(1.15);
 }
 
 .grandTotalRow {
     border-top: 3px solid var(--primary);
+    position: relative;
+}
+
+.grandTotalRow::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent,
+        var(--primary) 20%,
+        var(--primary) 80%,
+        transparent
+    );
 }
 
 .grandTotalRow td {
     font-weight: var(--font-weight-extrabold);
-    font-size: var(--font-size-lg);
-    color: var(--primary-dark);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 100%);
+    font-size: var(--font-size-md);
+    color: var(--primary);
+    background: var(--info-bg);
     border-top: 3px solid var(--primary);
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    box-shadow: 0 4px 12px var(--glow-primary, var(--shadow));
 }
 
 .overdueRow td {
     font-weight: var(--font-weight-medium);
     color: var(--error);
-    background: rgba(239, 68, 68, 0.08);
+    background: var(--error-bg);
+    padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 .paidRow td {
     font-weight: var(--font-weight-medium);
     color: var(--success);
-    background: rgba(34, 197, 94, 0.08);
+    background: var(--success-bg);
+    padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 .depositRow td {
-    background: rgba(6, 182, 212, 0.1);
+    background: var(--info-bg);
     font-weight: var(--font-weight-medium);
+    padding: var(--spacing-xs) var(--spacing-sm);
 }
 
-/* Status Indicators */
+/* ── Remaining Balance Row ──────────────────────────────────────────────── */
+.remainingBalanceRow {
+    border-top: 3px solid var(--error);
+    position: relative;
+}
+
+.remainingBalanceRow::before {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent,
+        var(--error) 20%,
+        var(--error) 80%,
+        transparent
+    );
+}
+
+.remainingBalanceRow td {
+    font-weight: var(--font-weight-extrabold);
+    font-size: var(--font-size-md);
+    color: var(--error);
+    background: var(--error-bg);
+    border-top: 3px solid var(--error);
+    padding: var(--spacing-sm) var(--spacing-md);
+    box-shadow: 0 4px 12px var(--glow-error, var(--shadow));
+}
+
+/* ── Status Indicators ──────────────────────────────────────────────────── */
 .remaining {
     color: var(--error);
     font-weight: var(--font-weight-bold);
@@ -213,31 +294,37 @@
 }
 
 .paidBadge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     color: var(--success);
     font-weight: var(--font-weight-medium);
-    background: rgba(34, 197, 94, 0.15);
-    padding: 4px 12px;
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-    border: 1px solid rgba(34, 197, 94, 0.3);
+    background: var(--success-bg);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    border: 1px solid var(--success-border);
+    box-shadow: 0 2px 4px var(--glow-success, var(--shadow));
 }
 
 .dueBadge {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     color: var(--error);
     font-weight: var(--font-weight-medium);
-    background: rgba(239, 68, 68, 0.15);
-    padding: 4px 12px;
-    border-radius: var(--radius-sm);
-    font-size: var(--font-size-sm);
-    border: 1px solid rgba(239, 68, 68, 0.3);
+    background: var(--error-bg);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    border: 1px solid var(--error-border);
+    box-shadow: 0 2px 4px var(--glow-error, var(--shadow));
 }
 
-/* Detail Breakdown Styles */
+/* ── Detail Breakdown ───────────────────────────────────────────────────── */
 .detailRow td {
     vertical-align: middle;
-    padding: var(--spacing-md);
+    padding: var(--spacing-xs) var(--spacing-sm);
 }
 
 .labelWithButton {
@@ -245,47 +332,50 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    gap: var(--spacing-sm);
 }
 
 .totalValue {
     font-weight: var(--font-weight-bold);
     color: var(--primary);
     display: block;
-    font-size: var(--font-size-lg);
+    font-size: var(--font-size-md);
 }
 
 .detailBreakdown {
-    background: var(--background);
-    border: 1px solid rgba(226, 232, 240, 0.3);
+    background: var(--surface-raised);
+    border: 1px solid var(--border);
     border-radius: var(--radius-md);
-    padding: var(--spacing-md);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.04);
+    padding: var(--spacing-sm);
+    box-shadow: inset 0 2px 8px var(--shadow);
     transition: all 0.3s ease;
-    margin-top: var(--spacing-sm);
+    margin-top: var(--spacing-xs);
 }
 
+/* ── Inner Table ────────────────────────────────────────────────────────── */
 .innerTable {
     width: 100%;
     border-collapse: collapse;
     font-size: var(--font-size-sm);
-    margin-top: var(--spacing-sm);
+    margin-top: var(--spacing-xs);
     border-radius: var(--radius-sm);
     overflow: hidden;
+    box-shadow: 0 2px 8px var(--shadow);
 }
 
 .innerTable th,
 .innerTable td {
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-bottom: 1px solid rgba(226, 232, 240, 0.2);
+    padding: 6px var(--spacing-sm);
+    border-bottom: 1px solid var(--border);
     text-align: left;
 }
 
 .innerTable th {
-    background: var(--primary-dark);
-    color: white;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
     font-weight: var(--font-weight-bold);
     text-align: left;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-xs);
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
@@ -293,181 +383,219 @@
 .innerTable td {
     color: var(--text);
     font-size: var(--font-size-sm);
-    background: var(--surface);
+    background: var(--surface-raised);
 }
 
 .innerTable tbody tr {
-    transition: background-color 0.2s ease;
+    transition: all 0.2s ease;
 }
 
 .innerTable tbody tr:hover {
-    background: rgba(59, 130, 246, 0.05);
+    background: var(--info-bg);
 }
 
 .innerTable tbody tr:hover td {
-    background: rgba(59, 130, 246, 0.05);
+    background: var(--info-bg);
+    color: var(--text);
+}
+
+.innerTable tbody tr:nth-child(even) td {
+    background: var(--surface);
 }
 
 .innerTable tr:last-child td {
     border-bottom: none;
 }
 
-/* Toggle Button */
+/* ── Toggle Button ──────────────────────────────────────────────────────── */
 .toggleButton {
     margin-left: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: var(--font-size-sm);
-    background: var(--primary);
-    color: white;
+    padding: 5px 12px;
+    font-size: 11px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: var(--font-weight-medium);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px var(--glow-primary, var(--shadow));
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: var(--font-family);
 }
 
 .toggleButton:hover {
-    background: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px var(--glow-primary, var(--shadow));
 }
 
 .toggleButton:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px var(--glow-primary, var(--shadow));
 }
 
-/* Error and Message Styles */
+/* ── Error & Message Styles ─────────────────────────────────────────────── */
 .errorSection {
-    background: rgba(239, 68, 68, 0.1);
-    border: 2px solid rgba(239, 68, 68, 0.3);
+    background: var(--error-bg);
+    border: 2px solid var(--error-border);
     border-radius: var(--radius-md);
-    padding: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
 }
 
 .errorSection h4 {
     color: var(--error);
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
     font-weight: var(--font-weight-bold);
+    font-size: var(--font-size-sm);
 }
 
 .errorSection li {
     color: var(--error);
-    margin-bottom: var(--spacing-sm);
-    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+    font-size: 12px;
 }
 
 .noDataMessage {
     text-align: center;
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg);
     color: var(--text-light);
-    background: var(--background);
+    background: var(--surface-raised);
     border-radius: var(--radius-md);
-    border: 2px dashed var(--primary);
+    border: 2px dashed var(--border-strong);
 }
 
 .noDataMessage h4 {
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-xs);
     color: var(--primary);
+    font-size: var(--font-size-md);
 }
 
 .noDataMessage p {
     margin: 0;
-    font-size: var(--font-size-base);
+    font-size: var(--font-size-sm);
     font-weight: var(--font-weight-medium);
 }
 
 .loadingText,
 .emptyText {
     text-align: center;
-    padding: var(--spacing-md);
+    padding: var(--spacing-sm);
     color: var(--text-light);
     font-style: italic;
+    font-size: 12px;
 }
 
-/* Payment Section Specific Styles */
+/* ── Payment Section Specifics ──────────────────────────────────────────── */
 .paymentDetailsTitle {
-    font-size: var(--font-size-md);
+    font-size: var(--font-size-sm);
     color: var(--primary);
-    margin: var(--spacing-md) 0 var(--spacing-sm) 0;
+    margin: var(--spacing-sm) 0 var(--spacing-xs) 0;
     font-weight: var(--font-weight-bold);
-    border-bottom: 1px solid var(--primary);
-    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid var(--primary);
+    padding-bottom: var(--spacing-xs);
+    background: linear-gradient(90deg, var(--info-bg), transparent);
+    padding-left: var(--spacing-sm);
+    border-radius: var(--radius-sm);
 }
 
-/* Utility Classes */
+/* ── Utility ────────────────────────────────────────────────────────────── */
 .subtotal {
     font-weight: var(--font-weight-medium);
     color: var(--text);
 }
 
-/* Enhanced Visual Hierarchy */
+/* ── Table Row Hover ────────────────────────────────────────────────────── */
 .breakdownTable tbody tr {
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .breakdownTable tbody tr:hover {
-    background: rgba(59, 130, 246, 0.03);
+    background: var(--info-bg);
 }
 
-.innerTable tbody tr:nth-child(even) {
-    background: rgba(0, 0, 0, 0.02);
-}
-
+/* ── Section Accent Borders ─────────────────────────────────────────────── */
 .categorySection {
-    border-left: 4px solid var(--primary);
+    border-left: 3px solid var(--primary);
+    position: relative;
+    overflow: hidden;
+}
+
+.categorySection::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--primary), var(--primary-dark));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.categorySection:hover::before {
+    opacity: 1;
 }
 
 .totalSection {
-    border-left: 4px solid var(--success);
+    border-left: 3px solid var(--success);
 }
 
 .paymentSection {
-    border-left: 4px solid #f59e0b;
+    border-left: 3px solid var(--warning);
 }
 
-/* Responsive Design */
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .costBreakdown {
+        max-width: 100%;
+        padding: var(--spacing-sm);
+    }
+}
+
 @media (max-width: 768px) {
     .costBreakdown {
-        padding: var(--spacing-sm);
+        padding: var(--spacing-xs);
         margin-top: 0;
     }
 
     .sectionTitle {
-        font-size: var(--font-size-base);
-        margin-bottom: var(--spacing-sm);
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--spacing-xs);
     }
 
     .subSectionTitle {
-        font-size: var(--font-size-sm);
+        font-size: 12px;
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--spacing-sm);
+        gap: var(--spacing-xs);
     }
 
     .labelWithButton {
         flex-direction: column;
         align-items: flex-start;
-        gap: var(--spacing-sm);
+        gap: var(--spacing-xs);
     }
 
     .toggleButton {
         margin-left: 0;
         width: 100%;
+        font-size: 11px;
+        padding: 6px 12px;
     }
 
     .breakdownTable,
     .innerTable {
-        font-size: 0.75rem;
+        font-size: 11px;
     }
 
     .breakdownTable th,
     .breakdownTable td,
     .innerTable th,
     .innerTable td {
-        padding: var(--spacing-sm);
+        padding: 6px 8px;
     }
 
     .descriptionCell {
@@ -476,16 +604,16 @@
     }
 
     .detailBreakdown {
-        padding: var(--spacing-sm);
+        padding: var(--spacing-xs);
     }
 
     .grandTotalRow td {
-        font-size: var(--font-size-base);
-        padding: var(--spacing-sm);
+        font-size: var(--font-size-sm);
+        padding: var(--spacing-xs);
     }
 
     .totalValue {
-        font-size: var(--font-size-base);
+        font-size: var(--font-size-sm);
     }
 
     /* Stack table on mobile */
@@ -495,17 +623,21 @@
 
     .breakdownTable tbody tr {
         display: block;
-        border: 1px solid var(--primary);
-        margin-bottom: var(--spacing-sm);
+        border: 1px solid var(--border-strong);
+        margin-bottom: var(--spacing-xs);
         border-radius: var(--radius-sm);
-        padding: var(--spacing-sm);
+        padding: var(--spacing-xs);
+        background: var(--surface-raised);
     }
 
     .breakdownTable td {
         display: block;
         text-align: right;
         border: none;
-        padding: var(--spacing-sm) 0;
+        padding: 5px 0;
+        font-size: 12px;
+        background: transparent;
+        color: var(--text);
     }
 
     .breakdownTable td::before {
@@ -513,45 +645,85 @@
         float: left;
         font-weight: var(--font-weight-bold);
         color: var(--primary);
+        font-size: 11px;
     }
 
     /* Keep inner tables normal on mobile */
-    .innerTable thead {
-        display: table-header-group;
-    }
-
-    .innerTable tbody tr {
-        display: table-row;
-    }
-
-    .innerTable td {
-        display: table-cell;
-    }
-
-    .innerTable td::before {
-        content: none;
-    }
+    .innerTable thead { display: table-header-group; }
+    .innerTable tbody tr { display: table-row; }
+    .innerTable td { display: table-cell; }
+    .innerTable td::before { content: none; }
 }
 
 @media (max-width: 480px) {
     .detailBreakdown {
-        padding: var(--spacing-sm);
+        padding: 6px;
     }
 
     .innerTable {
-        font-size: 0.65rem;
+        font-size: 10px;
     }
 
     .innerTable th,
     .innerTable td {
-        padding: 6px;
+        padding: 4px 6px;
     }
 
     .errorSection {
-        padding: var(--spacing-sm);
+        padding: var(--spacing-xs);
     }
 
     .itemNumber {
-        font-size: var(--font-size-sm);
+        font-size: 12px;
+        padding: 3px 8px;
+    }
+}
+
+/* ── Print ──────────────────────────────────────────────────────────────── */
+@media print {
+    .costBreakdown {
+        box-shadow: none;
+        background: #fff;
+        border: 1px solid #ddd;
+    }
+
+    .toggleButton {
+        display: none;
+    }
+
+    .categorySection,
+    .totalSection,
+    .paymentSection {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+        background: #fff;
+    }
+
+    .breakdownTable td,
+    .innerTable td {
+        background: #fff;
+        color: #000;
+    }
+}
+
+/* ── Accessibility ──────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+@media (prefers-contrast: high) {
+    .categorySection,
+    .totalSection,
+    .paymentSection {
+        border: 2px solid var(--text);
+    }
+
+    .breakdownTable th {
+        border: 1px solid #fff;
     }
 }

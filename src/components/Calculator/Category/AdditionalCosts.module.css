@@ -1,345 +1,492 @@
-/* AdditionalCosts.module.css - Enhanced with waste factor styles */
+/* AdditionalCosts.module.css - Compact Modern Redesign */
 
-/* Section container */
+/* ========================================
+   SECTION & LAYOUT
+   ======================================== */
+
 .section {
-  margin: var(--spacing-lg) 0;
+  margin: var(--spacing-md) 0;
   background: var(--surface);
   border-radius: var(--radius-md);
-  box-shadow: 0 4px 8px var(--shadow);
-  overflow: hidden;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Section header */
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: linear-gradient(to right, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  position: relative;
-}
-
-.sectionHeader:hover {
-  background: linear-gradient(to right, var(--primary-dark) 0%, var(--primary) 100%);
-}
-
-/* Total cost display */
-.totalCost {
-  margin-left: auto;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  backdrop-filter: blur(10px);
-  position: relative;
+  box-shadow: 0 2px 4px var(--shadow);
   overflow: hidden;
   transition: all 0.3s ease;
+  border: 1px solid var(--border);
+}
+
+/* ========================================
+   HEADER STATS (rendered inside a gradient header by parent)
+   ======================================== */
+
+.statsContainer {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
-  animation: shimmer 3s linear infinite;
-  white-space: nowrap;
-}
-
-.totalCost::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
-}
-
-.totalCost:hover::before {
-  left: 100%;
-}
-
-.totalLabel {
-  font-size: var(--font-size-xs);
-  opacity: 0.8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.totalValue {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--surface);
-}
-
-.additionalInline {
-  font-size: var(--font-size-lg);
-  opacity: 0.9;
-  color: var(--surface);
-  font-weight: var(--font-weight-medium);
-}
-
-/* Toggle button */
-.toggleButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: var(--font-size-lg);
-  color: var(--surface);
-  padding: var(--spacing-sm);
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.toggleButton:hover,
-.toggleButton:focus-visible {
-  color: var(--secondary);
-  transform: scale(1.1);
-}
-
-.toggleButton:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
-  border-radius: var(--radius-sm);
-}
-
-/* Section title */
-.sectionTitle {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
-  color: var(--surface);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  font-family: var(--font-family);
-}
-
-/* Content area */
-.settingsContent {
-  padding: var(--spacing-lg);
-  background: var(--background);
-  border: 1px solid rgba(209, 213, 219, 0.4);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-/* Form field */
-.field {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
   flex-wrap: wrap;
 }
 
-/* Field label */
-.field label {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--text);
+.statItem {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  min-width: 140px;
+  gap: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #ffffff;
 }
 
-/* Input and select styles */
+.statItem.highlight {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.statValue {
+  font-weight: var(--font-weight-bold);
+  font-size: 1em;
+  color: #ffffff;
+}
+
+.statIcon {
+  font-size: 0.85em;
+  opacity: 0.9;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+/* ========================================
+   CONTENT AREA
+   ======================================== */
+
+.settingsContent {
+  padding: var(--spacing-md);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--spacing-md);
+  align-items: start;
+}
+
+/* ========================================
+   FIELD CARDS — Transportation Fee, Tax Rate, etc.
+   ======================================== */
+
+.field {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: all 0.2s ease;
+  min-height: 50px;
+  justify-content: center;
+}
+
+.field:hover {
+  border-color: var(--secondary);
+  box-shadow: 0 2px 6px var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.field label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+.field label i {
+  color: var(--secondary);
+  font-size: 0.9em;
+}
+
+/* Input and select inside field cards */
 .field input,
 .field select {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid rgba(209, 213, 219, 0.4);
+  padding: 4px var(--spacing-sm);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
-  width: 150px;
-  background: var(--surface);
+  font-size: var(--font-size-sm);
+  flex: 1;
+  background-color: var(--surface);
   color: var(--text);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+  min-width: 0;
+}
+
+.field input::placeholder {
+  color: var(--text-muted);
+}
+
+.field select option {
+  background-color: var(--surface);
+  color: var(--text);
 }
 
 .field input:focus,
 .field select:focus {
   border-color: var(--secondary);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 0 2px var(--glow-secondary);
+  background-color: var(--surface-raised);
 }
 
 .field input:disabled,
 .field select:disabled {
-  background: rgba(233, 236, 239, 0.15);
-  border-color: rgba(226, 232, 240, 0.3);
+  background-color: var(--muted-bg);
+  border-color: var(--border);
   cursor: not-allowed;
+  opacity: 0.6;
+  color: var(--text-muted);
 }
 
 .field input[type="checkbox"] {
   width: auto;
   accent-color: var(--secondary);
+  flex: 0 0 auto;
 }
 
-/* Cost display */
+/* Row within field cards */
+.fieldRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.fieldRow:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cost display badge inside field cards */
 .costDisplay {
-  font-size: var(--font-size-sm);
-  color: var(--text-light);
-  margin-left: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--success);
+  font-weight: var(--font-weight-bold);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  padding: 2px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
 }
 
-/* Checkbox label */
+/* Inline checkbox */
 .checkbox {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-sm);
-  color: var(--text);
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.checkbox input[type="checkbox"] {
+  margin: 0;
 }
 
 /* ========================================
-   WASTE FACTOR SECTION STYLES
+   WASTE FACTOR SECTION — Redesigned to match field card style
    ======================================== */
 
 .wasteSection {
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-lg);
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.05) 0%, rgba(76, 175, 80, 0.05) 100%);
-  border: 1px solid rgba(46, 125, 50, 0.2);
+  grid-column: 1 / -1;
+  margin-top: var(--spacing-xs);
+  background: var(--surface);
+  border: 1px solid var(--success-border);
   border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: 0 2px 6px var(--shadow);
+}
+
+/* Waste Header — gradient bar matching other section headers */
+.wasteHeader {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: linear-gradient(135deg, var(--success-dark) 0%, var(--success) 100%);
   gap: var(--spacing-md);
 }
 
-.wasteSection > label {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--text);
+.wasteToggle {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-xs);
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+  flex: 1;
 }
+
+.wasteToggle:hover {
+  transform: translateX(4px);
+  opacity: 0.9;
+}
+
+.wasteToggle i:first-child {
+  font-size: var(--font-size-sm);
+  transition: transform 0.3s ease;
+}
+
+.wasteToggle i:nth-child(2) {
+  font-size: 1.1em;
+  opacity: 0.95;
+}
+
+.wasteToggle span {
+  letter-spacing: 0.3px;
+}
+
+.headerAddButton {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  padding: 6px var(--spacing-md);
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  backdrop-filter: blur(10px);
+}
+
+.headerAddButton:hover {
+  background: rgba(255, 255, 255, 0.28);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow-md);
+}
+
+.headerAddButton i {
+  font-size: 0.9em;
+}
+
+/* Waste Content Area */
+.wasteContent {
+  padding: var(--spacing-md);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* ========================================
+   WASTE ENTRY ROW — Consistent with .field card style
+   ======================================== */
 
 .wasteEntryRow {
   display: grid;
-  grid-template-columns: 2fr 1.5fr 1fr auto auto;
+  grid-template-columns: 2fr 1.2fr 1fr auto auto;
   gap: var(--spacing-sm);
   align-items: center;
-  padding: var(--spacing-sm);
-  background: var(--surface);
-  border: 1px solid rgba(209, 213, 219, 0.3);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--success);
   border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px var(--shadow);
+  position: relative;
+  min-height: 50px;
 }
 
 .wasteEntryRow:hover {
-  border-color: var(--secondary);
-  box-shadow: 0 2px 6px var(--shadow);
-  transform: translateY(-1px);
+  border-left-color: var(--success-dark);
+  border-color: var(--success-border);
+  border-left-color: var(--success);
+  box-shadow: 0 4px 12px var(--shadow-md);
+  transform: translateX(3px);
+  background: var(--surface-raised);
 }
 
-.surfaceNameInput {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
-  border: 1px solid rgba(209, 213, 219, 0.4);
+/* Icon inside waste inputs */
+.wasteEntryRow .inputWrapper {
+  position: relative;
+}
+
+.wasteEntryRow .inputWrapper i {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--success);
+  font-size: var(--font-size-sm);
+  z-index: 1;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.wasteEntryRow:hover .inputWrapper i {
+  color: var(--success-dark);
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* All three waste inputs use the same style as .field inputs */
+.surfaceNameInput,
+.costInput,
+.wasteSelect {
+  padding: 6px var(--spacing-sm) 6px 2rem;
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
-  background: var(--surface);
+  font-size: var(--font-size-sm);
+  background-color: var(--surface);
   color: var(--text);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+  width: 100%;
 }
 
-.surfaceNameInput:focus {
-  border-color: var(--secondary);
+.surfaceNameInput::placeholder,
+.costInput::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.surfaceNameInput:focus,
+.costInput:focus,
+.wasteSelect:focus {
+  border-color: var(--success);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 0 2px var(--glow-success);
+  background-color: var(--surface-raised);
 }
 
 .costInput {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
-  border: 1px solid rgba(209, 213, 219, 0.4);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
-  background: var(--surface);
-  color: var(--text);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   text-align: right;
+  font-weight: var(--font-weight-medium);
 }
 
-.costInput:focus {
-  border-color: var(--secondary);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
-}
-
+/* Waste percentage select */
 .wasteSelect {
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
-  border: 1px solid rgba(209, 213, 219, 0.4);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
-  background: var(--surface);
-  color: var(--text);
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  min-width: 100px;
+  font-weight: var(--font-weight-medium);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2338a169' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 1.2em 1.2em;
+  padding-right: 2rem;
+  appearance: none;
 }
 
-.wasteSelect:focus {
-  border-color: var(--secondary);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+.wasteSelect option {
+  background-color: var(--surface);
+  color: var(--text);
 }
 
+/* Waste cost display badge — matching .costDisplay style */
 .wasteCostDisplay {
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--success);
-  white-space: nowrap;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  background: rgba(46, 125, 50, 0.1);
-  border-radius: var(--radius-sm);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  padding: 6px var(--spacing-md);
+  border-radius: 20px;
   min-width: 80px;
   text-align: center;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
 }
 
+.wasteEntryRow:hover .wasteCostDisplay {
+  background: var(--success-bg);
+  border-color: var(--success);
+  transform: scale(1.04);
+}
+
+/* Waste total row — solid gradient bar */
 .wasteTotalRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: var(--spacing-md);
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
-  border: 2px solid rgba(46, 125, 50, 0.3);
-  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--success-dark) 0%, var(--success) 100%);
+  border-radius: var(--radius-sm);
   margin-top: var(--spacing-sm);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
-  color: var(--text);
+  color: #ffffff;
+  box-shadow: 0 4px 12px var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.wasteTotalRow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.08) 100%);
+  pointer-events: none;
+}
+
+.wasteTotalRow > span:first-child {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+}
+
+.wasteTotalRow > span:first-child::before {
+  content: '∑';
+  font-size: 1.3em;
+  opacity: 0.8;
 }
 
 .wasteTotalAmount {
   font-size: var(--font-size-lg);
-  color: var(--success);
-  font-weight: var(--font-weight-bold);
-  padding: var(--spacing-xs) var(--spacing-md);
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  box-shadow: 0 2px 4px var(--shadow);
+  color: #ffffff;
+  font-weight: var(--font-weight-extrabold);
+  padding: 6px var(--spacing-lg);
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 20px;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(10px);
 }
 
 /* ========================================
-   END WASTE FACTOR SECTION
+   MISCELLANEOUS FEES
    ======================================== */
 
-/* Miscellaneous fees section */
 .miscFees {
-  margin-top: var(--spacing-md);
+  grid-column: 1 / -1;
+  margin-top: var(--spacing-xs);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
 }
 
-/* Miscellaneous fees label */
 .miscFees > label {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
@@ -347,134 +494,185 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
+  margin-bottom: 4px;
 }
 
-/* Miscellaneous fee row */
+.miscFees > label i {
+  color: var(--secondary);
+}
+
+/* Misc fee row — same pattern as .wasteEntryRow */
 .miscFeeRow {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
   gap: var(--spacing-sm);
   align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid var(--secondary);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+  min-height: 50px;
 }
 
-/* Input wrapper */
+.miscFeeRow:hover {
+  border-color: var(--secondary);
+  border-left-color: var(--secondary);
+  box-shadow: 0 2px 6px var(--shadow-md);
+  transform: translateX(3px);
+}
+
+/* ========================================
+   INPUT WRAPPER (misc fees + general)
+   ======================================== */
+
 .inputWrapper {
   position: relative;
   flex: 1;
-  min-width: 150px;
 }
 
-/* Input styles */
-.inputWrapper input {
-  width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
-  border: 1px solid rgba(209, 213, 219, 0.4);
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
-  background: var(--surface);
-  color: var(--text);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.inputWrapper input:focus {
-  border-color: var(--secondary);
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
-}
-
+.inputWrapper input,
 .inputWrapper select {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 2rem;
-  border: 1px solid rgba(209, 213, 219, 0.4);
+  padding: 6px var(--spacing-sm) 6px 1.8rem;
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  font-size: var(--font-size-base);
-  background: var(--surface);
+  font-size: var(--font-size-sm);
+  background-color: var(--surface);
   color: var(--text);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
 }
 
+.inputWrapper input::placeholder {
+  color: var(--text-muted);
+}
+
+.inputWrapper select option {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+.inputWrapper input:focus,
 .inputWrapper select:focus {
   border-color: var(--secondary);
   outline: none;
-  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.2);
+  box-shadow: 0 0 0 2px var(--glow-secondary);
+  background-color: var(--surface-raised);
 }
 
-/* Input icon */
 .inputIcon {
   position: absolute;
-  left: var(--spacing-md);
+  left: var(--spacing-sm);
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-light);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-xs);
   pointer-events: none;
   z-index: 1;
 }
 
-/* Add button */
+/* ========================================
+   BUTTONS
+   ======================================== */
+
 .addButton {
   background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
-  color: var(--surface);
+  color: #ffffff;
   border: none;
-  padding: var(--spacing-sm) var(--spacing-lg);
+  padding: 6px var(--spacing-md);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  font-size: var(--font-size-base);
+  gap: 6px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: all 0.2s ease;
   align-self: flex-start;
+  min-height: 32px;
 }
 
 .addButton:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow);
+  box-shadow: 0 4px 8px var(--shadow-md);
 }
 
 .addButton:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 0 0 3px var(--glow-secondary);
 }
 
 .addButton:disabled {
-  background: var(--text-light);
+  background: var(--muted-bg);
+  color: var(--text-muted);
   cursor: not-allowed;
-  transform: none;
+  opacity: 0.5;
 }
 
-/* Remove button */
 .removeButton {
-  background: var(--error);
-  color: var(--surface);
+  background: linear-gradient(135deg, var(--error) 0%, var(--error-dark) 100%);
+  color: #ffffff;
   border: none;
-  padding: var(--spacing-sm);
+  padding: 6px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: var(--font-size-base);
-  transition: background 0.2s ease, transform 0.2s ease;
+  font-size: var(--font-size-sm);
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 36px;
-  height: 36px;
+  min-width: 32px;
+  height: 32px;
+  box-shadow: 0 2px 4px var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.removeButton::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  transform: translate(-50%, -50%);
+  transition: width 0.3s ease, height 0.3s ease;
 }
 
 .removeButton:hover:not(:disabled) {
-  background: #c53030;
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, var(--error-dark) 0%, var(--error) 100%);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px var(--shadow-md);
+}
+
+.removeButton:hover:not(:disabled)::before {
+  width: 100%;
+  height: 100%;
+}
+
+.removeButton:active {
+  transform: translateY(0) scale(0.95);
 }
 
 .removeButton:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3);
+  box-shadow: 0 0 0 3px var(--glow-error);
 }
 
-/* Tooltip for modern UX */
+.removeButton i {
+  position: relative;
+  z-index: 1;
+}
+
+/* ========================================
+   TOOLTIP
+   ======================================== */
+
 .tooltipWrapper {
   position: relative;
   display: inline-block;
@@ -482,23 +680,23 @@
 
 .tooltip {
   visibility: hidden;
-  width: 220px;
+  width: 200px;
   background: var(--text);
   color: var(--surface);
   text-align: center;
   border-radius: var(--radius-sm);
-  padding: var(--spacing-xs) var(--spacing-sm);
+  padding: 6px var(--spacing-sm);
   position: absolute;
   z-index: 10;
-  bottom: 125%;
+  bottom: 120%;
   left: 50%;
-  margin-left: -110px;
+  margin-left: -100px;
   opacity: 0;
-  transition: opacity 0.3s, visibility 0.3s;
+  transition: opacity 0.2s, visibility 0.2s;
   font-size: var(--font-size-xs);
-  box-shadow: 0 4px 8px var(--shadow);
+  box-shadow: 0 2px 8px var(--shadow-md);
   white-space: normal;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .tooltip::after {
@@ -506,8 +704,8 @@
   position: absolute;
   top: 100%;
   left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
+  margin-left: -4px;
+  border-width: 4px;
   border-style: solid;
   border-color: var(--text) transparent transparent transparent;
 }
@@ -517,32 +715,277 @@
   opacity: 1;
 }
 
-/* Deposit info */
+/* ========================================
+   DEPOSIT INFO
+   ======================================== */
+
 .depositInfo {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-md);
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.1) 0%, rgba(76, 175, 80, 0.1) 100%);
-  border: 1px solid rgba(46, 125, 50, 0.2);
-  border-radius: var(--radius-md);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
+  color: var(--text);
+}
+
+.depositInfo i {
+  color: var(--success);
 }
 
 .depositStatus {
   margin-left: auto;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-full);
+  padding: 3px var(--spacing-sm);
+  border-radius: 12px;
   font-weight: var(--font-weight-bold);
-  color: var(--surface);
+  font-size: var(--font-size-xs);
+  color: #ffffff;
   background: var(--success);
 }
 
-/* Responsive design */
+/* ========================================
+   DARK MODE
+   ======================================== */
+
+/* Section */
+:global(.dark) .section {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  box-shadow: 0 2px 6px var(--shadow-lg);
+}
+
+/* Content grid */
+:global(.dark) .settingsContent {
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+
+/* Field cards */
+:global(.dark) .field {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+
+:global(.dark) .field:hover {
+  border-color: var(--secondary);
+  box-shadow: 0 2px 6px var(--shadow-md);
+}
+
+:global(.dark) .field label {
+  color: var(--text-light);
+}
+
+:global(.dark) .field label i {
+  color: var(--secondary);
+}
+
+:global(.dark) .field input,
+:global(.dark) .field select {
+  background-color: var(--surface) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text) !important;
+}
+
+:global(.dark) .field input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+:global(.dark) .field select option {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+:global(.dark) .field input:focus,
+:global(.dark) .field select:focus {
+  border-color: var(--secondary) !important;
+  box-shadow: 0 0 0 2px var(--glow-secondary) !important;
+  background-color: var(--surface-raised) !important;
+}
+
+:global(.dark) .field input:disabled,
+:global(.dark) .field select:disabled {
+  background-color: var(--muted-bg) !important;
+  color: var(--text-muted) !important;
+}
+
+:global(.dark) .costDisplay {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success);
+}
+
+:global(.dark) .checkbox {
+  color: var(--text-light);
+}
+
+/* Waste section */
+:global(.dark) .wasteSection {
+  background: var(--surface);
+  border-color: var(--success-border);
+  box-shadow: 0 2px 6px var(--shadow-lg);
+}
+
+/* Waste header — darker success gradient */
+:global(.dark) .wasteHeader {
+  background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+}
+
+/* Waste content */
+:global(.dark) .wasteContent {
+  background: var(--surface);
+}
+
+/* Waste entry rows — consistent with field cards */
+:global(.dark) .wasteEntryRow {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+  border-left-color: var(--success);
+  box-shadow: 0 1px 3px var(--shadow-lg);
+}
+
+:global(.dark) .wasteEntryRow:hover {
+  background: var(--surface-raised);
+  border-color: var(--success-border);
+  border-left-color: var(--success);
+  box-shadow: 0 4px 12px var(--shadow-lg);
+}
+
+:global(.dark) .wasteEntryRow .inputWrapper i {
+  color: var(--success);
+}
+
+:global(.dark) .wasteEntryRow:hover .inputWrapper i {
+  color: var(--success);
+}
+
+/* Waste inputs */
+:global(.dark) .surfaceNameInput,
+:global(.dark) .costInput,
+:global(.dark) .wasteSelect {
+  background-color: var(--surface) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text) !important;
+}
+
+:global(.dark) .surfaceNameInput::placeholder,
+:global(.dark) .costInput::placeholder {
+  color: var(--text-muted) !important;
+  font-style: italic;
+}
+
+:global(.dark) .wasteSelect option {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+:global(.dark) .surfaceNameInput:focus,
+:global(.dark) .costInput:focus,
+:global(.dark) .wasteSelect:focus {
+  border-color: var(--success) !important;
+  box-shadow: 0 0 0 2px var(--glow-success) !important;
+  background-color: var(--surface-raised) !important;
+}
+
+/* Waste cost display */
+:global(.dark) .wasteCostDisplay {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success);
+}
+
+:global(.dark) .wasteEntryRow:hover .wasteCostDisplay {
+  border-color: var(--success);
+}
+
+/* Waste total row — darker gradient in dark mode */
+:global(.dark) .wasteTotalRow {
+  background: linear-gradient(135deg, #14532d 0%, #166534 100%);
+  box-shadow: 0 4px 12px var(--shadow-lg);
+}
+
+:global(.dark) .wasteTotalAmount {
+  color: #ffffff;
+}
+
+/* Misc fees */
+:global(.dark) .miscFees > label {
+  color: var(--text);
+}
+
+:global(.dark) .miscFeeRow {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+  border-left-color: var(--secondary);
+}
+
+:global(.dark) .miscFeeRow:hover {
+  border-color: var(--secondary);
+  box-shadow: 0 2px 6px var(--shadow-md);
+}
+
+/* Input wrappers (misc fees) */
+:global(.dark) .inputWrapper input,
+:global(.dark) .inputWrapper select {
+  background-color: var(--surface) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text) !important;
+}
+
+:global(.dark) .inputWrapper input::placeholder {
+  color: var(--text-muted) !important;
+}
+
+:global(.dark) .inputWrapper select option {
+  background-color: var(--surface);
+  color: var(--text);
+}
+
+:global(.dark) .inputWrapper input:focus,
+:global(.dark) .inputWrapper select:focus {
+  border-color: var(--secondary) !important;
+  box-shadow: 0 0 0 2px var(--glow-secondary) !important;
+  background-color: var(--surface-raised) !important;
+}
+
+:global(.dark) .inputIcon {
+  color: var(--text-light);
+}
+
+/* Tooltip */
+:global(.dark) .tooltip {
+  background: var(--surface-raised);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 2px 8px var(--shadow-lg);
+}
+
+:global(.dark) .tooltip::after {
+  border-color: var(--surface-raised) transparent transparent transparent;
+}
+
+/* Deposit info */
+:global(.dark) .depositInfo {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--text);
+}
+
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
+
 @media (max-width: 968px) {
+  .settingsContent {
+    grid-template-columns: 1fr;
+  }
+
   .wasteEntryRow {
     grid-template-columns: 1fr;
-    gap: var(--spacing-md);
+    gap: var(--spacing-sm);
+    min-height: auto;
   }
 
   .wasteCostDisplay {
@@ -550,155 +993,85 @@
     width: 100%;
   }
 
-  .removeButton {
+  .wasteHeader {
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+  }
+
+  .headerAddButton {
     width: 100%;
+    justify-content: center;
+  }
+
+  .miscFeeRow {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
   .section {
-    margin: var(--spacing-md) 0;
+    margin: var(--spacing-sm) 0;
+  }
+
+  .settingsContent {
+    padding: var(--spacing-sm);
+    gap: var(--spacing-sm);
+  }
+
+  .statsContainer {
+    gap: 4px;
+  }
+
+  .statItem {
+    padding: 3px 8px;
+    font-size: var(--font-size-xs);
   }
 
   .field {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .field label {
-    min-width: auto;
-    width: 100%;
-  }
-
-  .field input,
-  .field select {
-    width: 100%;
-  }
-
-  .miscFeeRow {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .inputWrapper {
-    min-width: 100%;
-  }
-
-  .addButton,
-  .removeButton {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .totalCost {
-    font-size: var(--font-size-xs);
+    min-height: 65px;
     padding: var(--spacing-xs) var(--spacing-sm);
-    flex-wrap: wrap;
-    gap: var(--spacing-xxs);
+  }
+
+  .wasteSection,
+  .miscFees {
+    padding: var(--spacing-sm);
   }
 
   .tooltip {
-    width: 180px;
+    width: 160px;
     left: 0;
     margin-left: 0;
-  }
-
-  .wasteSection {
-    padding: var(--spacing-md);
-  }
-
-  .wasteTotalRow {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-    text-align: center;
   }
 }
 
 @media (max-width: 480px) {
-  .sectionTitle {
-    font-size: var(--font-size-lg);
+  .statItem {
+    padding: 2px 6px;
+    gap: 3px;
   }
 
-  .field label,
-  .field input,
-  .field select {
-    font-size: var(--font-size-sm);
-  }
-
-  .addButton,
-  .removeButton {
-    padding: var(--spacing-sm);
-    font-size: var(--font-size-sm);
-  }
-
-  .costDisplay {
-    font-size: var(--font-size-xs);
+  .field {
+    min-height: 60px;
   }
 
   .wasteSection {
-    padding: var(--spacing-sm);
+    padding: var(--spacing-xs);
+  }
+
+  .wasteTotalRow {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
   }
 }
 
-/* Dark mode specific adjustments */
-.dark .section {
-  background: var(--surface);
-  box-shadow: 0 4px 8px var(--shadow);
-}
+/* ========================================
+   PRINT STYLES
+   ======================================== */
 
-.dark .settingsContent {
-  background: var(--background);
-  border-color: rgba(75, 85, 99, 0.3);
-}
-
-.dark .field input,
-.dark .field select {
-  background: var(--surface);
-  border-color: rgba(209, 213, 219, 0.2);
-}
-
-.dark .inputWrapper input,
-.dark .inputWrapper select {
-  background: var(--surface);
-  border-color: rgba(209, 213, 219, 0.2);
-}
-
-.dark .tooltip {
-  background: var(--text);
-  color: var(--surface);
-}
-
-.dark .wasteSection {
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.08) 0%, rgba(76, 175, 80, 0.08) 100%);
-  border-color: rgba(46, 125, 50, 0.3);
-}
-
-.dark .wasteEntryRow {
-  background: var(--surface);
-  border-color: rgba(209, 213, 219, 0.2);
-}
-
-.dark .surfaceNameInput,
-.dark .costInput,
-.dark .wasteSelect {
-  background: var(--surface);
-  border-color: rgba(209, 213, 219, 0.2);
-}
-
-.dark .wasteCostDisplay {
-  background: rgba(46, 125, 50, 0.15);
-}
-
-.dark .wasteTotalRow {
-  background: linear-gradient(135deg, rgba(46, 125, 50, 0.15) 0%, rgba(76, 175, 80, 0.15) 100%);
-  border-color: rgba(46, 125, 50, 0.4);
-}
-
-/* Print styles */
 @media print {
   .addButton,
-  .removeButton,
-  .toggleButton {
+  .removeButton {
     display: none;
   }
 
@@ -708,23 +1081,23 @@
     break-inside: avoid;
   }
 
-  .totalCost {
-    border: 1px solid #000;
-  }
-
   .wasteSection {
-    background: none;
+    background: transparent;
     border: 1px solid #000;
   }
 
-  .wasteEntryRow {
+  .wasteEntryRow,
+  .miscFeeRow {
     border: 1px solid #000;
+    background: transparent;
     page-break-inside: avoid;
   }
-}
 
-/* Shimmer animation */
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  .wasteHeader,
+  .wasteTotalRow {
+    background: #333 !important;
+    color: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }

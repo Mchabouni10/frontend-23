@@ -1,12 +1,13 @@
-/* CategoryList.module.css - Next-level enhanced design with innovation */
+/* CategoryList.module.css - Cleaned up without header styles */
 
-/* Main container */
+/* ==========================================================================
+   Main Container
+   ========================================================================== */
 .container {
   width: 100%;
   background: transparent;
 }
 
-/* Section container with modern glass effect */
 .section {
   margin: var(--spacing-sm) 0;
   background: var(--surface);
@@ -14,132 +15,12 @@
   box-shadow: 0 8px 32px var(--shadow);
   overflow: hidden;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border);
 }
 
-/* Section header with improved layout */
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  background: linear-gradient(to right, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
-  cursor: pointer;
-  transition: background 0.3s ease;
-  position: relative;
-}
-
-.sectionHeader::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-  transition: left 0.5s ease;
-}
-
-.sectionHeader:hover::before {
-  left: 100%;
-}
-
-.sectionHeader:hover {
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
-  box-shadow: 0 6px 20px var(--shadow);
-  transform: translateY(-1px);
-}
-
-/* Toggle button with modern styling */
-.toggleButton {
-  background: rgba(255, 255, 255, 0.15);
-  border: none;
-  cursor: pointer;
-  font-size: var(--font-size-lg);
-  color: var(--surface);
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-md);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  backdrop-filter: blur(10px);
-}
-
-.toggleButton:hover,
-.toggleButton:focus-visible {
-  background: rgba(255, 255, 255, 0.25);
-  transform: rotate(90deg) scale(1.1);
-}
-
-.toggleButton:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.4);
-}
-
-/* Section title with enhanced styling */
-.sectionTitle {
-  font-size: var(--font-size-xl);
-  color: var(--surface);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  letter-spacing: 0.5px;
-  flex: 1;
-  font-weight: var(--font-weight-bold);
-}
-
-.sectionTitle i {
-  font-size: 1.3em;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-/* Category count badge - NEW */
-.categoryCount {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.5px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.categoryCount:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
-}
-
-.categoryCountNumber {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 28px;
-  background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
-  color: var(--surface);
-  border-radius: 50%;
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-bold);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
-/* Categories content area with enhanced spacing */
+/* ==========================================================================
+   Categories Content Area
+   ========================================================================== */
 .categories {
   padding: var(--spacing-md);
   background: var(--background);
@@ -148,18 +29,20 @@
   gap: var(--spacing-sm);
 }
 
-/* Enhanced category input wrapper with card design */
+/* ==========================================================================
+   Category Input Wrapper
+   ========================================================================== */
 .categoryInputWrapper {
   display: flex;
   flex-wrap: wrap;
   align-items: stretch;
-  gap: var(--spacing-md);
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(255, 255, 255, 0.95) 100%);
+  gap: var(--spacing-sm);
+  background: var(--surface);
   border-radius: var(--radius-lg);
   box-shadow: 0 4px 16px var(--shadow);
   padding: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
-  border: 2px solid rgba(52, 152, 219, 0.1);
+  border: var(--spacing-xs) solid var(--info-border);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -171,7 +54,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 4px;
+  height: var(--spacing-xs);
   background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
   background-size: 200% 100%;
   animation: shimmer 3s linear infinite;
@@ -183,94 +66,100 @@
 }
 
 .categoryInputWrapper:hover {
-  border-color: rgba(52, 152, 219, 0.3);
-  box-shadow: 0 8px 24px var(--shadow);
-  transform: translateY(-2px);
+  border-color: var(--secondary);
+  box-shadow: 0 8px 24px var(--shadow-md);
+  transform: translateY(-1px);
 }
 
-/* Enhanced dropdown select with modern styling */
+/* ==========================================================================
+   Category Select Dropdown
+   ========================================================================== */
 .categorySelect {
   flex: 1;
   min-width: 200px;
-  padding: var(--spacing-md) var(--spacing-xl);
-  border: 2px solid rgba(209, 213, 219, 0.3);
+  padding: 10px var(--spacing-xl);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
-  background: var(--surface);
+  background-color: var(--surface);
   color: var(--text);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: var(--font-family);
   appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%233498db' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right var(--spacing-md) center;
   background-repeat: no-repeat;
-  background-size: 1.5em 1.5em;
+  background-size: 1.25em 1.25em;
   padding-right: calc(var(--spacing-xl) + 1.5em);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px var(--shadow);
+}
+
+.categorySelect option {
+  background-color: var(--surface);
+  color: var(--text);
 }
 
 .categorySelect:hover {
   border-color: var(--primary);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--shadow-md);
 }
 
 .categorySelect:focus {
   border-color: var(--secondary);
   outline: none;
-  box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15), 0 4px 12px rgba(52, 152, 219, 0.2);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px var(--glow-secondary);
+  transform: translateY(-1px);
 }
 
-/* Enhanced input wrapper for custom category */
+/* ==========================================================================
+   Category Input
+   ========================================================================== */
 .inputWrapper {
   position: relative;
   flex: 1;
   min-width: 250px;
 }
 
-/* Enhanced category and work inputs */
 .categoryInput {
   width: 100%;
-  padding: var(--spacing-md) var(--spacing-xl) var(--spacing-md) 3.5rem;
-  border: 2px solid rgba(209, 213, 219, 0.3);
+  padding: 10px var(--spacing-xl) 10px 2.75rem;
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
-  background: var(--surface);
+  background-color: var(--surface);
   color: var(--text);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: var(--font-family);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 4px var(--shadow);
 }
 
 .categoryInput:hover {
   border-color: var(--primary);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.1);
+  box-shadow: 0 2px 8px var(--shadow-md);
 }
 
 .categoryInput:focus {
   border-color: var(--secondary);
   outline: none;
-  box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.15), 0 4px 12px rgba(52, 152, 219, 0.2);
-  transform: translateY(-2px);
+  box-shadow: 0 0 0 3px var(--glow-secondary);
+  transform: translateY(-1px);
 }
 
 .categoryInput::placeholder {
-  color: var(--text-light);
-  opacity: 0.7;
+  color: var(--text-muted);
 }
 
-/* Enhanced input icon with animation */
 .inputIcon {
   position: absolute;
-  left: var(--spacing-lg);
+  left: var(--spacing-md);
   top: 50%;
   transform: translateY(-50%);
   color: var(--primary);
-  font-size: var(--font-size-xl);
+  font-size: 1.1rem;
   pointer-events: none;
   transition: all 0.3s ease;
 }
@@ -280,25 +169,27 @@
   transform: translateY(-50%) scale(1.1);
 }
 
-/* Revolutionary add button with icon and text */
+/* ==========================================================================
+   Add Button
+   ========================================================================== */
 .addButton {
-  background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
-  color: var(--surface);
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+  color: #ffffff;
   border: none;
-  padding: var(--spacing-md) var(--spacing-md);
+  padding: 10px 20px;
   border-radius: var(--radius-md);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--spacing-sm);
-  font-size: var(--font-size-base);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   text-transform: uppercase;
-  letter-spacing: 1px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-  min-width: 140px;
+  letter-spacing: 0.5px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px var(--shadow-md);
+  white-space: nowrap;
   position: relative;
   overflow: hidden;
 }
@@ -311,445 +202,664 @@
   width: 0;
   height: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.25);
   transform: translate(-50%, -50%);
   transition: width 0.6s, height 0.6s;
 }
 
 .addButton:hover::before {
-  width: 300px;
-  height: 300px;
+  width: 200px;
+  height: 200px;
 }
 
 .addButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2980b9 0%, var(--secondary) 100%);
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(52, 152, 219, 0.5);
+  background: linear-gradient(135deg, var(--secondary-dark) 0%, var(--secondary) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-lg);
 }
 
 .addButton:active:not(:disabled) {
-  transform: translateY(-1px);
+  transform: translateY(0);
+  box-shadow: 0 2px 4px var(--shadow);
 }
 
 .addButton:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.4), 0 8px 24px rgba(52, 152, 219, 0.5);
+  box-shadow: 0 0 0 3px var(--glow-secondary);
 }
 
 .addButton:disabled {
-  background: var(--text-light);
+  background: var(--muted-bg);
+  color: var(--text-muted);
   cursor: not-allowed;
+  opacity: 0.5;
   transform: none;
   box-shadow: none;
-  opacity: 0.5;
 }
 
-.addButton i {
-  font-size: var(--font-size-lg);
-  transition: transform 0.3s ease;
-}
-
-.addButton:hover:not(:disabled) i {
-  transform: rotate(90deg);
-}
-
-/* Enhanced category container */
+/* ==========================================================================
+   Individual Category Container
+   ========================================================================== */
 .category {
   background: var(--surface);
-  border: 2px solid rgba(209, 213, 219, 0.2);
   border-radius: var(--radius-lg);
+  box-shadow: 0 2px 8px var(--shadow);
   overflow: hidden;
-  box-shadow: 0 4px 16px var(--shadow);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-}
-
-.category::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--primary), var(--secondary));
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.category:hover::before {
-  opacity: 1;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid var(--border-strong);
+  margin-bottom: var(--spacing-md);
 }
 
 .category:hover {
+  box-shadow: 0 6px 16px var(--shadow-md);
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px var(--shadow);
-  border-color: rgba(52, 152, 219, 0.4);
+  border-color: var(--secondary);
 }
 
-/* Enhanced category header */
+/* ==========================================================================
+   Category Header
+   ========================================================================== */
 .categoryHeader {
   display: flex;
   align-items: center;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-sm) var(--spacing-xl);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary-dark) 100%
+  );
+  color: #ffffff;
   position: relative;
+  overflow: hidden;
+  min-height: 52px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.categoryHeader::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transition: left 0.6s ease;
+}
+
+.categoryHeader:hover::after {
+  left: 100%;
+}
+
+/* Category Number Badge */
+.categoryNumber {
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+}
+
+.category:hover .categoryNumber {
+  transform: scale(1.1);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Toggle Button */
 .categoryHeader .toggleButton {
-  margin: 0;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  padding: 0;
+  border-radius: var(--radius-md);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
 }
 
+.categoryHeader .toggleButton:hover:not(:disabled),
+.categoryHeader .toggleButton:focus-visible {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.1);
+}
+
+.categoryHeader .toggleButton:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+/* Category Name Input (inside header) */
 .categoryHeader .categoryInput {
   flex: 1;
-  background: rgba(255, 255, 255, 0.95);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: var(--text);
-  font-weight: var(--font-weight-medium);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  font-size: var(--font-size-base);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+  box-shadow: none;
 }
 
 .categoryHeader .categoryInput:hover {
-  background: rgba(255, 255, 255, 1);
-  border-color: var(--secondary);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.35);
 }
 
 .categoryHeader .categoryInput:focus {
-  background: var(--surface);
-  border-color: var(--secondary);
-  box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.3);
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.5);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+  transform: none;
 }
 
-/* Enhanced category number badge */
-.categoryNumber {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%);
-  color: var(--surface);
-  border-radius: 50%;
+.categoryHeader .categoryInput::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* Category Type Badge */
+.categoryType {
+  color: #ffffff;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 20px;
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
-}
-
-.categoryNumber:hover {
-  transform: scale(1.1) rotate(5deg);
-}
-
-/* Enhanced category type badge */
-.categoryType {
-  padding: var(--spacing-xs) var(--spacing-sm);
-  color: var(--surface);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
+  backdrop-filter: blur(4px);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
 }
 
-.categoryType:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
-}
-
-/* Enhanced remove button */
-.removeButton {
-  background: linear-gradient(135deg, var(--error) 0%, #c53030 100%);
-  color: var(--surface);
+/* Remove Button */
+.categoryHeader .removeButton {
+  background: var(--error);
+  color: #ffffff;
   border: none;
-  padding: var(--spacing-sm);
   border-radius: var(--radius-md);
+  padding: 0;
   cursor: pointer;
-  font-size: var(--font-size-base);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  position: relative;
-  overflow: hidden;
+  backdrop-filter: blur(10px);
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 }
 
-.removeButton::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.4s, height 0.4s;
+.categoryHeader .removeButton:hover:not(:disabled) {
+  background: var(--error-dark);
+  transform: scale(1.1);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.4);
 }
 
-.removeButton:hover::before {
-  width: 100px;
-  height: 100px;
+.categoryHeader .removeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-.removeButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, #c53030 0%, var(--error) 100%);
-  transform: translateY(-2px) scale(1.1);
-  box-shadow: 0 6px 20px rgba(229, 62, 62, 0.5);
-}
-
-.removeButton:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(229, 62, 62, 0.4);
-}
-
-/* Work items container */
+/* ==========================================================================
+   Work Items Container
+   ========================================================================== */
 .workItems {
-  padding: var(--spacing-xl);
+  padding: var(--spacing-md);
   background: var(--background);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-md);
 }
 
-/* Work controls */
+/* ==========================================================================
+   Work Controls (Add Work button area)
+   ========================================================================== */
 .workControls {
-  display: flex;
-  justify-content: flex-end;
-  padding: var(--spacing-lg) var(--spacing-xl);
+  padding: var(--spacing-md);
   background: var(--background);
-  border-top: 2px solid rgba(209, 213, 219, 0.2);
+  display: flex;
+  justify-content: flex-start;
+  border-top: 1px solid var(--border);
 }
 
-/* Enhanced empty states */
-.emptyState,
-.emptyWorkItems {
-  text-align: center;
-  padding: var(--spacing-xl) var(--spacing-lg);
-  background: linear-gradient(135deg, rgba(52, 152, 219, 0.05) 0%, rgba(44, 62, 80, 0.05) 100%);
-  border: 3px dashed rgba(52, 152, 219, 0.3);
-  border-radius: var(--radius-lg);
-  color: var(--text-light);
-  transition: all 0.4s ease;
-}
-
-.emptyState:hover,
-.emptyWorkItems:hover {
-  border-color: var(--secondary);
-  background: linear-gradient(135deg, rgba(52, 152, 219, 0.1) 0%, rgba(44, 62, 80, 0.1) 100%);
-  transform: scale(1.02);
-}
-
-.emptyState i,
-.emptyWorkItems i {
-  font-size: 4rem;
-  margin-bottom: var(--spacing-md);
-  color: var(--primary);
-  opacity: 0.6;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.emptyState p,
-.emptyWorkItems p {
-  margin: 0 0 var(--spacing-sm) 0;
-  font-size: var(--font-size-base);
-  color: var(--text);
-  font-weight: var(--font-weight-medium);
-}
-
-.helpText {
-  font-size: var(--font-size-sm);
-  color: var(--text-light);
-  font-style: italic;
-  margin-top: var(--spacing-sm);
-}
-
-/* Enhanced error message */
-.errorMessage {
-  background: linear-gradient(135deg, rgba(229, 62, 62, 0.15) 0%, rgba(197, 48, 48, 0.15) 100%);
-  border: 2px solid var(--error);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  color: var(--error);
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
+.workControls .addButton {
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+  color: #ffffff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-lg);
-  animation: shake 0.5s ease-in-out;
-  box-shadow: 0 4px 12px rgba(229, 62, 62, 0.2);
+  justify-content: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px var(--shadow-md);
+  white-space: nowrap;
+}
+
+.workControls .addButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--success-dark) 0%, var(--success) 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--shadow-lg);
+}
+
+.workControls .addButton:disabled {
+  background: var(--muted-bg);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ==========================================================================
+   Empty Work Items State
+   ========================================================================== */
+.emptyWorkItems {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--text-light);
+  background: var(--info-bg);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--info-border);
+}
+
+.emptyWorkItems i {
+  font-size: 3rem;
+  color: var(--primary);
+  margin-bottom: var(--spacing-md);
+  opacity: 0.6;
+}
+
+.emptyWorkItems p {
+  font-size: var(--font-size-base);
+  margin: 0;
+  color: var(--text-light);
+}
+
+.emptyWorkItems .helpText {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  opacity: 0.8;
+  margin-top: var(--spacing-xs);
+}
+
+/* ==========================================================================
+   Empty State
+   ========================================================================== */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--text-light);
+  background: var(--info-bg);
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--info-border);
+}
+
+.emptyState i {
+  font-size: 3rem;
+  color: var(--primary);
+  margin-bottom: var(--spacing-md);
+  opacity: 0.6;
+}
+
+.emptyState h4 {
+  font-size: var(--font-size-lg);
+  color: var(--text);
+  margin: 0 0 var(--spacing-sm);
+}
+
+.emptyState p {
+  font-size: var(--font-size-base);
+  margin: 0;
+  color: var(--text-light);
+}
+
+/* ==========================================================================
+   Error Message
+   ========================================================================== */
+.errorMessage {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--error-bg);
+  border: 2px solid var(--error-border);
+  border-radius: var(--radius-md);
+  color: var(--error);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-md);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .errorMessage i {
-  font-size: var(--font-size-xl);
-  animation: pulse 2s ease-in-out infinite;
+  font-size: var(--font-size-lg);
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
-  20%, 40%, 60%, 80% { transform: translateX(8px); }
-}
-
-/* Responsive design */
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
 @media (max-width: 768px) {
-  .section {
-    margin: var(--spacing-md) 0;
-    border-radius: var(--radius-md);
-  }
-
-  .sectionHeader {
-    padding: var(--spacing-md) var(--spacing-lg);
-    flex-wrap: wrap;
-  }
-
-  .sectionTitle {
-    font-size: var(--font-size-lg);
-    flex: 1 1 100%;
-    margin-bottom: var(--spacing-sm);
-  }
-
-  .categoryCount {
-    padding: var(--spacing-xs) var(--spacing-md);
-  }
-
-  .categoryCountNumber {
-    min-width: 24px;
-    height: 24px;
-    font-size: var(--font-size-sm);
-  }
-
-  .categories {
-    padding: var(--spacing-lg);
-  }
-
   .categoryInputWrapper {
     flex-direction: column;
-    gap: var(--spacing-md);
     padding: var(--spacing-md);
   }
 
   .categorySelect,
-  .inputWrapper,
-  .addButton {
-    min-width: 100%;
+  .inputWrapper {
     width: 100%;
+    min-width: 100%;
   }
 
   .addButton {
-    padding: var(--spacing-md) var(--spacing-lg);
+    width: 100%;
   }
 
   .categoryHeader {
-    flex-wrap: wrap;
-    padding: var(--spacing-xs);
-    gap: var(--spacing-xs);
-  }
-
-  .categoryHeader .categoryInput {
-    order: 3;
-    flex-basis: 100%;
-  }
-
-  .categoryType {
-    order: 2;
-  }
-
-  .removeButton {
-    order: 4;
-    width: 100%;
+    padding: 8px 12px;
+    gap: 8px;
+    min-height: 48px;
   }
 
   .categoryNumber {
-    min-width: 28px;
+    width: 28px;
     height: 28px;
+    font-size: 12px;
   }
 
-  .workItems {
-    padding: var(--spacing-md);
+  .categoryHeader .toggleButton,
+  .categoryHeader .removeButton {
+    width: 32px;
+    height: 32px;
   }
 
-  .workControls {
-    padding: var(--spacing-md);
+  .categoryHeader .categoryInput {
+    font-size: 14px;
   }
 
-  .workControls .addButton {
-    width: 100%;
+  .categoryType {
+    font-size: 12px;
+    padding: 3px 10px;
   }
 }
 
 @media (max-width: 480px) {
-  .sectionTitle {
-    font-size: var(--font-size-base);
+  .section {
+    margin: var(--spacing-xs) 0;
+  }
+
+  .categories {
+    padding: var(--spacing-sm);
+  }
+
+  .category {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .categoryHeader {
+    padding: 6px 10px;
+    gap: 6px;
   }
 
   .categoryNumber {
-    min-width: 24px;
+    width: 24px;
     height: 24px;
+    font-size: 11px;
+  }
+
+  .categoryHeader .toggleButton,
+  .categoryHeader .removeButton {
+    width: 28px;
+    height: 28px;
     font-size: var(--font-size-sm);
   }
 
-  .toggleButton {
-    width: 32px;
-    height: 32px;
+  .categoryHeader .categoryInput {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+
+  .categoryType {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  .emptyState,
+  .emptyWorkItems {
+    padding: var(--spacing-lg);
+  }
+
+  .emptyState i,
+  .emptyWorkItems i {
+    font-size: 2rem;
   }
 }
 
-/* Dark mode adjustments */
-.dark .categorySelect,
-.dark .categoryInput {
+/* ==========================================================================
+   DARK MODE
+   ========================================================================== */
+
+/* Section wrapper */
+:global(.dark) .section {
   background: var(--surface);
-  border-color: rgba(209, 213, 219, 0.2);
+  border-color: var(--border-strong);
+  box-shadow: 0 8px 32px var(--shadow-lg);
 }
 
-.dark .categoryInputWrapper {
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(0, 0, 0, 0.3) 100%);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+/* Categories & work items area — use --surface not --background
+   so it doesn't show the near-black abyss behind cards */
+:global(.dark) .categories,
+:global(.dark) .workItems,
+:global(.dark) .workControls {
+  background: var(--surface);
+  border-top-color: var(--border-strong);
 }
 
-.dark .category {
-  border-color: rgba(209, 213, 219, 0.1);
+/* Input wrapper card */
+:global(.dark) .categoryInputWrapper {
+  background: var(--surface-raised);
+  border-color: var(--info-border);
+  box-shadow: 0 4px 16px var(--shadow-lg);
 }
 
-.dark .emptyState,
-.dark .emptyWorkItems {
-  background: linear-gradient(135deg, rgba(96, 165, 250, 0.1) 0%, rgba(74, 111, 165, 0.1) 100%);
-  border-color: rgba(96, 165, 250, 0.3);
+:global(.dark) .categoryInputWrapper:hover {
+  border-color: var(--secondary);
+  box-shadow: 0 8px 24px var(--shadow-lg);
 }
 
-/* Print styles */
+/* Select & text inputs (outside header) */
+:global(.dark) .categorySelect,
+:global(.dark) .categoryInput {
+  background-color: var(--surface-raised) !important;
+  border-color: var(--border-strong) !important;
+  color: var(--text) !important;
+  box-shadow: 0 1px 4px var(--shadow);
+}
+
+:global(.dark) .categorySelect option {
+  background-color: var(--surface-raised);
+  color: var(--text);
+}
+
+:global(.dark) .categorySelect:hover,
+:global(.dark) .categoryInput:hover {
+  border-color: var(--primary) !important;
+  box-shadow: 0 2px 8px var(--shadow-md) !important;
+}
+
+:global(.dark) .categorySelect:focus {
+  border-color: var(--secondary) !important;
+  box-shadow: 0 0 0 3px var(--glow-secondary) !important;
+}
+
+:global(.dark) .categoryInput:focus {
+  border-color: var(--secondary) !important;
+  box-shadow: 0 0 0 3px var(--glow-secondary) !important;
+}
+
+:global(.dark) .categoryInput::placeholder {
+  color: var(--text-muted) !important;
+}
+
+:global(.dark) .inputIcon {
+  color: var(--primary);
+}
+
+:global(.dark) .inputWrapper:focus-within .inputIcon {
+  color: var(--secondary);
+}
+
+/* Category card */
+:global(.dark) .category {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  box-shadow: 0 2px 8px var(--shadow-lg);
+}
+
+:global(.dark) .category:hover {
+  border-color: var(--secondary);
+  box-shadow: 0 6px 16px var(--shadow-lg);
+}
+
+/* Category header gradient in dark */
+:global(.dark) .categoryHeader {
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark) 0%,
+    var(--primary) 100%
+  );
+}
+
+/* Input inside the dark header — keep frosted glass style */
+:global(.dark) .categoryHeader .categoryInput {
+  background: rgba(255, 255, 255, 0.10) !important;
+  border-color: rgba(255, 255, 255, 0.20) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+:global(.dark) .categoryHeader .categoryInput:hover {
+  background: rgba(255, 255, 255, 0.16) !important;
+  border-color: rgba(255, 255, 255, 0.30) !important;
+}
+
+:global(.dark) .categoryHeader .categoryInput:focus {
+  background: rgba(255, 255, 255, 0.20) !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.15) !important;
+}
+
+:global(.dark) .categoryHeader .categoryInput::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Empty states */
+:global(.dark) .emptyState,
+:global(.dark) .emptyWorkItems {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+
+:global(.dark) .emptyState h4,
+:global(.dark) .emptyState p,
+:global(.dark) .emptyWorkItems p,
+:global(.dark) .emptyWorkItems .helpText {
+  color: var(--text-light);
+}
+
+/* Error message */
+:global(.dark) .errorMessage {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+/* Work controls border */
+:global(.dark) .workControls {
+  border-top-color: var(--border-strong);
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
 @media print {
-  .categoryInputWrapper,
   .addButton,
-  .removeButton,
-  .toggleButton,
-  .categoryCount {
+  .categoryHeader .removeButton,
+  .categoryHeader .toggleButton {
     display: none;
   }
 
-  .category,
   .section {
     box-shadow: none;
     border: 1px solid #000;
     break-inside: avoid;
+  }
+
+  .category {
+    box-shadow: none;
+    border: 1px solid #000;
+    page-break-inside: avoid;
+  }
+
+  .categoryHeader {
+    background: #333;
+    color: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .categoryNumber {
+    background: #666;
+    border-color: #000;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }

@@ -1,102 +1,537 @@
-/* CostInput.module.css */
-
+/* CostInput.module.css - Next-level redesign with dark mode consistency */
 .costInput {
-  margin-bottom: 1.25rem;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+/* Label Section */
+.labelRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
 }
 
 .label {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
+  font-size: 11px;
   font-weight: 600;
-  color: #374151;
+  color: var(--text);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.unitLabel {
+  font-size: 9px;
+  color: var(--text-light);
+  margin-left: 4px;
+  font-weight: 500;
+  text-transform: lowercase;
+  opacity: 0.7;
+}
+
+.unitCost {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--secondary);
+  padding: 2px 8px;
+  background: var(--info-bg);
+  border: 1px solid var(--info-border);
+  border-radius: 4px;
+  letter-spacing: 0.2px;
 }
 
 .required {
-  color: #ef4444;
-  font-weight: 700;
+  color: var(--error);
+  margin-left: 3px;
+  font-size: 12px;
 }
 
+/* Input Group */
 .inputGroup {
   display: flex;
-  gap: 0.75rem;
-  align-items: stretch;
-  flex-wrap: wrap;
+  gap: 6px;
+  height: 28px;
+  position: relative;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.inputGroup.focused {
+  transform: translateY(-1px);
+}
+
+.selectWrapper {
+  flex: 1;
+  position: relative;
 }
 
 .select {
-  flex: 1;
-  min-width: 120px;
-  padding: 0.625rem 0.75rem;
-  border: 1px solid #d1d5db;
+  width: 100%;
+  height: 28px;
+  padding: 0 26px 0 10px;
+  border: 1.5px solid var(--border);
   border-radius: 6px;
-  font-size: 0.9rem;
-  color: #374151;
-  background: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface-raised);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 7px center;
+  background-repeat: no-repeat;
+  background-size: 13px;
+  font-family: var(--font-family);
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+.select::placeholder {
+  color: var(--text-muted);
 }
 
 .select:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px var(--glow-secondary);
+  background-color: var(--surface-raised);
+}
+
+.select:hover:not(:disabled) {
+  border-color: var(--secondary);
+  box-shadow: 0 2px 4px var(--shadow-md);
 }
 
 .select:disabled {
-  background: #f9fafb;
-  color: #6b7280;
+  background: var(--muted-bg);
+  color: var(--text-muted);
   cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Select option elements — force dark bg in dark mode */
+.select option {
+  background: var(--surface-raised);
+  color: var(--text);
 }
 
 .inputWrapper {
   position: relative;
   flex: 1;
-  min-width: 120px;
+  height: 28px;
 }
 
 .inputIcon {
   position: absolute;
-  left: 0.75rem;
+  left: 8px;
   top: 50%;
   transform: translateY(-50%);
-  color: #6b7280;
-  font-size: 0.875rem;
+  color: var(--text-light);
+  font-size: 10px;
   pointer-events: none;
+  z-index: 2;
+  transition: color 0.2s ease;
+}
+
+.inputWrapper input:focus + .inputIcon,
+.inputGroup.focused .inputIcon {
+  color: var(--secondary);
 }
 
 .inputWrapper input {
   width: 100%;
-  padding: 0.625rem 0.75rem 0.625rem 2rem;
-  border: 1px solid #d1d5db;
+  height: 100%;
+  padding: 0 10px 0 22px;
+  border: 1.5px solid var(--border);
   border-radius: 6px;
-  font-size: 0.9rem;
-  color: #374151;
-  background: #ffffff;
-  transition: all 0.2s ease;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface-raised);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-family);
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+.inputWrapper input::placeholder {
+  color: var(--text-muted);
 }
 
 .inputWrapper input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px var(--glow-secondary);
+  background-color: var(--surface-raised);
+}
+
+.inputWrapper input:hover:not(:disabled) {
+  border-color: var(--secondary);
+  box-shadow: 0 2px 4px var(--shadow-md);
 }
 
 .inputWrapper input:disabled {
-  background: #f9fafb;
-  color: #6b7280;
+  background: var(--muted-bg);
+  color: var(--text-muted);
   cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .disabledInput {
-  background: #f9fafb !important;
-  color: #9ca3af !important;
+  background: var(--muted-bg) !important;
+  color: var(--text-muted) !important;
+  opacity: 0.6 !important;
 }
 
-.disabledInput:focus {
-  border-color: #d1d5db !important;
-  box-shadow: none !important;
+/* Cost Summary Section */
+.costSummary {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--info-bg);
+  border-radius: 6px;
+  border: 1px solid var(--info-border);
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.summaryLabel {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.summaryLabel i {
+  font-size: 9px;
+  opacity: 0.7;
+}
+
+.summaryCalc {
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text);
+  font-family: 'Monaco', 'Menlo', monospace;
+  letter-spacing: 0.2px;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.totalLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.totalValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--secondary);
+  letter-spacing: 0.3px;
+}
+
+/* ============================================================
+   DARK MODE
+   ============================================================ */
+:global(.dark) .label {
+  color: var(--text);
+}
+
+:global(.dark) .unitLabel {
+  color: var(--text-light);
+}
+
+:global(.dark) .unitCost {
+  color: var(--secondary);
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+
+:global(.dark) .select {
+  background-color: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--text);
+  box-shadow: 0 1px 3px var(--shadow);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238892a4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+}
+
+:global(.dark) .select option {
+  background-color: var(--surface-raised);
+  color: var(--text);
+}
+
+:global(.dark) .select::placeholder {
+  color: var(--text-muted);
+}
+
+:global(.dark) .select:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px var(--glow-secondary);
+  background-color: var(--surface-raised);
+}
+
+:global(.dark) .select:hover:not(:disabled) {
+  border-color: var(--secondary);
+  box-shadow: 0 2px 4px var(--shadow-md);
+}
+
+:global(.dark) .select:disabled {
+  background-color: var(--muted-bg);
+  color: var(--text-muted);
+}
+
+:global(.dark) .inputIcon {
+  color: var(--text-light);
+}
+
+:global(.dark) .inputWrapper input {
+  background-color: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--text);
+  box-shadow: 0 1px 3px var(--shadow);
+}
+
+:global(.dark) .inputWrapper input::placeholder {
+  color: var(--text-muted);
+}
+
+:global(.dark) .inputWrapper input:focus {
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px var(--glow-secondary);
+  background-color: var(--surface-raised);
+}
+
+:global(.dark) .inputWrapper input:hover:not(:disabled) {
+  border-color: var(--secondary);
+  box-shadow: 0 2px 4px var(--shadow-md);
+}
+
+:global(.dark) .inputWrapper input:disabled {
+  background-color: var(--muted-bg);
+  color: var(--text-muted);
+}
+
+:global(.dark) .disabledInput {
+  background-color: var(--muted-bg) !important;
+  color: var(--text-muted) !important;
+}
+
+:global(.dark) .costSummary {
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+
+:global(.dark) .summaryRow {
+  border-bottom-color: var(--border-strong);
+}
+
+:global(.dark) .summaryLabel {
+  color: var(--text-light);
+}
+
+:global(.dark) .summaryCalc {
+  color: var(--text);
+}
+
+:global(.dark) .totalLabel {
+  color: var(--text);
+}
+
+:global(.dark) .totalValue {
+  color: var(--secondary);
+}
+
+/* Mobile Optimization */
+@media (max-width: 480px) {
+  .inputGroup {
+    flex-direction: column;
+    gap: 6px;
+    height: auto;
+  }
+  .select,
+  .inputWrapper {
+    height: 32px;
+  }
+  .costSummary {
+    padding: 10px;
+  }
+  .summaryCalc {
+    font-size: 9px;
+  }
+  .totalValue {
+    font-size: 13px;
+  }
+}
+
+/* Focus States with Animation */
+@keyframes focusPulse {
+  0% {
+    box-shadow: 0 0 0 0 var(--glow-primary);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--glow-primary);
+  }
+  100% {
+    box-shadow: 0 0 0 3px var(--glow-primary);
+  }
+}
+
+.select:focus,
+.inputWrapper input:focus {
+  animation: focusPulse 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover States */
+@media (hover: hover) {
+  .costSummary:hover {
+    background: var(--info-bg);
+    border-color: var(--info-border);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px var(--shadow-md);
+  }
+  :global(.dark) .costSummary:hover {
+    box-shadow: 0 2px 6px var(--shadow-lg);
+  }
+}
+
+/* Custom Scrollbar */
+.select::-webkit-scrollbar {
+  width: 8px;
+}
+
+.select::-webkit-scrollbar-track {
+  background: var(--surface-raised);
+  border-radius: 4px;
+}
+
+.select::-webkit-scrollbar-thumb {
+  background: var(--text-light);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.select::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
+}
+
+:global(.dark) .select::-webkit-scrollbar-track {
+  background: var(--surface-raised);
+}
+
+:global(.dark) .select::-webkit-scrollbar-thumb {
+  background: var(--text-light);
+}
+
+/* Number Input Arrows Styling */
+.inputWrapper input[type="number"]::-webkit-inner-spin-button,
+.inputWrapper input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  height: 26px;
+  margin: 0;
+}
+
+/* Print Styles */
+@media print {
+  .costInput {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .select,
+  .inputWrapper input {
+    border: 1px solid #000;
+    background: transparent;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .costSummary {
+    border: 1px solid #000;
+    background: transparent;
+  }
+  .inputIcon {
+    color: #000;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .select,
+  .inputWrapper input {
+    border-width: 2px;
+  }
+  .select:focus,
+  .inputWrapper input:focus {
+    border-width: 3px;
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+  .costSummary {
+    border-width: 2px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .costInput,
+  .inputGroup,
+  .select,
+  .inputWrapper input,
+  .costSummary {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Loading State */
+.costInput.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.costInput.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+:global(.dark) .costInput.loading::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}

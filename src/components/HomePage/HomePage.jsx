@@ -15,7 +15,7 @@ import {
   useCategories,
 } from "../../context/CategoriesContext";
 import { SettingsProvider, useSettings } from "../../context/SettingsContext";
-import { WorkTypeProvider, useWorkType } from "../../context/WorkTypeContext";
+import { useWorkType } from "../../context/WorkTypeContext";
 import { CalculatorEngine } from "../Calculator/engine/CalculatorEngine";
 import CustomerInfo from "../CustomerInfo/CustomerInfo";
 import Calculator from "../Calculator/Calculator";
@@ -90,7 +90,7 @@ const sanitizeCategoriesWithEngine = (categories) => {
   return sanitized;
 };
 
-// Main HomePage content - now properly wrapped with providers
+// Main HomePage content
 function HomePageContent() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -101,9 +101,9 @@ function HomePageContent() {
       : location.state?.customerInfo || {};
 
   const { categories, setCategories } = useCategories();
-  const { settings, setSettings } = useSettings();
+  // FIX (Issue 10): destructure resetSettings so resetAll can use it
+  const { settings, setSettings, resetSettings } = useSettings();
 
-  // Use the WorkType hook directly - now properly available
   const workTypeContext = useWorkType();
   const { getMeasurementType, isValidSubtype, getWorkTypeDetails } =
     workTypeContext;
@@ -161,7 +161,6 @@ function HomePageContent() {
       "startDate",
     ];
 
-    // Check if all required fields are filled
     const missingFields = requiredFields.filter((field) => {
       if (field === "startDate") {
         return (
@@ -172,7 +171,6 @@ function HomePageContent() {
       return !customer[field] || !customer[field].toString().trim();
     });
 
-    // Additional validations
     if (customer.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
       return false;
     }
@@ -222,11 +220,10 @@ function HomePageContent() {
               ? new Date(project.customerInfo.finishDate)
               : "",
             notes: project.customerInfo?.notes || "",
-            status: project.status || "Not Started", // Ensure status is captured
+            status: project.status || "Not Started",
           };
           setCustomer(normalizedCustomer);
 
-          // Simplified sanitization - no need to pass functions
           const sanitizedCategories = sanitizeCategoriesWithEngine(
             project.categories,
           );
@@ -235,7 +232,7 @@ function HomePageContent() {
           const normalizedSettings = {
             taxRate: project.settings?.taxRate || 0,
             transportationFee: project.settings?.transportationFee || 0,
-            wasteFactor: project.settings?.wasteFactor || 0,
+            wasteEntries: project.settings?.wasteEntries || [],
             miscFees: project.settings?.miscFees || [],
             deposit: project.settings?.deposit || 0,
             depositDate: project.settings?.depositDate || null,
@@ -290,23 +287,19 @@ function HomePageContent() {
       return;
     }
 
-    // Simplified sanitization
     const sanitizedCategories = sanitizeCategoriesWithEngine(categories);
 
     try {
-      // Instantiate CalculatorEngine with context functions
       const engine = new CalculatorEngine(
         sanitizedCategories,
         settings,
         workTypeContext,
       );
 
-      // Recalculate totals, breakdowns, payments
       const totals = engine.calculateTotals();
       const breakdowns = engine.calculateBreakdowns();
       const paymentDetails = engine.calculatePaymentDetails();
 
-      // Build project payload
       const projectData = {
         customerInfo: {
           ...customer,
@@ -369,6 +362,11 @@ function HomePageContent() {
     }
   };
 
+  // FIX (Issue 10): Use resetSettings() from SettingsContext so that ALL
+  // fields are reset to DEFAULT_SETTINGS — no risk of partial or stale state.
+  // Previously this called setSettings({...}) with a hardcoded subset that was
+  // missing fields like `wasteEntries` and would drift whenever DEFAULT_SETTINGS
+  // was updated.
   const resetAll = () => {
     if (
       window.confirm(
@@ -393,17 +391,7 @@ function HomePageContent() {
         notes: "",
       });
       setCategories([]);
-      setSettings({
-        taxRate: 0,
-        transportationFee: 0,
-        wasteFactor: 0,
-        miscFees: [],
-        deposit: 0,
-        depositDate: null,
-        payments: [],
-        markup: 0,
-        laborDiscount: 0,
-      });
+      resetSettings(); // ← replaces the old partial setSettings({...}) call
       setProjectId(null);
       alert("All data reset.");
     }
@@ -618,20 +606,19 @@ function HomePageContent() {
   );
 }
 
-// HomePage with providers - restructured for proper context access
+// HomePage with providers - CategoriesProvider and SettingsProvider stay here
+// since they are specific to the project editor. WorkTypeProvider is now in App.js.
 export default function HomePage() {
   const { id } = useParams();
   const projectKey = id || "new-project";
 
   return (
     <ErrorBoundary boundaryName="HomePage">
-      <WorkTypeProvider>
-        <CategoriesProvider key={`cat-${projectKey}`}>
-          <SettingsProvider key={`set-${projectKey}`}>
-            <HomePageContentWrapper />
-          </SettingsProvider>
-        </CategoriesProvider>
-      </WorkTypeProvider>
+      <CategoriesProvider key={`cat-${projectKey}`}>
+        <SettingsProvider key={`set-${projectKey}`}>
+          <HomePageContentWrapper />
+        </SettingsProvider>
+      </CategoriesProvider>
     </ErrorBoundary>
   );
 }
@@ -641,7 +628,6 @@ function HomePageContentWrapper() {
   const { getMeasurementType, isValidSubtype, getWorkTypeDetails } =
     useWorkType();
 
-  // Wait for context to be ready
   const isContextReady = !!(
     getMeasurementType &&
     isValidSubtype &&

@@ -1,831 +1,1281 @@
-import { useState, useMemo, useEffect } from 'react';
-import { useCategories } from '../../../context/CategoriesContext';
-import { useSettings } from '../../../context/SettingsContext';
-import { useWorkType } from '../../../context/WorkTypeContext';
-import { useError } from '../../../context/ErrorContext';
-import { CalculatorEngine } from '../engine/CalculatorEngine';
-import styles from './PaymentTracking.module.css';
+// src/components/Calculator/Category/PaymentTracking.jsx
 
-const errorToString = (error) => {
-  if (typeof error === 'string') return error;
-  if (error && typeof error === 'object') {
-    return error.message || error.toString() || 'Unknown error';
-  }
-  return String(error || 'Unknown error');
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import Decimal from "decimal.js";
+import { useSettings } from "../../../context/SettingsContext";
+import { useCalculation } from "../../../context/CalculationContext";
+import SectionHeader from "./SectionHeader";
+import styles from "./PaymentTracking.module.css";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const PAYMENT_TYPES = {
+  DEPOSIT: "Deposit",
+  INSTALLMENT: "Installment",
+  ONE_TIME: "One-Time",
 };
 
+const PAYMENT_METHODS = [
+  "Cash",
+  "Credit Card",
+  "Debit Card",
+  "Check",
+  "Bank Transfer",
+  "Zelle",
+  "PayPal",
+  "Venmo",
+  "CashApp",
+  "Other",
+];
+
+const INSTALLMENT_DURATIONS = [1, 2, 3, 6, 9, 12, 18, 24, 36, 48, 60];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function generateId() {
+  return crypto.randomUUID
+    ? crypto.randomUUID()
+    : `payment_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+function parseSafeDate(dateString) {
+  if (!dateString) return new Date();
+  try {
+    const d = new Date(dateString);
+    return isNaN(d.getTime()) ? new Date() : d;
+  } catch {
+    return new Date();
+  }
+}
+
+function formatDateForInput(date) {
+  try {
+    return date.toISOString().split("T")[0];
+  } catch {
+    return new Date().toISOString().split("T")[0];
+  }
+}
+
+function todayString() {
+  return formatDateForInput(new Date());
+}
+
+function validatePayment(payment) {
+  const errors = [];
+
+  if (!payment.amount || parseFloat(payment.amount) <= 0) {
+    errors.push("Amount must be greater than 0");
+  }
+
+  if (!payment.date) {
+    errors.push("Date is required");
+  } else {
+    const date = parseSafeDate(payment.date);
+    if (isNaN(date.getTime())) {
+      errors.push("Invalid date");
+    }
+  }
+
+  if (payment.type === PAYMENT_TYPES.DEPOSIT && payment.amount) {
+    const amount = parseFloat(payment.amount);
+    if (amount > 1000000) {
+      errors.push("Deposit amount seems unusually high");
+    }
+  }
+
+  return errors;
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function PaymentTracking({ disabled = false }) {
-  const { categories } = useCategories();
   const { settings, setSettings } = useSettings();
-  const { getMeasurementType, isValidSubtype, getWorkTypeDetails } = useWorkType();
-  const { addError } = useError();
-  
-  const [newPayment, setNewPayment] = useState({
-    date: new Date().toISOString().split('T')[0],
-    amount: '',
-    method: 'Cash',
-    note: '',
+  const { derived } = useCalculation();
+
+  // ── Refs for preventing circular updates ────────────────────────────────────
+  const isUpdatingRef = useRef(false);
+  const lastBalanceRef = useRef(null);
+
+  // ── Local UI state ──────────────────────────────────────────────────────────
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  // Installment plan form
+  const [showInstallmentForm, setShowInstallmentForm] = useState(false);
+  const [installmentDuration, setInstallmentDuration] = useState("6");
+  const [installmentStartDate, setInstallmentStartDate] = useState(
+    todayString(),
+  );
+  const [generatedInstallments, setGeneratedInstallments] = useState([]);
+
+  // One-time payment form
+  const [showOneTimeForm, setShowOneTimeForm] = useState(false);
+  const [oneTimePayment, setOneTimePayment] = useState({
+    id: generateId(),
+    date: todayString(),
+    amount: "",
+    method: "Cash",
+    note: "",
     isPaid: true,
+    type: PAYMENT_TYPES.ONE_TIME,
   });
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [editedPayment, setEditedPayment] = useState(null);
-  const [expandedPayments, setExpandedPayments] = useState(true);
-  const [showAddPayment, setShowAddPayment] = useState(false);
 
-  const safeSettings = useMemo(() => ({
-    payments: [],
-    ...settings,
-  }), [settings]);
+  // Auto-recalculate toggle
+  const [autoRecalculate, setAutoRecalculate] = useState(true);
 
-  // FIX: useMemo dependencies to fix ESLint warning
-  const calculatorEngine = useMemo(() => {
-    if (!getMeasurementType || !isValidSubtype || !getWorkTypeDetails) {
-      return null;
-    }
-    return new CalculatorEngine(categories, settings, {
-      getMeasurementType,
-      isValidSubtype,
-      getWorkTypeDetails,
-    }, {
-      enableCaching: true,
-      strictValidation: false,
-      timeoutMs: 30000,
-    });
-  }, [categories, settings, getMeasurementType, isValidSubtype, getWorkTypeDetails]);
+  // ── Deposit local state (prevents single-digit bug) ─────────────────────────
+  // We keep a raw string while the user types, only commit on blur/Enter.
+  // Once committed the row is locked until the user clicks Edit.
+  const [depositRaw, setDepositRaw] = useState("");
+  const [depositDateRaw, setDepositDateRaw] = useState(todayString());
+  const [depositMethod, setDepositMethod] = useState("Cash");
+  const [depositEditMode, setDepositEditMode] = useState(false); // true = editing existing deposit
+  const [depositInputError, setDepositInputError] = useState("");
 
-  const calculations = useMemo(() => {
-    if (!calculatorEngine) {
-      return {
-        totals: {
-          total: '0.00',
-          errors: ['Calculator engine not available.'],
-        },
-        payments: {
-          totalPaid: '0.00',
-          totalDue: '0.00',
-          overduePayments: '0.00',
-          deposit: '0.00',
-          summary: { paidPayments: 0, totalPayments: 0, overduePayments: 0 },
-          errors: ['Calculator engine not available.'],
-        }
+  // ── Derived data from payments ──────────────────────────────────────────────
+  const payments = useMemo(() => settings.payments || [], [settings.payments]);
+
+  // Group payments by type with stable IDs
+  const { depositPayment, installmentPayments, oneTimePayments } =
+    useMemo(() => {
+      const result = {
+        depositPayment: null,
+        installmentPayments: [],
+        oneTimePayments: [],
       };
-    }
 
-    try {
-      const totals = calculatorEngine.calculateTotals();
-      const payments = calculatorEngine.calculatePaymentDetails();
-      
-      return { totals, payments };
-    } catch (err) {
-      console.error('Calculation error:', err);
-      const errorMessage = errorToString(err);
-      return {
-        totals: {
-          total: '0.00',
-          errors: [`Cost calculation failed: ${errorMessage}`],
-        },
-        payments: {
-          totalPaid: '0.00',
-          totalDue: '0.00',
-          overduePayments: '0.00',
-          deposit: '0.00',
-          summary: { paidPayments: 0, totalPayments: 0, overduePayments: 0 },
-          errors: [`Payment calculation failed: ${errorMessage}`],
+      payments.forEach((payment) => {
+        // Always use type for identification (standardized)
+        if (payment.type === PAYMENT_TYPES.DEPOSIT) {
+          result.depositPayment = payment;
+        } else if (payment.type === PAYMENT_TYPES.INSTALLMENT) {
+          result.installmentPayments.push(payment);
+        } else {
+          result.oneTimePayments.push(payment);
         }
-      };
-    }
-  }, [calculatorEngine]);
+      });
+
+      // Sort installments by date and number
+      result.installmentPayments.sort((a, b) => {
+        if (a.installmentNumber && b.installmentNumber) {
+          return a.installmentNumber - b.installmentNumber;
+        }
+        return new Date(a.date) - new Date(b.date);
+      });
+
+      return result;
+    }, [payments]);
+
+  const hasInstallmentPlan = installmentPayments.length > 0;
+
+  const installmentStats = useMemo(() => {
+    const paid = installmentPayments.filter((p) => p.isPaid);
+    return {
+      total: installmentPayments.length,
+      paid: paid.length,
+      totalAmount: installmentPayments.reduce(
+        (s, p) => s + (parseFloat(p.amount) || 0),
+        0,
+      ),
+      paidAmount: paid.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0),
+    };
+  }, [installmentPayments]);
+
+  // ── Safe payment update function (prevents circular updates) ────────────────
+
+  const updatePayments = useCallback(
+    (updater) => {
+      if (isUpdatingRef.current) return;
+
+      isUpdatingRef.current = true;
+
+      setSettings((prev) => {
+        const currentPayments = prev.payments || [];
+        const newPayments =
+          typeof updater === "function" ? updater(currentPayments) : updater;
+
+        // Validate all payments
+        const errors = {};
+        newPayments.forEach((p, idx) => {
+          const paymentErrors = validatePayment(p);
+          if (paymentErrors.length > 0) {
+            errors[p.id || `payment_${idx}`] = paymentErrors;
+          }
+        });
+
+        setValidationErrors(errors);
+
+        return {
+          ...prev,
+          payments: newPayments,
+        };
+      });
+
+      // Release the lock after React has a chance to update
+      setTimeout(() => {
+        isUpdatingRef.current = false;
+      }, 0);
+    },
+    [setSettings],
+  );
+
+  // ── Auto-recalculate installments ───────────────────────────────────────────
+  // FIXED: Circular update eliminated with isUpdatingRef guard
 
   useEffect(() => {
-    const allErrors = [...(calculations.totals.errors || []), ...(calculations.payments.errors || [])];
-    
-    if (allErrors.length > 0) {
-      const seriousErrors = allErrors.filter(error => {
-        const lowerError = errorToString(error).toLowerCase();
-        return !lowerError.includes('not available') && 
-               !lowerError.includes('no valid') &&
-               lowerError.includes('failed');
-      });
-      
-      seriousErrors.forEach(error => {
-        const safeError = errorToString(error);
-        addError(safeError);
-      });
-    }
-  }, [calculations.totals.errors, calculations.payments.errors, addError]);
-
-  // FIX: Calculate amounts properly separating deposit from other payments
-  const paymentBreakdown = useMemo(() => {
-    const grandTotal = parseFloat(calculations.totals.total) || 0;
-    const totalPaid = parseFloat(calculations.payments.totalPaid) || 0;
-    const depositAmount = parseFloat(calculations.payments.deposit) || 0;
-    const otherPayments = totalPaid - depositAmount; // Non-deposit payments
-    const totalDue = parseFloat(calculations.payments.totalDue) || 0;
-    const overpayment = totalPaid > grandTotal ? (totalPaid - grandTotal) : 0;
-
-    return {
-      grandTotal,
-      depositAmount,
-      otherPayments,
-      totalPaid,
-      totalDue,
-      overpayment,
-      balanceAfterDeposit: grandTotal - depositAmount, // What remains after deposit
-    };
-  }, [calculations.totals.total, calculations.payments.totalPaid, calculations.payments.deposit, calculations.payments.totalDue]);
-
-  const formatCurrency = (value) => {
-    const num = parseFloat(value) || 0;
-    return num.toLocaleString(undefined, { 
-      minimumFractionDigits: 2, 
-      maximumFractionDigits: 2 
-    });
-  };
-
-  const depositPayment = useMemo(() => {
-    return safeSettings.payments?.find(p => p.method === 'Deposit') || null;
-  }, [safeSettings.payments]);
-
-  const paidPayments = useMemo(() => {
-    return safeSettings.payments?.filter(p => p.method !== 'Deposit' && p.isPaid) || [];
-  }, [safeSettings.payments]);
-
-  const totalPaymentsCount = useMemo(() => {
-    return safeSettings.payments?.filter(p => p.method !== 'Deposit').length || 0;
-  }, [safeSettings.payments]);
-
-  const validatePayment = (payment) => {
-    if (!payment.date || isNaN(Date.parse(payment.date))) {
-      return 'Please select a valid date.';
-    }
-    const amount = parseFloat(payment.amount);
-    if (isNaN(amount) || amount <= 0) {
-      return 'Payment amount must be greater than zero.';
-    }
-    if (amount > 100000) {
-      return 'Payment amount cannot exceed $100,000.';
-    }
-    return null;
-  };
-
-  const updateDepositPayment = (amount, date) => {
-    setSettings(prev => {
-      const payments = [...(prev.payments || [])];
-      const depositIndex = payments.findIndex(p => p.method === 'Deposit');
-
-      const depositAmountValue = parseFloat(amount);
-      if (isNaN(depositAmountValue) || depositAmountValue < 0) {
-        addError('Deposit amount must be valid and non-negative.');
-        return prev;
-      }
-      if (depositAmountValue > 100000) {
-        addError('Deposit cannot exceed $100,000.');
-        return prev;
-      }
-
-      const depositDate = date ? new Date(date) : new Date();
-      if (isNaN(depositDate.getTime())) {
-        addError('Invalid deposit date.');
-        return prev;
-      }
-      
-      const depositDateISO = depositDate.toISOString();
-
-      if (depositAmountValue === 0) {
-        if (depositIndex !== -1) {
-          payments.splice(depositIndex, 1);
-        }
-      } else {
-        const depositPayment = {
-          date: depositDateISO,
-          amount: depositAmountValue,
-          method: 'Deposit',
-          note: 'Initial Deposit',
-          isPaid: true,
-        };
-        
-        if (depositIndex === -1) {
-          payments.push(depositPayment);
-        } else {
-          payments[depositIndex] = depositPayment;
-        }
-      }
-
-      return { ...prev, payments };
-    });
-  };
-
-  const handleDepositAmountChange = (value) => {
-    const currentDeposit = safeSettings.payments?.find(p => p.method === 'Deposit');
-    const depositDate = currentDeposit?.date || new Date().toISOString();
-    updateDepositPayment(value, depositDate);
-  };
-
-  const handleDepositDateChange = (value) => {
-    const currentDeposit = safeSettings.payments?.find(p => p.method === 'Deposit');
-    const depositAmount = currentDeposit?.amount || 0;
-    updateDepositPayment(depositAmount, value);
-  };
-
-  const handleNewPaymentChange = (field, value) => {
-    setNewPayment((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const addPayment = () => {
-    if (disabled) return;
-
-    if (newPayment.method === 'Deposit') {
-      addError('Cannot create payments with "Deposit" method. Please use the Deposit section to record deposit payments.');
+    // Skip if:
+    // - Already updating
+    // - Auto-recalc disabled
+    // - No installment plan
+    // - Balance hasn't changed
+    if (
+      isUpdatingRef.current ||
+      !autoRecalculate ||
+      !hasInstallmentPlan ||
+      derived.remainingBalance === lastBalanceRef.current
+    ) {
       return;
     }
 
-    const validationError = validatePayment(newPayment);
-    if (validationError) {
-      addError(validationError);
-      return;
+    const balance = derived.remainingBalance;
+    lastBalanceRef.current = balance;
+
+    if (balance <= 0) return;
+
+    // Find unpaid, non-manually-adjusted installments
+    const unpaidInstallments = installmentPayments.filter(
+      (p) => !p.isPaid && !p.manuallyAdjusted,
+    );
+
+    if (unpaidInstallments.length === 0) return;
+
+    // Calculate new amounts using Decimal for precision
+    const balanceDec = new Decimal(balance);
+    const count = unpaidInstallments.length;
+    const perInstallment = balanceDec.dividedBy(count);
+
+    // Use bankers rounding for currency
+    const perInstallmentRounded = Decimal.round(
+      perInstallment.times(100),
+    ).dividedBy(100);
+
+    // Calculate total of rounded amounts
+    const totalRounded = perInstallmentRounded.times(count);
+
+    // Adjust last payment if there's a rounding discrepancy
+    const discrepancy = balanceDec.minus(totalRounded);
+
+    updatePayments((prev) => {
+      const updated = [...prev];
+
+      unpaidInstallments.forEach((payment, index) => {
+        const idx = updated.findIndex((p) => p.id === payment.id);
+        if (idx !== -1) {
+          let amount = perInstallmentRounded;
+          // Add discrepancy to last payment
+          if (
+            index === unpaidInstallments.length - 1 &&
+            !discrepancy.isZero()
+          ) {
+            amount = amount.plus(discrepancy);
+          }
+
+          updated[idx] = {
+            ...updated[idx],
+            amount: amount.toFixed(2),
+          };
+        }
+      });
+
+      return updated;
+    });
+  }, [
+    derived.remainingBalance,
+    autoRecalculate,
+    hasInstallmentPlan,
+    installmentPayments,
+    updatePayments,
+  ]);
+
+  // ── Deposit mutators ────────────────────────────────────────────────────────
+
+  // Keep raw fields in sync when an existing deposit is loaded (e.g. from context)
+  // but only when we're not actively editing.
+  const prevDepositRef = useRef(null);
+  useEffect(() => {
+    if (!depositEditMode && depositPayment) {
+      const changed =
+        prevDepositRef.current?.amount !== depositPayment.amount ||
+        prevDepositRef.current?.date !== depositPayment.date;
+      if (changed) {
+        setDepositRaw(depositPayment.amount);
+        setDepositDateRaw(depositPayment.date);
+        setDepositMethod(depositPayment.method || "Cash");
+        prevDepositRef.current = depositPayment;
+      }
+    }
+  }, [depositPayment, depositEditMode]);
+
+  const commitDeposit = useCallback(() => {
+    const num = parseFloat(depositRaw);
+    if (!depositRaw || isNaN(num) || num <= 0) {
+      setDepositInputError("Enter a valid amount greater than 0");
+      return false;
     }
 
-    try {
-      const payment = {
-        date: new Date(newPayment.date).toISOString(),
-        amount: parseFloat(newPayment.amount),
-        method: newPayment.method || 'Cash',
-        note: newPayment.note.trim() || '',
-        isPaid: newPayment.isPaid,
+    // Prevent multiple deposits for a single project.
+    // Guard not only on explicit Deposit-type rows, but also on legacy
+    // "deposit-like" payments where the note or method indicates a deposit.
+    const hasExistingDepositLikePayment = payments.some((p) => {
+      if (!p) return false;
+      if (p.type === PAYMENT_TYPES.DEPOSIT) return true;
+      const note = (p.note || "").toLowerCase();
+      const method = (p.method || "").toLowerCase();
+      return note.includes("deposit") || method === "deposit";
+    });
+
+    if (!depositEditMode && hasExistingDepositLikePayment) {
+      setDepositInputError(
+        "A deposit is already recorded for this project. Edit or delete the existing deposit instead of adding a new one.",
+      );
+      return false;
+    }
+
+    setDepositInputError("");
+    updatePayments((prev) => {
+      const existingDeposit = prev.find(
+        (p) => p.type === PAYMENT_TYPES.DEPOSIT,
+      );
+      const updated = prev.filter((p) => p.type !== PAYMENT_TYPES.DEPOSIT);
+      const deposit = {
+        id: existingDeposit?.id || generateId(),
+        date: depositDateRaw,
+        amount: num.toFixed(2),
+        method: depositMethod,
+        note: "Initial Deposit",
+        isPaid: true,
+        type: PAYMENT_TYPES.DEPOSIT,
       };
-      
-      setSettings((prev) => ({
-        ...prev,
-        payments: [...(prev.payments || []), payment],
-      }));
-      
-      setNewPayment({
-        date: new Date().toISOString().split('T')[0],
-        amount: '',
-        method: 'Cash',
-        note: '',
-        isPaid: true,
-      });
-      
-      setShowAddPayment(false);
-    } catch (err) {
-      addError('Failed to add payment. Please try again.');
-    }
-  };
-
-  const togglePaymentStatus = (index) => {
-    if (disabled) return;
-    
-    const payment = safeSettings.payments[index];
-    if (payment.method === 'Deposit') {
-      addError('Cannot change deposit payment status. Deposits are always marked as paid.');
-      return;
-    }
-    
-    try {
-      setSettings((prev) => ({
-        ...prev,
-        payments: prev.payments.map((payment, i) =>
-          i === index ? { ...payment, isPaid: !payment.isPaid } : payment,
-        ),
-      }));
-    } catch (err) {
-      addError('Failed to update payment status. Please try again.');
-    }
-  };
-
-  const removePayment = (index) => {
-    if (disabled) return;
-    
-    const payment = safeSettings.payments[index];
-    if (payment.method === 'Deposit') {
-      addError('Cannot remove deposit payment here. Set deposit amount to $0 in the Deposit section to remove it.');
-      return;
-    }
-    
-    try {
-      setSettings((prev) => ({
-        ...prev,
-        payments: prev.payments.filter((_, i) => i !== index),
-      }));
-    } catch (err) {
-      addError('Failed to remove payment. Please try again.');
-    }
-  };
-
-  const startEditing = (index) => {
-    if (disabled) return;
-    
-    const payment = safeSettings.payments[index];
-    
-    if (payment.method === 'Deposit') {
-      addError('Deposit payments cannot be edited here. Please use the Deposit section above.');
-      return;
-    }
-    
-    setEditingIndex(index);
-    setEditedPayment({
-      ...payment,
-      date: new Date(payment.date).toISOString().split('T')[0],
-      amount: payment.amount.toString(),
+      return [deposit, ...updated];
     });
-  };
+    setDepositEditMode(false);
+    return true;
+  }, [
+    depositRaw,
+    depositDateRaw,
+    depositMethod,
+    payments,
+    depositEditMode,
+    updatePayments,
+  ]);
 
-  const handleEditChange = (field, value) => {
-    setEditedPayment((prev) => ({
+  const removeDeposit = useCallback(() => {
+    if (!window.confirm("Remove the deposit?")) return;
+    updatePayments((prev) =>
+      prev.filter((p) => p.type !== PAYMENT_TYPES.DEPOSIT),
+    );
+    setDepositRaw("");
+    setDepositDateRaw(todayString());
+    setDepositMethod("Cash");
+    setDepositEditMode(false);
+    prevDepositRef.current = null;
+  }, [updatePayments]);
+
+  const startDepositEdit = useCallback(() => {
+    if (depositPayment) {
+      setDepositRaw(depositPayment.amount);
+      setDepositDateRaw(depositPayment.date);
+      setDepositMethod(depositPayment.method || "Cash");
+    }
+    setDepositEditMode(true);
+  }, [depositPayment]);
+
+  // ── One-time payment mutators ───────────────────────────────────────────────
+
+  const addOneTimePayment = useCallback(() => {
+    const amount = parseFloat(oneTimePayment.amount);
+    if (isNaN(amount) || amount <= 0 || !oneTimePayment.date) return;
+
+    const paymentErrors = validatePayment(oneTimePayment);
+    if (paymentErrors.length > 0) {
+      alert(paymentErrors.join("\n"));
+      return;
+    }
+
+    updatePayments((prev) => [
       ...prev,
-      [field]: value,
-    }));
-  };
+      {
+        ...oneTimePayment,
+        id: generateId(),
+        amount: amount.toFixed(2),
+        type: PAYMENT_TYPES.ONE_TIME,
+        timestamp: new Date().toISOString(),
+      },
+    ]);
 
-  const saveEdit = (index) => {
-    if (disabled) return;
-
-    if (editedPayment.method === 'Deposit') {
-      addError('Cannot change payment method to "Deposit". Please use the Deposit section for deposit payments.');
-      return;
-    }
-    
-    const originalPayment = safeSettings.payments[index];
-    if (originalPayment.method === 'Deposit') {
-      addError('Cannot edit deposit payment. Please use the Deposit section above.');
-      cancelEdit();
-      return;
-    }
-
-    const validationError = validatePayment(editedPayment);
-    if (validationError) {
-      addError(validationError);
-      return;
-    }
-
-    try {
-      setSettings((prev) => ({
-        ...prev,
-        payments: prev.payments.map((payment, i) =>
-          i === index
-            ? {
-                ...editedPayment,
-                date: new Date(editedPayment.date).toISOString(),
-                amount: parseFloat(editedPayment.amount),
-                method: editedPayment.method || 'Cash',
-                note: editedPayment.note?.trim() || '',
-              }
-            : payment,
-        ),
-      }));
-      
-      setEditingIndex(null);
-      setEditedPayment(null);
-    } catch (err) {
-      addError('Failed to save payment. Please try again.');
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingIndex(null);
-    setEditedPayment(null);
-  };
-
-  const addQuickPayment = () => {
-    if (disabled) return;
-    
-    const remaining = paymentBreakdown.totalDue;
-    if (remaining <= 0) {
-      addError('No remaining balance to pay.');
-      return;
-    }
-
-    setNewPayment(prev => ({
-      ...prev,
-      amount: remaining.toString(),
-      note: `Final payment - cleared balance of $${formatCurrency(remaining)}`,
+    // Reset form
+    setOneTimePayment({
+      id: generateId(),
+      date: todayString(),
+      amount: "",
+      method: "Cash",
+      note: "",
       isPaid: true,
-    }));
-    
-    setShowAddPayment(true);
-  };
+      type: PAYMENT_TYPES.ONE_TIME,
+    });
+    setShowOneTimeForm(false);
+  }, [oneTimePayment, updatePayments]);
 
-  const toggleAddPayment = () => {
-    if (showAddPayment) {
-      setNewPayment({
-        date: new Date().toISOString().split('T')[0],
-        amount: '',
-        method: 'Cash',
-        note: '',
-        isPaid: true,
+  const toggleOneTimePaid = useCallback(
+    (paymentId) => {
+      updatePayments((prev) =>
+        prev.map((p) => (p.id === paymentId ? { ...p, isPaid: !p.isPaid } : p)),
+      );
+    },
+    [updatePayments],
+  );
+
+  const removeOneTimePayment = useCallback(
+    (paymentId) => {
+      if (!window.confirm("Remove this payment?")) return;
+      updatePayments((prev) => prev.filter((p) => p.id !== paymentId));
+    },
+    [updatePayments],
+  );
+
+  // ── Installment mutators ────────────────────────────────────────────────────
+
+  const generateInstallments = useCallback(() => {
+    const duration = parseInt(installmentDuration, 10);
+    if (isNaN(duration) || duration < 1 || duration > 60) return;
+
+    const balance = derived.remainingBalance;
+    if (balance <= 0) {
+      alert("No remaining balance to create installments for");
+      return;
+    }
+
+    // Use Decimal for precise calculations
+    const balanceDec = new Decimal(balance);
+    const amountPer = balanceDec.dividedBy(duration);
+
+    // Round to cents
+    const amounts = [];
+    let remaining = balanceDec;
+
+    for (let i = 0; i < duration; i++) {
+      if (i === duration - 1) {
+        // Last payment gets whatever's left (handles rounding)
+        amounts.push(remaining);
+      } else {
+        const amount = Decimal.round(amountPer.times(100)).dividedBy(100);
+        amounts.push(amount);
+        remaining = remaining.minus(amount);
+      }
+    }
+
+    const start = parseSafeDate(installmentStartDate);
+    const list = [];
+
+    for (let i = 0; i < duration; i++) {
+      const d = new Date(start);
+      d.setMonth(d.getMonth() + i);
+
+      list.push({
+        id: generateId(),
+        date: formatDateForInput(d),
+        amount: amounts[i].toFixed(2),
+        method: "Installment",
+        note:
+          duration === 1
+            ? "Single payment"
+            : `Installment ${i + 1} of ${duration}`,
+        isPaid: false,
+        type: PAYMENT_TYPES.INSTALLMENT,
+        installmentNumber: i + 1,
+        totalInstallments: duration,
       });
     }
-    setShowAddPayment(!showAddPayment);
-  };
+
+    setGeneratedInstallments(list);
+  }, [installmentDuration, installmentStartDate, derived.remainingBalance]);
+
+  const applyInstallmentPlan = useCallback(() => {
+    if (generatedInstallments.length === 0) return;
+
+    // Remove any existing installments first
+    updatePayments((prev) => [
+      ...prev.filter((p) => p.type !== PAYMENT_TYPES.INSTALLMENT),
+      ...generatedInstallments,
+    ]);
+
+    setGeneratedInstallments([]);
+    setShowInstallmentForm(false);
+    lastBalanceRef.current = null; // Reset balance tracking
+  }, [generatedInstallments, updatePayments]);
+
+  const removeAllInstallments = useCallback(() => {
+    if (!window.confirm("Remove all installment payments?")) return;
+    updatePayments((prev) =>
+      prev.filter((p) => p.type !== PAYMENT_TYPES.INSTALLMENT),
+    );
+    lastBalanceRef.current = null;
+  }, [updatePayments]);
+
+  const toggleInstallmentPaid = useCallback(
+    (paymentId) => {
+      updatePayments((prev) =>
+        prev.map((p) => (p.id === paymentId ? { ...p, isPaid: !p.isPaid } : p)),
+      );
+    },
+    [updatePayments],
+  );
+
+  const removeInstallment = useCallback(
+    (paymentId) => {
+      if (!window.confirm("Remove this installment?")) return;
+      updatePayments((prev) => prev.filter((p) => p.id !== paymentId));
+      lastBalanceRef.current = null;
+    },
+    [updatePayments],
+  );
+
+  const updateInstallmentAmount = useCallback(
+    (paymentId, rawAmount) => {
+      const num = parseFloat(rawAmount);
+      if (isNaN(num) || num < 0) return;
+
+      updatePayments((prev) =>
+        prev.map((p) =>
+          p.id === paymentId
+            ? {
+                ...p,
+                amount: num.toFixed(2),
+                manuallyAdjusted: true,
+              }
+            : p,
+        ),
+      );
+    },
+    [updatePayments],
+  );
+
+  const resetManualAdjustments = useCallback(() => {
+    if (
+      !window.confirm(
+        "Reset all manually adjusted installments to auto-calculated amounts?",
+      )
+    )
+      return;
+
+    updatePayments((prev) =>
+      prev.map((p) => {
+        if (p.type === PAYMENT_TYPES.INSTALLMENT) {
+          const { manuallyAdjusted, ...rest } = p;
+          return rest;
+        }
+        return p;
+      }),
+    );
+
+    lastBalanceRef.current = null; // Trigger recalculation
+  }, [updatePayments]);
+
+  // ── Preview amount for installment form ─────────────────────────────────────
+
+  const previewAmount = useMemo(() => {
+    const dur = parseInt(installmentDuration, 10);
+    if (isNaN(dur) || dur < 1 || derived.remainingBalance <= 0) return "0.00";
+
+    const perAmount = new Decimal(derived.remainingBalance).dividedBy(dur);
+    return Decimal.round(perAmount.times(100)).dividedBy(100).toFixed(2);
+  }, [installmentDuration, derived.remainingBalance]);
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <div className={styles.section}>
-      <div className={styles.sectionHeader}>
-        <button
-          className={styles.toggleButton}
-          onClick={() => setExpandedPayments(!expandedPayments)}
-          title={expandedPayments ? 'Collapse' : 'Expand'}
-          aria-expanded={expandedPayments}
-        >
-          <i className={`fas ${expandedPayments ? 'fa-chevron-down' : 'fa-chevron-right'}`} aria-hidden="true" />
-        </button>
-        <h3 className={styles.sectionTitle}>
-          <i className="fas fa-wallet" aria-hidden="true" /> Payment Tracking
-        </h3>
-        <div className={styles.totalPaid}>
-          <span className={styles.paidLabel}>Paid: ${formatCurrency(paymentBreakdown.totalPaid)}</span>
-        </div>
-      </div>
+      <SectionHeader
+        title="💳 Payment Tracking"
+        subtitle={`Total: $${fmt(derived.grandTotal)} | Paid: $${fmt(
+          derived.totalPaid,
+        )} | Remaining: $${fmt(derived.remainingBalance)}`}
+        expanded={isExpanded}
+        onToggle={() => setIsExpanded(!isExpanded)}
+      />
 
-      {expandedPayments && (
+      {isExpanded && (
         <div className={styles.content}>
-          {/* FIX: Clearer payment breakdown showing the flow of money */}
-          <div className={styles.summary}>
-            <div className={`${styles.summaryRow} ${styles.grandTotal}`}>
-              <span className={styles.summaryLabel}>
-                <i className="fas fa-receipt" aria-hidden="true" /> Project Total
-              </span>
-              <span className={styles.summaryValue}>
-                ${formatCurrency(paymentBreakdown.grandTotal)}
-              </span>
+          {/* Validation Errors Summary */}
+          {Object.keys(validationErrors).length > 0 && (
+            <div className={styles.errorSummary}>
+              <i className="fas fa-exclamation-triangle" />
+              <span>Some payments have validation issues</span>
+            </div>
+          )}
+
+          {/* ── Summary cards ────────────────────────────────────────────── */}
+          <div className={styles.summaryCompact}>
+            <div className={styles.summaryCard}>
+              <div className={styles.summaryIcon}>
+                <i className="fas fa-wallet" />
+              </div>
+              <div className={styles.summaryInfo}>
+                <span className={styles.summaryLabel}>Grand Total</span>
+                <span className={styles.summaryAmount}>
+                  ${fmt(derived.grandTotal)}
+                </span>
+              </div>
+            </div>
+            <div className={`${styles.summaryCard} ${styles.summaryCardPaid}`}>
+              <div
+                className={`${styles.summaryIcon} ${styles.summaryIconSuccess}`}
+              >
+                <i className="fas fa-check-circle" />
+              </div>
+              <div className={styles.summaryInfo}>
+                <span className={styles.summaryLabel}>Total Paid</span>
+                <span
+                  className={`${styles.summaryAmount} ${styles.summaryAmountSuccess}`}
+                >
+                  ${fmt(derived.totalPaid)}
+                </span>
+              </div>
+            </div>
+            <div
+              className={`${styles.summaryCard} ${styles.summaryCardRemaining}`}
+            >
+              <div
+                className={`${styles.summaryIcon} ${styles.summaryIconError}`}
+              >
+                <i className="fas fa-exclamation-circle" />
+              </div>
+              <div className={styles.summaryInfo}>
+                <span className={styles.summaryLabel}>Remaining</span>
+                <span
+                  className={`${styles.summaryAmount} ${styles.summaryAmountError}`}
+                >
+                  ${fmt(derived.remainingBalance)}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Deposit ──────────────────────────────────────────────────── */}
+          <div className={styles.depositInline}>
+            <span className={styles.inlineLabel}>
+              <i className="fas fa-hand-holding-usd" /> Initial Deposit
+            </span>
+
+            {/* ── LOCKED state: deposit exists and not being edited ── */}
+            {depositPayment && !depositEditMode ? (
+              <div className={styles.depositLocked}>
+                <span className={styles.depositLockedAmount}>
+                  <i
+                    className="fas fa-lock"
+                    style={{ fontSize: "0.7em", opacity: 0.6, marginRight: 4 }}
+                  />
+                  ${fmt(depositPayment.amount)}
+                </span>
+                <span className={styles.depositLockedDate}>
+                  {new Date(depositPayment.date).toLocaleDateString()}
+                </span>
+                <span className={styles.depositLockedMethod}>
+                  {depositPayment.method}
+                </span>
+                {!disabled && (
+                  <div className={styles.depositLockedActions}>
+                    <button
+                      onClick={startDepositEdit}
+                      className={`${styles.btnAction} ${styles.btnActionEdit}`}
+                      title="Edit deposit"
+                    >
+                      <i className="fas fa-pencil-alt" />
+                    </button>
+                    <button
+                      onClick={removeDeposit}
+                      className={`${styles.btnAction} ${styles.btnActionDanger}`}
+                      title="Delete deposit"
+                    >
+                      <i className="fas fa-trash-alt" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* ── INPUT state: no deposit yet, or editing existing one ── */
+              !disabled && (
+                <div className={styles.depositInputGroup}>
+                  <div className={styles.inlineFields}>
+                    <input
+                      type="number"
+                      value={depositRaw}
+                      onChange={(e) => {
+                        setDepositRaw(e.target.value);
+                        setDepositInputError("");
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") commitDeposit();
+                        if (e.key === "Escape" && depositEditMode) {
+                          setDepositEditMode(false);
+                          setDepositInputError("");
+                        }
+                      }}
+                      placeholder="Amount (e.g. 500)"
+                      className={`${styles.inlineInput} ${
+                        depositInputError ? styles.inputError : ""
+                      }`}
+                      min="0"
+                      step="0.01"
+                      autoFocus={depositEditMode}
+                    />
+                    <input
+                      type="date"
+                      value={depositDateRaw}
+                      onChange={(e) => setDepositDateRaw(e.target.value)}
+                      className={styles.inlineInput}
+                    />
+                    <select
+                      value={depositMethod}
+                      onChange={(e) => setDepositMethod(e.target.value)}
+                      className={styles.inlineInput}
+                    >
+                      {PAYMENT_METHODS.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {depositInputError && (
+                    <span className={styles.editError}>
+                      {depositInputError}
+                    </span>
+                  )}
+                  <div className={styles.depositFormActions}>
+                    <button
+                      onClick={commitDeposit}
+                      className={styles.btnSubmit}
+                      disabled={!depositRaw}
+                    >
+                      <i className="fas fa-check" />{" "}
+                      {depositEditMode ? "Update" : "Save"} Deposit
+                    </button>
+                    {depositEditMode && (
+                      <button
+                        onClick={() => {
+                          setDepositEditMode(false);
+                          setDepositInputError("");
+                        }}
+                        className={styles.btnClear}
+                      >
+                        <i className="fas fa-times" /> Cancel
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+
+          {/* ── One-time payment ──────────────────────────────────────────── */}
+          <div className={styles.oneTimeSection}>
+            <div className={styles.compactHeader}>
+              <div className={styles.headerLeft}>
+                <i className="fas fa-money-bill-wave" />
+                <span>One-Time Payments</span>
+              </div>
+              {!disabled && (
+                <button
+                  onClick={() => setShowOneTimeForm(!showOneTimeForm)}
+                  className={`${styles.toggleBtn} ${
+                    showOneTimeForm ? styles.toggleBtnActive : ""
+                  }`}
+                >
+                  <i
+                    className={`fas fa-${showOneTimeForm ? "minus" : "plus"}`}
+                  />
+                  {showOneTimeForm ? "Hide" : "Add Payment"}
+                </button>
+              )}
             </div>
 
-            {/* Show deposit if exists */}
-            {paymentBreakdown.depositAmount > 0 && (
-              <>
-                <div className={styles.summaryRow}>
-                  <span className={styles.summaryLabel}>
-                    <i className="fas fa-hand-holding-usd" aria-hidden="true" /> Deposit Paid
-                  </span>
-                  <span className={styles.summaryValue}>
-                    ${formatCurrency(paymentBreakdown.depositAmount)}
-                  </span>
+            {showOneTimeForm && !disabled && (
+              <div className={styles.oneTimeForm}>
+                <div className={styles.formGrid}>
+                  <input
+                    type="date"
+                    value={oneTimePayment.date}
+                    onChange={(e) =>
+                      setOneTimePayment((prev) => ({
+                        ...prev,
+                        date: e.target.value,
+                      }))
+                    }
+                    className={styles.formInput}
+                  />
+                  <input
+                    type="number"
+                    value={oneTimePayment.amount}
+                    onChange={(e) =>
+                      setOneTimePayment((prev) => ({
+                        ...prev,
+                        amount: e.target.value,
+                      }))
+                    }
+                    placeholder="Amount"
+                    className={styles.formInput}
+                    step="0.01"
+                    min="0"
+                  />
+                  <select
+                    value={oneTimePayment.method}
+                    onChange={(e) =>
+                      setOneTimePayment((prev) => ({
+                        ...prev,
+                        method: e.target.value,
+                      }))
+                    }
+                    className={styles.formSelect}
+                  >
+                    {PAYMENT_METHODS.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    value={oneTimePayment.note}
+                    onChange={(e) =>
+                      setOneTimePayment((prev) => ({
+                        ...prev,
+                        note: e.target.value,
+                      }))
+                    }
+                    placeholder="Note (optional)"
+                    className={styles.formInput}
+                  />
                 </div>
-                <div className={`${styles.summaryRow} ${styles.afterDeposit}`}>
-                  <span className={styles.summaryLabel}>
-                    Balance After Deposit
-                  </span>
-                  <span className={styles.summaryValue}>
-                    ${formatCurrency(paymentBreakdown.balanceAfterDeposit)}
-                  </span>
+                <div className={styles.formFooter}>
+                  <label className={styles.paidToggle}>
+                    <input
+                      type="checkbox"
+                      checked={oneTimePayment.isPaid}
+                      onChange={(e) =>
+                        setOneTimePayment((prev) => ({
+                          ...prev,
+                          isPaid: e.target.checked,
+                        }))
+                      }
+                    />
+                    <span>Mark as paid</span>
+                  </label>
+                  <button
+                    onClick={addOneTimePayment}
+                    className={styles.btnSubmit}
+                    disabled={!oneTimePayment.amount || !oneTimePayment.date}
+                  >
+                    <i className="fas fa-check" /> Save Payment
+                  </button>
                 </div>
-              </>
-            )}
-
-            {/* Show other payments if any */}
-            {paymentBreakdown.otherPayments > 0 && (
-              <div className={styles.summaryRow}>
-                <span className={styles.summaryLabel}>
-                  <i className="fas fa-credit-card" aria-hidden="true" /> Additional Payments ({paidPayments.length})
-                </span>
-                <span className={styles.summaryValue}>
-                  ${formatCurrency(paymentBreakdown.otherPayments)}
-                </span>
               </div>
             )}
 
-            {/* Total paid summary */}
-            <div className={`${styles.summaryRow} ${styles.totalPaidRow}`}>
-              <span className={styles.summaryLabel}>
-                <i className="fas fa-check-circle" aria-hidden="true" /> Total Paid
-              </span>
-              <span className={styles.summaryValue}>
-                ${formatCurrency(paymentBreakdown.totalPaid)}
-              </span>
-            </div>
-
-            {/* Balance or overpayment */}
-            <div className={`${styles.summaryRow} ${styles.balance}`}>
-              <span className={styles.summaryLabel}>
-                {paymentBreakdown.overpayment > 0 ? (
-                  <>
-                    <i className={`fas fa-gift ${styles.overpaidIcon}`} aria-hidden="true" /> Overpaid
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-money-bill" aria-hidden="true" /> Remaining Balance
-                  </>
-                )}
-              </span>
-              <span className={styles.summaryValue}>
-                ${formatCurrency(paymentBreakdown.overpayment > 0 ? paymentBreakdown.overpayment : paymentBreakdown.totalDue)}
-              </span>
-            </div>
-
-            {parseFloat(calculations.payments.overduePayments || 0) > 0 && (
-              <div className={styles.overdueWarning}>
-                <i className="fas fa-exclamation-triangle" aria-hidden="true" />
-                <span>Overdue: ${formatCurrency(calculations.payments.overduePayments)}</span>
+            {oneTimePayments.length > 0 && (
+              <div className={styles.oneTimeList}>
+                {oneTimePayments.map((payment) => (
+                  <div
+                    key={payment.id}
+                    className={`${styles.paymentRow} ${styles.manualRow} ${
+                      payment.isPaid ? styles.rowPaid : ""
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={Boolean(payment.isPaid)}
+                      onChange={() => toggleOneTimePaid(payment.id)}
+                      disabled={disabled}
+                      className={styles.paymentCheckbox}
+                    />
+                    <div className={styles.paymentInfo}>
+                      <span className={styles.paymentDate}>
+                        {new Date(payment.date).toLocaleDateString()}
+                      </span>
+                      <span className={styles.paymentAmount}>
+                        ${fmt(payment.amount)}
+                      </span>
+                      <span className={styles.paymentMethod}>
+                        {payment.method}
+                      </span>
+                      {payment.note && (
+                        <span
+                          className={styles.paymentNote}
+                          title={payment.note}
+                        >
+                          {payment.note}
+                        </span>
+                      )}
+                    </div>
+                    {!disabled && (
+                      <button
+                        onClick={() => removeOneTimePayment(payment.id)}
+                        className={`${styles.btnAction} ${styles.btnActionDanger}`}
+                        title="Remove payment"
+                      >
+                        <i className="fas fa-trash-alt" />
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </div>
 
-          {!disabled && (
-            <div className={styles.depositSection}>
-              <h4 className={styles.sectionSubtitle}>
-                <i className="fas fa-hand-holding-usd" aria-hidden="true" /> Deposit Information
-              </h4>
-              <div className={styles.depositFields}>
-                <div className={styles.field}>
-                  <label htmlFor="deposit-amount">Amount:</label>
-                  <input
-                    id="deposit-amount"
-                    type="number"
-                    value={depositPayment?.amount || ''}
-                    onChange={(e) => handleDepositAmountChange(e.target.value)}
-                    min="0"
-                    max="100000"
-                    step="0.01"
-                    placeholder="0.00"
-                    aria-label="Deposit Amount"
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="deposit-date">Date:</label>
-                  <input
-                    id="deposit-date"
-                    type="date"
-                    value={depositPayment?.date ? new Date(depositPayment.date).toISOString().split('T')[0] : ''}
-                    onChange={(e) => handleDepositDateChange(e.target.value)}
-                    aria-label="Deposit Date"
-                  />
-                </div>
+          {/* ── Installment Plan ─────────────────────────────────────────── */}
+          <div className={styles.installmentCompact}>
+            <div className={styles.compactHeader}>
+              <div className={styles.headerLeft}>
+                <i className="fas fa-calendar-alt" />
+                <span>Installment Plan</span>
               </div>
-            </div>
-          )}
-
-          {!disabled && (
-            <div className={styles.quickActions}>
-              {paymentBreakdown.totalDue > 0 && (
-                <button
-                  onClick={addQuickPayment}
-                  className={styles.quickButton}
-                  title="Pre-fill form with remaining balance"
-                  disabled={disabled}
-                >
-                  <i className="fas fa-check-circle" aria-hidden="true" /> Clear Balance (${formatCurrency(paymentBreakdown.totalDue)})
-                </button>
-              )}
-              <button
-                onClick={toggleAddPayment}
-                className={`${styles.addPaymentToggle} ${showAddPayment ? styles.addPaymentActive : ''}`}
-                title={showAddPayment ? 'Cancel adding payment' : 'Add new payment'}
-                disabled={disabled}
-              >
-                <i className={showAddPayment ? 'fas fa-times' : 'fas fa-plus'} aria-hidden="true" />
-                {showAddPayment ? 'Cancel' : 'Add Payment'}
-              </button>
-            </div>
-          )}
-
-          {!disabled && showAddPayment && (
-            <div className={styles.addPaymentSection}>
-              <h4 className={styles.sectionSubtitle}>
-                <i className="fas fa-plus-circle" aria-hidden="true" /> New Payment
-              </h4>
-              <div className={styles.addPaymentFields}>
-                <div className={styles.field}>
-                  <label htmlFor="payment-date">Date:</label>
+              <div className={styles.headerRight}>
+                <label className={styles.autoRecalcLabel}>
                   <input
-                    id="payment-date"
-                    type="date"
-                    value={newPayment.date}
-                    onChange={(e) => handleNewPaymentChange('date', e.target.value)}
-                    aria-label="Payment Date"
-                    required
+                    type="checkbox"
+                    checked={autoRecalculate}
+                    onChange={(e) => setAutoRecalculate(e.target.checked)}
+                    disabled={disabled}
                   />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="payment-amount">Amount:</label>
-                  <input
-                    id="payment-amount"
-                    type="number"
-                    value={newPayment.amount}
-                    onChange={(e) => handleNewPaymentChange('amount', e.target.value)}
-                    min="0.01"
-                    max="100000"
-                    step="0.01"
-                    placeholder="0.00"
-                    aria-label="Payment Amount"
-                    required
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="payment-method">Method:</label>
-                  <select
-                    id="payment-method"
-                    value={newPayment.method}
-                    onChange={(e) => handleNewPaymentChange('method', e.target.value)}
-                    aria-label="Payment Method"
+                  <span>Auto-recalculate</span>
+                </label>
+                {!disabled && hasInstallmentPlan && (
+                  <button
+                    onClick={resetManualAdjustments}
+                    className={styles.btnReset}
+                    title="Reset manually adjusted amounts"
                   >
-                    <option value="Cash">Cash</option>
-                    <option value="Credit">Credit</option>
-                    <option value="Debit">Debit</option>
-                    <option value="Check">Check</option>
-                    <option value="Zelle">Zelle</option>
-                  </select>
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor="payment-note">Note:</label>
-                  <input
-                    id="payment-note"
-                    type="text"
-                    value={newPayment.note}
-                    onChange={(e) => handleNewPaymentChange('note', e.target.value)}
-                    placeholder="Payment note (optional)"
-                    aria-label="Payment Note"
-                  />
-                </div>
-                <div className={styles.field}>
-                  <label className={styles.checkboxLabel}>
-                    <input
-                      type="checkbox"
-                      checked={newPayment.isPaid}
-                      onChange={(e) => handleNewPaymentChange('isPaid', e.target.checked)}
-                      aria-label="Mark as Paid"
+                    <i className="fas fa-undo" />
+                  </button>
+                )}
+                {!disabled && (
+                  <button
+                    onClick={() => setShowInstallmentForm(!showInstallmentForm)}
+                    className={`${styles.toggleBtn} ${
+                      hasInstallmentPlan ? styles.toggleBtnDisabled : ""
+                    }`}
+                    disabled={hasInstallmentPlan}
+                  >
+                    <i
+                      className={`fas fa-${
+                        showInstallmentForm ? "minus" : "plus"
+                      }`}
                     />
-                    <span>Mark as Paid</span>
-                  </label>
+                    {showInstallmentForm ? "Hide" : "Create Plan"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {hasInstallmentPlan && (
+              <div className={styles.planWarning}>
+                <i className="fas fa-info-circle" /> Active plan exists. Remove
+                it to create a new one.
+              </div>
+            )}
+
+            {showInstallmentForm && !hasInstallmentPlan && (
+              <div className={styles.installmentContent}>
+                <div className={styles.planInputs}>
+                  <select
+                    value={installmentDuration}
+                    onChange={(e) => setInstallmentDuration(e.target.value)}
+                    className={styles.planSelect}
+                  >
+                    {INSTALLMENT_DURATIONS.map((m) => (
+                      <option key={m} value={m}>
+                        {m === 1 ? "1 month (single)" : `${m} months`}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="date"
+                    value={installmentStartDate}
+                    onChange={(e) => setInstallmentStartDate(e.target.value)}
+                    className={styles.planInput}
+                  />
+                  <span className={styles.planAmount}>
+                    ${previewAmount}
+                    {parseInt(installmentDuration) > 1 ? "/month" : " total"}
+                  </span>
+                </div>
+
+                <div className={styles.planActions}>
+                  <button
+                    onClick={generateInstallments}
+                    className={styles.btnGenerate}
+                    disabled={derived.remainingBalance <= 0}
+                  >
+                    <i className="fas fa-calculator" /> Generate
+                  </button>
+                  {generatedInstallments.length > 0 && (
+                    <>
+                      <button
+                        onClick={applyInstallmentPlan}
+                        className={styles.btnApply}
+                      >
+                        <i className="fas fa-check-double" /> Apply Plan
+                      </button>
+                      <button
+                        onClick={() => setGeneratedInstallments([])}
+                        className={styles.btnClear}
+                      >
+                        <i className="fas fa-times" /> Clear
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {generatedInstallments.length > 0 && (
+                  <div className={styles.previewSection}>
+                    <div className={styles.previewHeader}>
+                      <span>
+                        <i className="fas fa-eye" /> Preview (
+                        {generatedInstallments.length}{" "}
+                        {generatedInstallments.length === 1
+                          ? "payment"
+                          : "payments"}
+                        )
+                      </span>
+                      <span className={styles.statPaid}>
+                        Total: $
+                        {fmt(
+                          generatedInstallments.reduce(
+                            (s, p) => s + parseFloat(p.amount),
+                            0,
+                          ),
+                        )}
+                      </span>
+                    </div>
+                    <div className={styles.previewList}>
+                      {generatedInstallments.map((inst) => (
+                        <div key={inst.id} className={styles.previewItem}>
+                          <span className={styles.previewNumber}>
+                            #{inst.installmentNumber}
+                          </span>
+                          <span className={styles.previewDate}>
+                            {new Date(inst.date).toLocaleDateString()}
+                          </span>
+                          <span className={styles.previewAmount}>
+                            ${fmt(inst.amount)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* ── Active installment list ───────────────────────────────────── */}
+          {hasInstallmentPlan && (
+            <div className={styles.installmentGroup}>
+              <div className={styles.installmentGroupHeader}>
+                <div className={styles.groupHeaderLeft}>
+                  <i className="fas fa-calendar-alt" />
+                  <span className={styles.groupTitle}>Installment Plan</span>
+                  <span className={styles.groupProgress}>
+                    {installmentStats.paid}/{installmentStats.total} paid
+                  </span>
+                </div>
+                <div className={styles.groupHeaderRight}>
+                  <span className={styles.groupAmount}>
+                    ${fmt(installmentStats.paidAmount)} / $
+                    {fmt(installmentStats.totalAmount)}
+                  </span>
+                  {!disabled && (
+                    <button
+                      onClick={removeAllInstallments}
+                      className={styles.btnRemovePlan}
+                      title="Remove entire installment plan"
+                    >
+                      <i className="fas fa-trash-alt" />
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className={styles.addPaymentActions}>
-                <button
-                  onClick={addPayment}
-                  className={styles.addButton}
-                  disabled={!newPayment.amount || parseFloat(newPayment.amount) <= 0 || !newPayment.date}
-                >
-                  <i className="fas fa-plus" aria-hidden="true" /> Add Payment (${formatCurrency(newPayment.amount || 0)})
-                </button>
+
+              <div className={styles.installmentPayments}>
+                {installmentPayments.map((payment) => (
+                  <InstallmentRow
+                    key={payment.id}
+                    payment={payment}
+                    disabled={disabled}
+                    onTogglePaid={() => toggleInstallmentPaid(payment.id)}
+                    onRemove={() => removeInstallment(payment.id)}
+                    onAmountChange={(val) =>
+                      updateInstallmentAmount(payment.id, val)
+                    }
+                  />
+                ))}
               </div>
             </div>
           )}
 
-          {totalPaymentsCount > 0 && (
-            <div className={styles.paymentEntries}>
-              <h4 className={styles.sectionSubtitle}>
-                <i className="fas fa-list" aria-hidden="true" /> Payment History ({totalPaymentsCount})
-              </h4>
-              <div className={styles.tableContainer}>
-                <table className={styles.paymentTable} aria-label="Payment History">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Amount</th>
-                      <th>Method</th>
-                      <th>Note</th>
-                      <th>Status</th>
-                      {!disabled && <th>Actions</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {safeSettings.payments
-                      .filter(payment => payment.method !== 'Deposit')
-                      .map((payment, index) => {
-                        const actualIndex = safeSettings.payments.findIndex(p => p === payment);
-                        return editingIndex === actualIndex ? (
-                          <tr key={actualIndex}>
-                            <td>
-                              <input
-                                type="date"
-                                value={editedPayment.date}
-                                onChange={(e) => handleEditChange('date', e.target.value)}
-                                aria-label="Edit Payment Date"
-                                required
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                value={editedPayment.amount}
-                                onChange={(e) => handleEditChange('amount', e.target.value)}
-                                min="0.01"
-                                max="100000"
-                                step="0.01"
-                                placeholder="0.00"
-                                aria-label="Edit Payment Amount"
-                                required
-                              />
-                            </td>
-                            <td>
-                              <select
-                                value={editedPayment.method}
-                                onChange={(e) => handleEditChange('method', e.target.value)}
-                                aria-label="Edit Payment Method"
-                              >
-                                <option value="Cash">Cash</option>
-                                <option value="Credit">Credit</option>
-                                <option value="Debit">Debit</option>
-                                <option value="Check">Check</option>
-                                <option value="Zelle">Zelle</option>
-                              </select>
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                value={editedPayment.note || ''}
-                                onChange={(e) => handleEditChange('note', e.target.value)}
-                                placeholder="Payment note"
-                                aria-label="Edit Payment Note"
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={editedPayment.isPaid}
-                                onChange={(e) => handleEditChange('isPaid', e.target.checked)}
-                                aria-label="Edit Payment Status"
-                              />
-                              {editedPayment.isPaid ? ' Paid' : ' Due'}
-                            </td>
-                            <td className={styles.actionsCell}>
-                              <button
-                                onClick={() => saveEdit(actualIndex)}
-                                className={styles.saveButton}
-                                title="Save Changes"
-                                disabled={!editedPayment.amount || !editedPayment.date}
-                                aria-label="Save Edited Payment"
-                              >
-                                <i className="fas fa-check" aria-hidden="true" />
-                              </button>
-                              <button
-                                onClick={cancelEdit}
-                                className={styles.cancelButton}
-                                title="Cancel Edit"
-                                aria-label="Cancel Editing"
-                              >
-                                <i className="fas fa-times" aria-hidden="true" />
-                              </button>
-                            </td>
-                          </tr>
-                        ) : (
-                          <tr
-                            key={actualIndex}
-                            className={
-                              payment.isPaid
-                                ? styles.paidRow
-                                : new Date(payment.date) < new Date()
-                                ? styles.overdueRow
-                                : ''
-                            }
-                          >
-                            <td>{new Date(payment.date).toLocaleDateString()}</td>
-                            <td className={styles.amountCell}>${parseFloat(payment.amount).toFixed(2)}</td>
-                            <td>{payment.method || 'N/A'}</td>
-                            <td className={styles.noteCell}>{payment.note || '-'}</td>
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={payment.isPaid}
-                                onChange={() => togglePaymentStatus(actualIndex)}
-                                disabled={disabled}
-                                aria-label={`Toggle ${payment.isPaid ? 'Paid' : 'Due'} Status`}
-                              />
-                              <span className={styles.statusText}>
-                                {payment.isPaid ? ' Paid' : ' Due'}
-                              </span>
-                            </td>
-                            {!disabled && (
-                              <td className={styles.actionsCell}>
-                                <button
-                                  onClick={() => startEditing(actualIndex)}
-                                  className={styles.editButton}
-                                  title="Edit Payment"
-                                  aria-label="Edit Payment"
-                                >
-                                  <i className="fas fa-edit" aria-hidden="true" />
-                                </button>
-                                <button
-                                  onClick={() => removePayment(actualIndex)}
-                                  className={styles.removeButton}
-                                  title="Remove Payment"
-                                  aria-label="Remove Payment"
-                                >
-                                  <i className="fas fa-trash-alt" aria-hidden="true" />
-                                </button>
-                              </td>
-                            )}
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                </table>
+          {/* Empty state */}
+          {!hasInstallmentPlan &&
+            !depositPayment &&
+            oneTimePayments.length === 0 && (
+              <div className={styles.emptyState}>
+                <i className="fas fa-inbox" />
+                <p>
+                  No payments recorded yet. Add a deposit, a one-time payment,
+                  or create an installment plan.
+                </p>
               </div>
-            </div>
-          )}
-
-          {/* Empty State */}
-          {totalPaymentsCount === 0 && !showAddPayment && !disabled && (
-            <div className={styles.emptyState}>
-              <i className="fas fa-wallet fa-2x" aria-hidden="true" />
-              <div>
-                <h4>No Payments Recorded</h4>
-                <p>Click "Add Payment" to record your first payment or use the deposit fields above.</p>
-              </div>
-            </div>
-          )}
+            )}
         </div>
       )}
     </div>
   );
+}
+
+// ─── InstallmentRow ───────────────────────────────────────────────────────────
+// Uses payment.id for stable identification
+
+function InstallmentRow({
+  payment,
+  disabled,
+  onTogglePaid,
+  onRemove,
+  onAmountChange,
+}) {
+  const [editing, setEditing] = useState(false);
+  const [editValue, setEditValue] = useState(payment.amount);
+  const [validationError, setValidationError] = useState("");
+
+  // Keep local edit value in sync when parent updates amount
+  useEffect(() => {
+    if (!editing) {
+      setEditValue(payment.amount);
+      setValidationError("");
+    }
+  }, [payment.amount, editing]);
+
+  const validateAndCommit = () => {
+    const num = parseFloat(editValue);
+    if (isNaN(num) || num <= 0) {
+      setValidationError("Amount must be greater than 0");
+      return;
+    }
+    if (num > 1000000) {
+      setValidationError("Amount seems unusually high");
+      return;
+    }
+
+    onAmountChange(editValue);
+    setEditing(false);
+    setValidationError("");
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      validateAndCommit();
+    }
+    if (e.key === "Escape") {
+      setEditValue(payment.amount);
+      setEditing(false);
+      setValidationError("");
+    }
+  };
+
+  return (
+    <div
+      className={`${styles.paymentRow} ${styles.installmentRow} ${
+        payment.isPaid ? styles.rowPaid : ""
+      } ${payment.manuallyAdjusted ? styles.rowAdjusted : ""} ${
+        validationError ? styles.rowError : ""
+      }`}
+    >
+      <input
+        type="checkbox"
+        checked={Boolean(payment.isPaid)}
+        onChange={onTogglePaid}
+        disabled={disabled}
+        className={styles.paymentCheckbox}
+      />
+
+      <div className={styles.paymentInfo}>
+        <span className={styles.paymentNumber}>
+          #{payment.installmentNumber}
+        </span>
+        <span className={styles.paymentDate}>
+          {new Date(payment.date).toLocaleDateString()}
+        </span>
+
+        {editing && !disabled ? (
+          <div className={styles.editContainer}>
+            <span className={styles.inlineEdit}>
+              <input
+                type="number"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                onBlur={validateAndCommit}
+                onKeyDown={handleKeyDown}
+                className={`${styles.inlineEditInput} ${
+                  validationError ? styles.inputError : ""
+                }`}
+                step="0.01"
+                min="0"
+                autoFocus
+              />
+            </span>
+            {validationError && (
+              <span className={styles.editError}>{validationError}</span>
+            )}
+          </div>
+        ) : (
+          <span
+            className={styles.paymentAmount}
+            onClick={() => !disabled && setEditing(true)}
+            title={disabled ? "" : "Click to edit amount"}
+          >
+            ${fmt(payment.amount)}
+            {payment.manuallyAdjusted && (
+              <span className={styles.badge} title="Manually adjusted">
+                <i className="fas fa-edit" />
+              </span>
+            )}
+          </span>
+        )}
+
+        {payment.note && (
+          <span className={styles.paymentNote} title={payment.note}>
+            {payment.note}
+          </span>
+        )}
+      </div>
+
+      {!disabled && (
+        <button
+          onClick={onRemove}
+          className={`${styles.btnAction} ${styles.btnActionDanger}`}
+          title="Remove installment"
+        >
+          <i className="fas fa-trash-alt" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Helper function (duplicated from CostSummary for consistency) ────────────
+
+function fmt(value) {
+  const num = parseFloat(value) || 0;
+  return num.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }

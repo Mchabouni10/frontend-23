@@ -11,37 +11,52 @@ export default function AuthPage({ setUser, toggleDarkMode, isDarkMode }) {
   const [animate, setAnimate] = useState(false);
 
   const handleToggle = (isLogin) => {
+    if (isLogin === showLogin) return;
     setAnimate(true);
     setTimeout(() => {
       setShowLogin(isLogin);
       setAnimate(false);
-    }, 300);
+    }, 220);
   };
 
   return (
     <main className={styles.AuthPage}>
+      {/* Ambient orbs */}
+      <div className={styles.ambientOrb} aria-hidden="true" />
+      <div className={styles.ambientOrb2} aria-hidden="true" />
+
       <div className={styles.container}>
+        {/* Header */}
         <div className={styles.header}>
           <h1 className={styles.title}>Rawdah Remodeling</h1>
           <p className={styles.subtitle}>Professional Project Management</p>
         </div>
 
-        <div className={styles.toggleContainer}>
+        {/* Toggle */}
+        <div className={styles.toggleContainer} role="tablist" aria-label="Authentication mode">
           <button
+            role="tab"
+            aria-selected={showLogin}
             className={`${styles.toggleButton} ${showLogin ? styles.active : ''}`}
             onClick={() => handleToggle(true)}
           >
-            <span>Login</span>
+            Sign In
           </button>
           <button
+            role="tab"
+            aria-selected={!showLogin}
             className={`${styles.toggleButton} ${!showLogin ? styles.active : ''}`}
             onClick={() => handleToggle(false)}
           >
-            <span>Sign Up</span>
+            Register
           </button>
         </div>
 
-        <div className={`${styles.formWrapper} ${animate ? styles.animate : ''}`}>
+        {/* Form */}
+        <div
+          className={`${styles.formWrapper} ${animate ? styles.animate : ''}`}
+          role="tabpanel"
+        >
           {showLogin ? (
             <LoginForm setUser={setUser} />
           ) : (
@@ -49,8 +64,9 @@ export default function AuthPage({ setUser, toggleDarkMode, isDarkMode }) {
           )}
         </div>
 
+        {/* Footer */}
         <div className={styles.footer}>
-          <p>Protected by Quantum Encryption</p>
+          <p>Secured by Enterprise Encryption</p>
           <button
             className={styles.darkModeToggle}
             onClick={toggleDarkMode}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { login } from '../../utilities/users-service';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLock, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faLock, faEye, faEyeSlash, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import styles from './LoginForm.module.css';
 
 export default function LoginForm({ setUser }) {
@@ -28,21 +28,17 @@ export default function LoginForm({ setUser }) {
       const user = await login(credentials);
       setUser(user);
     } catch {
-      setError('Authentication Failed');
+      setError('Invalid credentials — please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
     <div className={styles.formContainer}>
       <form autoComplete="off" onSubmit={handleSubmit} className={styles.form}>
-        <h2 className={styles.title}>Access Portal</h2>
-        
+
+        {/* Email */}
         <div className={styles.inputGroup}>
           <FontAwesomeIcon icon={faEnvelope} className={styles.inputIcon} />
           <input
@@ -51,44 +47,63 @@ export default function LoginForm({ setUser }) {
             name="email"
             value={credentials.email}
             onChange={handleChange}
-            placeholder="Enter your email"
+            placeholder="Email address"
             required
             className={styles.input}
+            autoComplete="email"
           />
         </div>
 
+        {/* Password */}
         <div className={styles.inputGroup}>
           <FontAwesomeIcon icon={faLock} className={styles.inputIcon} />
           <input
-            type={showPassword ? "text" : "password"}
+            type={showPassword ? 'text' : 'password'}
             id="password"
             name="password"
             value={credentials.password}
             onChange={handleChange}
-            placeholder="Enter security key"
+            placeholder="Password"
             required
             className={styles.input}
+            autoComplete="current-password"
           />
           <FontAwesomeIcon
             icon={showPassword ? faEyeSlash : faEye}
             className={styles.passwordToggleIcon}
-            onClick={togglePasswordVisibility}
+            onClick={() => setShowPassword(!showPassword)}
+            title={showPassword ? 'Hide password' : 'Show password'}
           />
         </div>
 
+        {/* Forgot password */}
+        <div className={styles.helperRow}>
+          <button type="button" className={styles.helperLink}>
+            Forgot password?
+          </button>
+        </div>
+
+        {/* Submit */}
         <button
           type="submit"
           className={`${styles.submitButton} ${isLoading ? styles.loading : ''}`}
           disabled={isLoading}
         >
           {isLoading ? (
-            <span className={styles.loader}></span>
+            <span className={styles.loader} />
           ) : (
-            'Initialize Access'
+            <>
+              Access Account
+              <FontAwesomeIcon icon={faArrowRight} style={{ fontSize: '0.75em', opacity: 0.85 }} />
+            </>
           )}
         </button>
 
-        {error && <p className={styles.errorMessage}>{error}</p>}
+        {error && (
+          <p className={styles.errorMessage} role="alert">
+            {error}
+          </p>
+        )}
       </form>
     </div>
   );

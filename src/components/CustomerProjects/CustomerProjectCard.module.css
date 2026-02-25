@@ -1,183 +1,345 @@
+/* CustomerProjectCard.module.css — Consistent with global index.css */
+
 .projectCard {
-  background: linear-gradient(135deg, var(--surface) 0%, rgba(249, 250, 251, 0.95) 100%);
-  border-radius: var(--radius-md);
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 1px solid rgba(var(--primary), 0.2);
   margin-bottom: var(--spacing-md);
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  font-family: var(--font-family);
+  box-shadow: 0 4px 16px var(--shadow);
 }
 
 .projectCard:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(var(--primary), 0.4);
+  transform: translateY(-3px);
+  border-color: var(--border-strong);
+  box-shadow: 0 10px 32px var(--shadow-md);
 }
 
+/* Left accent bar — color injected inline per-status */
+.statusAccentBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+}
+
+/* ── Header ─────────────────────────────────────── */
+
 .cardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  padding-left: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
 }
 
-.headerContent {
+.headerTop {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: var(--spacing-sm);
-  width: 100%;
+  margin-bottom: var(--spacing-sm);
 }
 
-.expandButton {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--primary);
-  font-size: var(--font-size-md);
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
+
+.statusPill.completed  { background: var(--success-bg);  color: var(--success);  border: 1px solid var(--success-border); }
+.statusPill.overdue    { background: var(--error-bg);    color: var(--error);    border: 1px solid var(--error-border); }
+.statusPill.inprogress { background: var(--info-bg);     color: var(--info);     border: 1px solid var(--info-border); }
+.statusPill.pending    { background: var(--warning-bg);  color: var(--warning);  border: 1px solid var(--warning-border); }
+.statusPill.unknown    { background: var(--muted-bg);    color: var(--muted);    border: 1px solid var(--muted-border); }
+
+.countdown {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-light);
+}
+
+.countdownRed   { color: var(--error); }
+.countdownAmber { color: var(--warning); }
 
 .projectName {
   font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+  font-weight: var(--font-weight-extrabold);
   color: var(--primary);
-  flex-grow: 1;
+  margin: 0 0 var(--spacing-sm) 0;
+  line-height: 1.2;
 }
 
-.statusBadge {
-  padding: 0.4rem 0.8rem;
-  border-radius: 20px;
-  font-size: var(--font-size-sm);
+.dateRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+}
+
+.dateRow span {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.dateRow svg { font-size: 0.65rem; color: var(--secondary); }
+.dateSep     { color: var(--border-strong) !important; }
+
+/* ── Financials Grid ─────────────────────────────── */
+
+.financialsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.finCard {
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  transition: border-color 0.2s;
+}
+
+.finCard:hover { border-color: var(--border-strong); }
+
+.finLabel {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
   font-weight: var(--font-weight-medium);
-  text-transform: capitalize;
-  color: var(--surface);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.completed { background: linear-gradient(135deg, var(--success) 0%, #2e8b57 100%); }
-.overdue { background: linear-gradient(135deg, var(--error) 0%, #c53030 100%); }
-.pending { background: linear-gradient(135deg, #95a5a6 0%, #d1d5db 100%); }
-.inprogress { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%); }
+.finLabel svg { font-size: 0.6rem; color: var(--secondary); }
 
-.cardContent {
+.finValue {
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
   color: var(--text);
 }
 
-.progressBar {
-  margin: var(--spacing-sm) 0;
-  position: relative;
-  background: #e2e8f0;
-  border-radius: var(--radius-sm);
-  height: 8px;
-  overflow: hidden;
+.finValuePaid    { color: var(--success); }
+.finValueDue     { color: var(--error); }
+.finValueSettled { color: var(--success); }
+.finValueDeposit { color: var(--secondary); }
+
+/* ── Progress ───────────────────────────────────── */
+
+.progressSection { margin-bottom: var(--spacing-md); }
+
+.progressHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  font-weight: var(--font-weight-medium);
 }
 
-.progressBar span {
-  position: absolute;
-  top: -20px;
-  left: 0;
-  font-size: var(--font-size-xs);
-  color: var(--primary-dark);
+.progressPct {
+  font-weight: var(--font-weight-bold);
+  color: var(--primary);
+}
+
+.progressTrack {
+  height: 7px;
+  background: var(--border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
 }
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(135deg, var(--success) 0%, var(--primary) 100%);
-  transition: width 0.3s ease;
+  border-radius: var(--radius-full);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.moneyDetails {
-  font-weight: var(--font-weight-medium);
+.progressLow  { background: linear-gradient(90deg, var(--warning), var(--warning-dark)); }
+.progressMid  { background: linear-gradient(90deg, var(--secondary), var(--secondary-dark)); }
+.progressHigh { background: linear-gradient(90deg, var(--success), var(--success-dark)); }
+
+.overdueNote {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--error);
+  font-weight: var(--font-weight-medium);
 }
 
-.amountDisplay {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  color: var(--text);
-  padding: 2px 6px;
-  background: linear-gradient(135deg, rgba(var(--primary), 0.1) 0%, rgba(var(--primary-dark), 0.05) 100%);
-  border-radius: var(--radius-sm);
-  min-width: 60px;
-  text-align: center;
-}
+/* ── Action Buttons ─────────────────────────────── */
 
 .cardActions {
   display: flex;
-  gap: 0.6rem;
-  margin-top: var(--spacing-md);
-  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
-.actionButton {
-  padding: 0.6rem;
-  border: none;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  color: var(--surface);
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
   cursor: pointer;
-  width: 40px;
-  height: 40px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.actionBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px var(--shadow);
+}
+
+.actionBtn:active { transform: translateY(0); }
+
+.viewBtn      { background: linear-gradient(135deg, var(--primary), var(--primary-dark));       color: var(--surface); }
+.viewBtn:hover      { box-shadow: 0 4px 12px var(--shadow-md); }
+
+.editBtn      { background: linear-gradient(135deg, var(--success), var(--success-dark));       color: var(--surface); }
+.editBtn:hover      { box-shadow: 0 4px 12px rgba(56,161,105,0.3); }
+
+.downloadBtn  { background: linear-gradient(135deg, var(--secondary), var(--secondary-dark));   color: var(--surface); }
+.downloadBtn:hover  { box-shadow: 0 4px 12px rgba(52,152,219,0.3); }
+
+.deleteBtn {
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error-border);
+  margin-left: auto;
+}
+.deleteBtn:hover {
+  background: var(--error);
+  color: var(--surface);
+  border-color: var(--error);
+}
+
+/* ── Expand Toggle ──────────────────────────────── */
+
+.expandToggle {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.actionButton:hover {
-  transform: scale(1.1);
-  box-shadow: 0 0 15px rgba(var(--primary), 0.5);
-}
-
-.editButton { background: linear-gradient(135deg, var(--success) 0%, #2e8b57 100%); }
-.deleteButton { background: linear-gradient(135deg, var(--error) 0%, #c53030 100%); }
-.downloadButton { background: linear-gradient(135deg, var(--secondary) 0%, #2980b9 100%); }
-
-.detailsSection {
-  margin-top: var(--spacing-md);
-  padding: var(--spacing-md);
-  background: rgba(var(--surface), 0.9);
-  border-radius: var(--radius-sm);
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm);
+  background: var(--background);
   border: 1px solid var(--border);
-}
-
-.detailsSection h4 {
-  font-size: var(--font-size-md);
-  color: var(--primary);
-  margin-bottom: var(--spacing-sm);
-}
-
-.detailContent {
-  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
   color: var(--text-light);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.detailContent p {
-  margin: 0.5rem 0;
-}
-
-.detailContent strong {
+.expandToggle:hover {
+  background: var(--border);
   color: var(--text);
 }
 
-@media (max-width: 768px) {
-  .projectCard {
-    padding: var(--spacing-md);
+.expandIcon { font-size: 0.65rem; }
+
+/* ── Expanded Section ───────────────────────────── */
+
+.expandedSection {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.detailsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.detailItem {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.detailIcon {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+}
+
+.detailLabel {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: var(--font-weight-bold);
+  margin-bottom: 0.1rem;
+}
+
+.detailValue {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.costBreakdownWrapper {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--background);
+}
+
+/* ── Responsive ─────────────────────────────────── */
+
+@media (max-width: 480px) {
+  .projectCard { padding: var(--spacing-md); }
+
+  .financialsGrid { grid-template-columns: 1fr 1fr; }
+
+  .actionBtn span { display: none; }
+  .actionBtn {
+    padding: var(--spacing-sm);
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
   }
-  .actionButton {
-    width: 36px;
-    height: 36px;
-  }
-  .projectName {
-    font-size: var(--font-size-md);
-  }
-  .progressBar {
-    height: 6px;
-  }
-  .amountDisplay {
-    font-size: 0.7rem;
-    min-width: 50px;
-    padding: 2px 4px;
-  }
+  .deleteBtn { margin-left: 0; }
 }

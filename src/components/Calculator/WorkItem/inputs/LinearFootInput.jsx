@@ -168,60 +168,57 @@ export default function LinearFootInput({
     <div
       className={`${styles.linearFootInput} ${hasError ? styles.hasError : ""}`}
     >
-      <div className={styles.field}>
-        <label htmlFor={inputId} className={styles.label}>
-          Linear Feet:
-          <span className={styles.required} aria-label="required field">
-            *
-          </span>
+      <div className={styles.inputRow}>
+        <label htmlFor={inputId} className={styles.inlineLabel}>
+          Linear Feet
+          <span className={styles.required}>*</span>
         </label>
 
-        <div
-          className={`${styles.inputWrapper} ${commonStyles.inputWrapper} ${
-            hasError ? styles.errorInput : ""
-          }`}
-        >
-          <i
-            className={`fas fa-ruler ${commonStyles.inputIcon}`}
-            aria-hidden="true"
-          ></i>
-
-          <input
-            id={inputId}
-            type="number"
-            step={step}
-            min={minValue}
-            max={maxValue}
-            value={displayValue}
-            onChange={handleInputChange}
-            onBlur={handleInputBlur}
-            onFocus={(e) => e.target.select()}
-            onKeyPress={handleKeyPress}
-            onKeyDown={handleKeyDown}
-            placeholder={`${minValue}.0`}
-            disabled={disabled}
-            aria-label={`Surface ${surfIndex + 1} linear feet`}
-            aria-describedby={hasError ? errorId : undefined}
-            aria-invalid={hasError}
-            className={hasError ? styles.inputError : ""}
-          />
-
-          <span className={styles.unit} aria-label="unit">
-            ft
-          </span>
-        </div>
-
-        {hasError && (
+        <div className={styles.inputGroup}>
           <div
-            id={errorId}
-            className={styles.errorMessage}
-            role="alert"
-            aria-live="polite"
+            className={`${styles.inputWrapper} ${commonStyles.inputWrapper} ${
+              hasError ? styles.errorInput : ""
+            }`}
           >
-            <i className="fas fa-exclamation-circle" aria-hidden="true"></i>
-            Please enter a value between {minValue} and {maxValue}
+            <i
+              className={`fas fa-ruler ${commonStyles.inputIcon}`}
+              aria-hidden="true"
+            ></i>
+
+            <input
+              id={inputId}
+              type="number"
+              step={step}
+              min={minValue}
+              max={maxValue}
+              value={displayValue}
+              onChange={handleInputChange}
+              onBlur={handleInputBlur}
+              onFocus={(e) => e.target.select()}
+              onKeyPress={handleKeyPress}
+              onKeyDown={handleKeyDown}
+              placeholder={`${minValue}.0`}
+              disabled={disabled}
+              aria-label={`Surface ${surfIndex + 1} linear feet`}
+              aria-describedby={hasError ? errorId : undefined}
+              aria-invalid={hasError}
+            />
+
+            <span className={styles.unit}>ft</span>
           </div>
-        )}
+
+          {hasError && (
+            <div
+              id={errorId}
+              className={styles.errorMessage}
+              role="alert"
+              aria-live="polite"
+            >
+              <i className="fas fa-exclamation-circle" aria-hidden="true"></i>
+              Please enter a value between {minValue} and {maxValue}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

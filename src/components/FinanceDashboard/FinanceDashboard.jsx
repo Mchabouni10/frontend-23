@@ -1,8 +1,17 @@
+// src/components/FinanceDashboard/FinanceDashboard.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { getProjects } from "../../services/projectService";
 import { getAllExpenses } from "../../utilities/expenses-api";
-import { getProjectAdditionalRevenue } from "../../constants/additionalRevenueCalculator";
-import { Doughnut, Line, Bar } from "react-chartjs-2";
+import {
+  calculateAggregatedFinancials,
+  generateMonthlyData,
+  aggregateCompanyExpenses,
+  formatCurrency,
+  formatPercentage,
+  getCategoryName,
+  calculateProjectPayments,
+} from "../../constants/financialCalculator";
+import { Doughnut, Line, Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -17,21 +26,33 @@ import {
 } from "chart.js";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faChartPie,
   faChartLine,
-  faChartBar,
   faDollarSign,
   faPercentage,
   faArrowTrendUp,
   faEye,
   faEyeSlash,
-  faTimes,
   faSpinner,
-  faCalendarAlt,
   faMoneyBillWave,
   faWallet,
+  faTools,
+  faPaintRoller,
+  faExclamationTriangle,
+  faCheckCircle,
+  faClipboardList,
+  faCalendarAlt,
+  faChartPie,
+  faChartBar,
+  faHandHoldingDollar,
+  faClockRotateLeft,
+  faFileInvoiceDollar,
+  faCoins,
   faArrowUp,
   faArrowDown,
+  faShieldHalved,
+  faTrophy,
+  faFire,
+  faUsers,
 } from "@fortawesome/free-solid-svg-icons";
 import styles from "./FinanceDashboard.module.css";
 
@@ -52,8 +73,6 @@ export default function FinanceDashboard() {
   const [companyExpenses, setCompanyExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showModal, setShowModal] = useState(false);
-  const [modalData, setModalData] = useState(null);
   const [dateFilter, setDateFilter] = useState({
     type: "all",
     year: null,
@@ -61,14 +80,18 @@ export default function FinanceDashboard() {
     endDate: null,
   });
   const [visibleCharts, setVisibleCharts] = useState({
+    projectStatus: true,
+    materialCost: true,
+    laborCost: true,
+    additionalRevenue: true,
+    grandTotalVsPayments: true,
+    avgProjectValue: true,
+    monthlyCollections: true,
+    projectExpenses: true,
+    companyExpensesByCategory: true,
+    monthlyExpenses: true,
     paymentMethods: true,
-    collections: true,
-    materialTypes: true,
-    expenses: true,
-    detailedExpenses: true,
-    profit: true,
-    expensesByCategory: true,
-    incomeVsExpenses: true,
+    monthlyProfit: true,
   });
 
   useEffect(() => {
@@ -91,1654 +114,1574 @@ export default function FinanceDashboard() {
     fetchData();
   }, []);
 
-  // Helper to check if a date is within the selected range
-  const isDateInFilter = useMemo(() => {
-    return (date) => {
-      if (!date) return false;
-      const d = new Date(date);
-      if (isNaN(d.getTime())) return false;
-
-      if (dateFilter.type === "year") {
-        const year = dateFilter.year || new Date().getFullYear();
-        return d.getFullYear() === year;
-      }
-
-      if (
-        dateFilter.type === "custom" &&
-        dateFilter.startDate &&
-        dateFilter.endDate
-      ) {
-        const start = new Date(dateFilter.startDate);
-        const end = new Date(dateFilter.endDate);
-        start.setHours(0, 0, 0, 0);
-        end.setHours(23, 59, 59, 999);
-        return d >= start && d <= end;
-      }
-
-      return true; // All time
-    };
-  }, [dateFilter]);
-
-  // Generate chart labels based on filtered data range
-  const chartLabels = useMemo(() => {
-    const allDates = [];
-
-    // Collect dates from projects
-    projects.forEach((p) => {
-      if (p.customerInfo?.startDate)
-        allDates.push(new Date(p.customerInfo.startDate));
-      (p.settings?.payments || []).forEach((pay) => {
-        if (pay.date) allDates.push(new Date(pay.date));
-      });
-    });
-
-    // Collect dates from company expenses
-    companyExpenses.forEach((e) => {
-      if (e.date) allDates.push(new Date(e.date));
-    });
-
-    if (allDates.length === 0) return [];
-
-    const sortedDates = allDates.sort((a, b) => a - b);
-    const start = sortedDates[0];
-    const end = sortedDates[sortedDates.length - 1];
-
-    // If specific year selected, show all months of that year
-    if (dateFilter.type === "year") {
-      const year = dateFilter.year || new Date().getFullYear();
-      return Array.from({ length: 12 }, (_, i) => {
-        const d = new Date(year, i, 1);
-        return d.toLocaleString("default", { month: "short", year: "numeric" });
-      });
-    }
-
-    // Otherwise generate months between start and end
-    const labels = [];
-    const current = new Date(start);
-    current.setDate(1); // Start of month
-
-    while (current <= end) {
-      labels.push(
-        current.toLocaleString("default", { month: "short", year: "numeric" }),
-      );
-      current.setMonth(current.getMonth() + 1);
-    }
-    return labels;
-  }, [projects, companyExpenses, dateFilter]);
-
-  // Helper function to map expense category IDs to readable names
-  const getCategoryNameFromId = (catId) => {
-    const categoryMap = {
-      fuel: "Fuel / Van",
-      vehicle_maint: "Vehicle Maintenance",
-      phone: "Phone Bill",
-      website: "Website / Hosting",
-      software: "Software / Subscriptions",
-      marketing: "Marketing / Ads",
-      insurance: "Insurance",
-      tools: "Tools",
-      material: "Materials",
-      subcontractors: "Subcontractors",
-      permits: "Permits / Licenses",
-      office: "Office Supplies",
-      rent: "Rent / Utilities",
-      disposal: "Waste Disposal",
-      taxes: "Taxes / Fees",
-      meals: "Meals / Entertainment",
-      other: "Other",
-    };
-    return categoryMap[catId] || catId;
-  };
-
-  // Calculate aggregated financial data
+  // ─── All financial data from the single source of truth ────────────────────
   const financialData = useMemo(() => {
     if (!projects.length && !companyExpenses.length) return null;
 
-    const collectionsByMonth = chartLabels.reduce(
-      (acc, label) => ({ ...acc, [label]: 0 }),
-      {},
+    const aggregated = calculateAggregatedFinancials(projects, dateFilter);
+    const monthlyData = generateMonthlyData(
+      projects,
+      companyExpenses,
+      dateFilter,
     );
-    const projectExpensesByMonth = chartLabels.reduce(
-      (acc, label) => ({ ...acc, [label]: 0 }),
-      {},
-    );
-    const overheadByMonth = chartLabels.reduce(
-      (acc, label) => ({ ...acc, [label]: 0 }),
-      {},
-    );
+    const expenseData = aggregateCompanyExpenses(companyExpenses, dateFilter);
 
-    const paymentMethods = {
-      Cash: 0,
-      Credit: 0,
-      Debit: 0,
-      Check: 0,
-      Zelle: 0,
-      Deposit: 0,
-    };
-    const materialTypes = {};
-    const expenseCategories = { Material: 0, Labor: 0, Tax: 0, Fees: 0 };
-    const overheadCategories = {};
+    // Avg Project Value = sum of all project grand totals / count
+    // (NOT collections/count — those are different things)
+    const avgProjectValue =
+      aggregated.totalProjects > 0
+        ? aggregated.totalGrandValue / aggregated.totalProjects
+        : 0;
 
-    const profitByProject = [];
+    const collectionRate =
+      aggregated.totalProjects > 0
+        ? (aggregated.fullyPaidProjects / aggregated.totalProjects) * 100
+        : 0;
 
-    let totalCollections = 0;
-    let totalProjectExpenses = 0; // COGS
-    let totalOverhead = 0; // Company Expenses
+    const expensePercentage =
+      aggregated.totalCollections > 0
+        ? (aggregated.totalCOGS / aggregated.totalCollections) * 100
+        : 0;
 
-    // Additional Revenue Components for Overhead Coverage (Markup and Transportation only)
-    // Using shared utility to ensure consistency across all pages
-    let totalTransportation = 0;
-    let totalMarkup = 0;
+    const grossMargin =
+      aggregated.totalCollections > 0
+        ? (aggregated.totalGrossProfit / aggregated.totalCollections) * 100
+        : 0;
 
-    // Process Projects (Revenue & COGS)
-    projects.forEach((project) => {
-      const payments = project.settings?.payments || [];
-      const deposit = project.settings?.deposit || 0;
-
-      // Handle Deposit
-      if (
-        deposit > 0 &&
-        project.settings?.depositDate &&
-        isDateInFilter(project.settings.depositDate)
-      ) {
-        const date = new Date(project.settings.depositDate);
-        const label = date.toLocaleString("default", {
-          month: "short",
-          year: "numeric",
-        });
-        if (collectionsByMonth[label] !== undefined)
-          collectionsByMonth[label] += deposit;
-        paymentMethods.Deposit += deposit;
-        totalCollections += deposit;
-      }
-
-      // Handle Payments
-      payments.forEach((payment) => {
-        if (payment.isPaid && payment.date && isDateInFilter(payment.date)) {
-          const date = new Date(payment.date);
-          const label = date.toLocaleString("default", {
-            month: "short",
-            year: "numeric",
-          });
-          if (collectionsByMonth[label] !== undefined)
-            collectionsByMonth[label] += payment.amount;
-          paymentMethods[payment.method] =
-            (paymentMethods[payment.method] || 0) + payment.amount;
-          totalCollections += payment.amount;
-        }
-      });
-
-      // Project Expenses - Calculate for all projects
-      const projectDate = project.customerInfo?.startDate
-        ? new Date(project.customerInfo.startDate)
-        : new Date();
-
-      let pMat = 0,
-        pLab = 0;
-      (project.categories || []).forEach((cat) => {
-        (cat.workItems || []).forEach((item) => {
-          const units =
-            (item.surfaces || []).reduce(
-              (sum, surf) => sum + (parseFloat(surf.sqft) || 0),
-              0,
-            ) ||
-            parseFloat(item.linearFt) ||
-            parseFloat(item.units) ||
-            0;
-          const matCost = (parseFloat(item.materialCost) || 0) * units;
-          const labCost = (parseFloat(item.laborCost) || 0) * units;
-          pMat += matCost;
-          pLab += labCost;
-          const subtype = item.subtype || "Other";
-          materialTypes[subtype] = (materialTypes[subtype] || 0) + matCost;
-        });
-      });
-
-      // Calculate Labor Discount
-      const laborDiscountRate =
-        parseFloat(project.settings?.laborDiscount) || 0;
-      const laborDiscountAmount = pLab * laborDiscountRate;
-
-      // Base Subtotal (Material + Labor - Discount)
-      const baseSubtotal = pMat + pLab - laborDiscountAmount;
-
-      // Calculate Waste
-      let waste = 0;
-      if (
-        project.settings?.wasteEntries &&
-        project.settings.wasteEntries.length > 0
-      ) {
-        waste = project.settings.wasteEntries.reduce((sum, entry) => {
-          const cost = parseFloat(entry.surfaceCost) || 0;
-          const factor = parseFloat(entry.wasteFactor) || 0;
-          return sum + cost * factor;
-        }, 0);
-      } else {
-        waste = baseSubtotal * (project.settings?.wasteFactor || 0);
-      }
-
-      const tax = baseSubtotal * (project.settings?.taxRate || 0);
-
-      // Get project's markup and transportation using shared utility
-      const projectRevenue = getProjectAdditionalRevenue(project);
-      const projectMarkup = projectRevenue.markup;
-      const projectTransportation = projectRevenue.transportation;
-
-      const misc = (project.settings?.miscFees || []).reduce(
-        (sum, fee) => sum + (parseFloat(fee.amount) || 0),
-        0,
-      );
-
-      // Calculate total project value
-      const totalProjectValue =
-        baseSubtotal +
-        projectMarkup +
-        tax +
-        waste +
-        projectTransportation +
-        misc;
-
-      // Calculate lifetime collections
-      const lifetimeCollections =
-        payments.reduce(
-          (sum, p) => sum + (p.isPaid ? parseFloat(p.amount) || 0 : 0),
-          0,
-        ) + deposit;
-
-      // Calculate remaining balance and fully paid status
-      const remainingBalance = totalProjectValue - lifetimeCollections;
-      const isFullyPaid = remainingBalance <= 0.01;
-
-      // Track project expenses and attribute revenue if project started in filter period
-      if (isDateInFilter(projectDate)) {
-        const label = projectDate.toLocaleString("default", {
-          month: "short",
-          year: "numeric",
-        });
-
-        // *** Using Shared Utility: Only count Markup and Transportation if Fully Paid ***
-        if (isFullyPaid) {
-          totalMarkup += projectMarkup;
-          totalTransportation += projectTransportation;
-        }
-
-        const projectCost =
-          pMat + pLab + tax + waste + projectTransportation + misc;
-
-        if (projectExpensesByMonth[label] !== undefined)
-          projectExpensesByMonth[label] += projectCost;
-
-        totalProjectExpenses += projectCost;
-
-        expenseCategories.Material += pMat;
-        expenseCategories.Labor += pLab;
-        expenseCategories.Tax += tax;
-        expenseCategories.Fees += projectTransportation + misc;
-      }
-
-      const projectCost =
-        pMat + pLab + tax + waste + projectTransportation + misc;
-      const projectProfit = lifetimeCollections - projectCost;
-
-      profitByProject.push({
-        name: project.customerInfo?.projectName || `Project ${project._id}`,
-        profit: projectProfit,
-        details: {
-          customer: `${project.customerInfo?.firstName || ""} ${
-            project.customerInfo?.lastName || ""
-          }`.trim(),
-          collections: lifetimeCollections,
-          expenses: projectCost,
-          categories: project.categories || [],
-          payments: payments,
-          deposit,
-          isFullyPaid,
-          remainingBalance,
-          laborDiscountAmount,
-        },
-      });
-    });
-
-    // Process Company Expenses (Overhead)
-    companyExpenses.forEach((exp) => {
-      if (exp.date && isDateInFilter(exp.date)) {
-        const date = new Date(exp.date);
-        const label = date.toLocaleString("default", {
-          month: "short",
-          year: "numeric",
-        });
-
-        if (overheadByMonth[label] !== undefined)
-          overheadByMonth[label] += exp.amount;
-
-        totalOverhead += exp.amount;
-
-        // Map category ID to readable name
-        const categoryName = getCategoryNameFromId(exp.category);
-        overheadCategories[categoryName] =
-          (overheadCategories[categoryName] || 0) + exp.amount;
-      }
-    });
-
-    // Calculate Totals
-    const totalExpenses = totalProjectExpenses + totalOverhead;
-    const netProfit = totalCollections - totalExpenses;
-    const profitMargin =
-      totalCollections > 0 ? (netProfit / totalCollections) * 100 : 0;
+    const netMargin =
+      aggregated.totalCollections > 0
+        ? (aggregated.totalNetProfit / aggregated.totalCollections) * 100
+        : 0;
 
     return {
-      labels: chartLabels,
-      collectionsByMonth: Object.values(collectionsByMonth),
-      projectExpensesByMonth: Object.values(projectExpensesByMonth),
-      overheadByMonth: Object.values(overheadByMonth),
-
-      paymentMethods,
-      materialTypes,
-      expenseCategories, // Project Expenses
-      overheadCategories, // Company Expenses
-
-      profitByProject: profitByProject.sort((a, b) => b.profit - a.profit),
-
-      totalCollections,
-      totalProjectExpenses,
-      totalOverhead,
-      totalExpenses, // Project + Overhead
-
-      totalProfit: netProfit,
-      profitMargin,
-
-      // Overhead Coverage Data (Only Markup and Transportation)
-      additionalRevenue: {
-        transportation: totalTransportation,
-        markup: totalMarkup,
-        total: totalTransportation + totalMarkup,
-      },
+      ...aggregated,
+      monthlyData,
+      companyExpenseCategories: expenseData.categoryTotals,
+      totalCompanyExpenses: expenseData.total,
+      avgProjectValue,
+      collectionRate,
+      expensePercentage,
+      grossMargin,
+      netMargin,
     };
-  }, [projects, companyExpenses, chartLabels, isDateInFilter]);
+  }, [projects, companyExpenses, dateFilter]);
 
-  // Chart configurations
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          font: { family: "Poppins", size: 12, weight: 500 },
-          padding: 15,
-          usePointStyle: true,
-          pointStyle: "circle",
-        },
-      },
-      tooltip: {
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        titleColor: "#ffffff",
-        bodyColor: "#ffffff",
-        borderColor: "rgba(255, 255, 255, 0.1)",
-        borderWidth: 1,
-        cornerRadius: 8,
-        bodyFont: { family: "Poppins", size: 12 },
-        titleFont: { family: "Poppins", size: 14, weight: 600 },
-        callbacks: {
-          label: (context) =>
-            `${context.dataset.label}: $${
-              context.parsed.y?.toLocaleString() ||
-              context.parsed.toLocaleString()
-            }`,
-        },
-      },
-    },
-    scales: {
-      x: {
-        ticks: {
-          font: { family: "Poppins", size: 11 },
-          maxRotation: 45,
-        },
-        grid: {
-          display: false,
-        },
-      },
-      y: {
-        ticks: {
-          font: { family: "Poppins", size: 11 },
-          callback: (value) => `$${value.toLocaleString()}`,
-        },
-        grid: {
-          color: "rgba(0, 0, 0, 0.1)",
-        },
-      },
-    },
-  };
+  const toggleChart = (chartName) =>
+    setVisibleCharts((prev) => ({ ...prev, [chartName]: !prev[chartName] }));
 
-  const donutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "bottom",
-        labels: {
-          font: { family: "Poppins", size: 12, weight: 500 },
-          padding: 15,
-          usePointStyle: true,
-          pointStyle: "circle",
-        },
-      },
-      tooltip: {
-        backgroundColor: "rgba(0, 0, 0, 0.8)",
-        titleColor: "#ffffff",
-        bodyColor: "#ffffff",
-        borderColor: "rgba(255, 255, 255, 0.1)",
-        borderWidth: 1,
-        cornerRadius: 8,
-        callbacks: {
-          label: (context) => `$${context.parsed.toLocaleString()}`,
-        },
-      },
-    },
-    cutout: "60%",
-  };
-
-  // Generate chart data
-  const getChartData = () => {
-    if (!financialData) return {};
-
-    return {
-      paymentMethodData: {
-        labels: Object.keys(financialData.paymentMethods).filter(
-          (method) => financialData.paymentMethods[method] > 0,
-        ),
-        datasets: [
-          {
-            data: Object.values(financialData.paymentMethods).filter(
-              (amount) => amount > 0,
-            ),
-            backgroundColor: [
-              "#3498db",
-              "#e74c3c",
-              "#f39c12",
-              "#2ecc71",
-              "#9b59b6",
-              "#1abc9c",
-            ],
-            borderWidth: 0,
-            hoverOffset: 8,
-          },
-        ],
-      },
-
-      collectionsData: {
-        labels: financialData.labels,
-        datasets: [
-          {
-            label: "Income",
-            data: financialData.collectionsByMonth,
-            borderColor: "#2ecc71",
-            backgroundColor: "rgba(46, 204, 113, 0.1)",
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3,
-            pointRadius: 4,
-          },
-          {
-            label: "Total Expenses",
-            data: financialData.labels.map(
-              (_, i) =>
-                financialData.projectExpensesByMonth[i] +
-                financialData.overheadByMonth[i],
-            ),
-            borderColor: "#e74c3c",
-            backgroundColor: "rgba(231, 76, 60, 0.1)",
-            fill: true,
-            tension: 0.4,
-            borderWidth: 3,
-            pointRadius: 4,
-          },
-        ],
-      },
-
-      materialTypeData: {
-        labels: Object.keys(financialData.materialTypes).filter(
-          (type) => financialData.materialTypes[type] > 0,
-        ),
-        datasets: [
-          {
-            data: Object.values(financialData.materialTypes).filter(
-              (amount) => amount > 0,
-            ),
-            backgroundColor: [
-              "#e74c3c",
-              "#3498db",
-              "#f39c12",
-              "#2ecc71",
-              "#9b59b6",
-              "#1abc9c",
-              "#34495e",
-              "#e67e22",
-            ],
-            borderWidth: 0,
-            hoverOffset: 8,
-          },
-        ],
-      },
-
-      expenseCategoryData: {
-        labels: ["Project Costs", "Overhead"],
-        datasets: [
-          {
-            data: [
-              financialData.totalProjectExpenses,
-              financialData.totalOverhead,
-            ],
-            backgroundColor: ["#3498db", "#95a5a6"],
-            borderWidth: 0,
-            hoverOffset: 8,
-          },
-        ],
-      },
-
-      detailedExpensesData: {
-        labels: financialData.labels,
-        datasets: [
-          {
-            label: "Project Costs",
-            data: financialData.projectExpensesByMonth,
-            backgroundColor: "#3498db",
-            stack: "Stack 0",
-          },
-          {
-            label: "Overhead",
-            data: financialData.overheadByMonth,
-            backgroundColor: "#95a5a6",
-            stack: "Stack 0",
-          },
-        ],
-      },
-
-      profitData: {
-        labels: financialData.profitByProject.map((p) => p.name).slice(0, 10),
-        datasets: [
-          {
-            label: "Profit",
-            data: financialData.profitByProject
-              .map((p) => p.profit)
-              .slice(0, 10),
-            backgroundColor: financialData.profitByProject
-              .map((p) => (p.profit >= 0 ? "#2ecc71" : "#e74c3c"))
-              .slice(0, 10),
-            borderColor: financialData.profitByProject
-              .map((p) => (p.profit >= 0 ? "#27ae60" : "#c0392b"))
-              .slice(0, 10),
-            borderWidth: 2,
-            borderRadius: 4,
-          },
-        ],
-      },
-
-      // NEW CHART 1: Detailed Company Expenses by Category
-      expensesByCategoryData: {
-        labels: Object.keys(financialData.overheadCategories).filter(
-          (cat) => financialData.overheadCategories[cat] > 0,
-        ),
-        datasets: [
-          {
-            data: Object.values(financialData.overheadCategories).filter(
-              (amount) => amount > 0,
-            ),
-            backgroundColor: [
-              "#e74c3c",
-              "#3498db",
-              "#f39c12",
-              "#2ecc71",
-              "#9b59b6",
-              "#1abc9c",
-              "#34495e",
-              "#e67e22",
-              "#95a5a6",
-              "#c0392b",
-              "#8e44ad",
-              "#d35400",
-              "#16a085",
-              "#27ae60",
-              "#2c3e50",
-              "#795548",
-              "#607d8b",
-            ],
-            borderWidth: 0,
-            hoverOffset: 10,
-          },
-        ],
-      },
-
-      // NEW CHART 2: Monthly Income vs Expenses Comparison
-      incomeVsExpensesData: {
-        labels: financialData.labels,
-        datasets: [
-          {
-            label: "Income",
-            data: financialData.collectionsByMonth,
-            backgroundColor: "rgba(46, 204, 113, 0.8)",
-            borderColor: "#2ecc71",
-            borderWidth: 2,
-            borderRadius: 6,
-          },
-          {
-            label: "Project Costs",
-            data: financialData.projectExpensesByMonth,
-            backgroundColor: "rgba(52, 152, 219, 0.8)",
-            borderColor: "#3498db",
-            borderWidth: 2,
-            borderRadius: 6,
-          },
-          {
-            label: "Company Expenses",
-            data: financialData.overheadByMonth,
-            backgroundColor: "rgba(231, 76, 60, 0.8)",
-            borderColor: "#e74c3c",
-            borderWidth: 2,
-            borderRadius: 6,
-          },
-        ],
-      },
-    };
-  };
-
-  const chartData = getChartData();
-  const formatCurrency = (value) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value || 0);
-
-  const toggleChartVisibility = (chartKey) => {
-    setVisibleCharts((prev) => ({
-      ...prev,
-      [chartKey]: !prev[chartKey],
-    }));
-  };
-
+  // ─── Loading / Error / Empty states ────────────────────────────────────────
   if (loading) {
     return (
-      <div className={styles.dashboard}>
-        <div className="container">
-          <div className={styles.loading}>
-            <FontAwesomeIcon
-              icon={faSpinner}
-              spin
-              className={styles.loadingIcon}
-            />
-            <span>Loading financial data...</span>
-          </div>
-        </div>
+      <div className={styles.loading}>
+        <FontAwesomeIcon icon={faSpinner} className={styles.loadingIcon} spin />
+        <p className={styles.loadingText}>Loading Financial Analytics...</p>
+        <p className={styles.loadingSubtext}>
+          Preparing your comprehensive financial dashboard
+        </p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className={styles.dashboard}>
-        <div className="container">
-          <div className="error-message">{error}</div>
-        </div>
+      <div className={styles.error}>
+        <FontAwesomeIcon
+          icon={faExclamationTriangle}
+          className={styles.errorIcon}
+        />
+        <h3 className={styles.errorText}>Error Loading Data</h3>
+        <p className={styles.errorSubtext}>{error}</p>
       </div>
     );
   }
 
   if (!financialData) {
     return (
-      <div className={styles.dashboard}>
-        <div className="container">
-          <div className={styles.noData}>
-            <FontAwesomeIcon icon={faChartPie} className={styles.noDataIcon} />
-            <h3>No Financial Data Available</h3>
-            <p>Add some projects with payments to see financial analytics.</p>
-          </div>
-        </div>
+      <div className={styles.noData}>
+        <FontAwesomeIcon icon={faClipboardList} className={styles.noDataIcon} />
+        <h3 className={styles.noDataText}>No Financial Data Available</h3>
+        <p className={styles.noDataSubtext}>
+          Start by creating projects and adding expenses to unlock comprehensive
+          financial insights.
+        </p>
       </div>
     );
   }
 
+  // ─── Chart shared config ───────────────────────────────────────────────────
+  const premiumChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: { duration: 600, easing: "easeOutQuart" },
+    plugins: {
+      legend: {
+        position: "bottom",
+        labels: {
+          padding: 10,
+          font: { size: 10, weight: "600", family: "'Poppins', sans-serif" },
+          usePointStyle: true,
+          pointStyle: "circle",
+          boxWidth: 8,
+          boxHeight: 8,
+          color: "#4a5568",
+        },
+      },
+      tooltip: {
+        backgroundColor: "rgba(15, 20, 35, 0.92)",
+        titleColor: "#f0f4ff",
+        bodyColor: "#c8d3e8",
+        padding: 10,
+        cornerRadius: 8,
+        titleFont: { size: 11, weight: "700", family: "'Poppins', sans-serif" },
+        bodyFont: { size: 10, weight: "500", family: "'Poppins', sans-serif" },
+        displayColors: true,
+        boxPadding: 4,
+        callbacks: {
+          label: (ctx) => {
+            const label = ctx.dataset.label || ctx.label || "";
+            const value =
+              ctx.parsed.y !== undefined ? ctx.parsed.y : ctx.parsed;
+            return `  ${label}: $${formatCurrency(value)}`;
+          },
+        },
+      },
+    },
+  };
+
+  const lineChartOptions = {
+    ...premiumChartOptions,
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          font: { size: 9, family: "'Poppins', sans-serif" },
+          color: "#718096",
+          maxRotation: 35,
+        },
+        border: { display: false },
+      },
+      y: {
+        grid: { color: "rgba(0,0,0,0.04)", drawTicks: false },
+        ticks: {
+          font: { size: 9, family: "'Poppins', sans-serif" },
+          color: "#718096",
+          callback: (v) => "$" + (v / 1000).toFixed(0) + "K",
+        },
+        border: { display: false },
+      },
+    },
+  };
+
+  const barChartOptions = {
+    ...premiumChartOptions,
+    scales: {
+      x: {
+        stacked: false,
+        grid: { display: false },
+        ticks: {
+          font: { size: 9, family: "'Poppins', sans-serif" },
+          color: "#718096",
+          maxRotation: 35,
+        },
+        border: { display: false },
+      },
+      y: {
+        stacked: false,
+        grid: { color: "rgba(0,0,0,0.04)", drawTicks: false },
+        ticks: {
+          font: { size: 9, family: "'Poppins', sans-serif" },
+          color: "#718096",
+          callback: (v) => "$" + (v / 1000).toFixed(0) + "K",
+        },
+        border: { display: false },
+      },
+    },
+  };
+
+  // ─── Color palettes ────────────────────────────────────────────────────────
+  const palette = [
+    "#6366f1",
+    "#8b5cf6",
+    "#ec4899",
+    "#06b6d4",
+    "#10b981",
+    "#f59e0b",
+    "#ef4444",
+    "#3b82f6",
+  ];
+
+  // ─── Monthly labels ─────────────────────────────────────────────────────────
+  const monthlyLabels = Object.values(financialData.monthlyData).map(
+    (d) => d.label,
+  );
+
+  // ─── Chart datasets ────────────────────────────────────────────────────────
+
+  // 1. Project Status — number of projects, fully paid vs outstanding + customer count
+  const projectStatusData = {
+    labels: ["Fully Paid", "With Balance"],
+    datasets: [
+      {
+        label: "Projects",
+        data: [
+          financialData.fullyPaidProjects,
+          financialData.projectsWithBalance,
+        ],
+        backgroundColor: ["#10b981", "#f59e0b"],
+        borderWidth: 3,
+        borderColor: "#fff",
+        hoverOffset: 10,
+      },
+    ],
+  };
+
+  // 2. Total Material Cost (all projects) — includes waste as part of the breakdown
+  const materialCostData = {
+    labels: ["Material Cost", "Waste Factor"],
+    datasets: [
+      {
+        label: "Amount",
+        data: [financialData.totalMaterialCost, financialData.totalWaste],
+        backgroundColor: ["#3b82f6", "#f59e0b"],
+        borderWidth: 3,
+        borderColor: "#fff",
+        hoverOffset: 10,
+      },
+    ],
+  };
+
+  // 3. Labor Cost (all projects) — shown as profit value
+  const laborCostData = {
+    labels: monthlyLabels.length ? monthlyLabels : ["Total"],
+    datasets: [
+      {
+        label: "Labor Value (Profit)",
+        data: monthlyLabels.length
+          ? Object.values(financialData.monthlyData).map((d) => d.laborCost)
+          : [financialData.totalLaborCost],
+        borderColor: "#ec4899",
+        backgroundColor: "rgba(236,72,153,0.08)",
+        fill: true,
+        tension: 0.45,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: "#ec4899",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 1.5,
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  // 4. Additional Revenue — markup + transportation, fully-paid projects only
+  const additionalRevenueData = {
+    labels: ["Markup", "Transportation"],
+    datasets: [
+      {
+        label: "Additional Revenue",
+        data: [
+          financialData.additionalRevenue.markup,
+          financialData.additionalRevenue.transportation,
+        ],
+        backgroundColor: ["#6366f1", "#10b981"],
+        borderWidth: 3,
+        borderColor: "#fff",
+        hoverOffset: 10,
+      },
+    ],
+  };
+
+  // 5. Grand Total vs Paid vs Outstanding — one bar per project
+  // We build this directly from the projects array so each project
+  // is its own group on the x-axis, making the bars clearly visible.
+  const grandTotalVsPaymentsLabels = projects.map((p) => {
+    const name =
+      p.customerInfo?.firstName ||
+      p.customerInfo?.name ||
+      p.customerInfo?.lastName ||
+      "Project";
+    const last =
+      p.customerInfo?.lastName && p.customerInfo?.firstName
+        ? ` ${p.customerInfo.lastName[0]}.`
+        : "";
+    return `${name}${last}`;
+  });
+
+  // Pre-compute per-project payment data using the canonical calculator
+  // so Grand Total, Collected, and Outstanding are always consistent.
+  const perProjectPayments = projects.map((p) => {
+    const pmts = calculateProjectPayments(p);
+    return {
+      grandTotal: pmts.totalProjectValue,
+      collected: pmts.totalPaid,
+      outstanding: pmts.remainingBalance,
+    };
+  });
+
+  const grandTotalVsPaymentsData = {
+    labels:
+      grandTotalVsPaymentsLabels.length > 0
+        ? grandTotalVsPaymentsLabels
+        : ["No Projects"],
+    datasets: [
+      {
+        label: "Grand Total (Contract)",
+        data: perProjectPayments.map((p) => p.grandTotal),
+        backgroundColor: "rgba(99, 102, 241, 0.85)",
+        borderColor: "#6366f1",
+        borderWidth: 1.5,
+        borderRadius: 5,
+      },
+      {
+        label: "Collected",
+        data: perProjectPayments.map((p) => p.collected),
+        backgroundColor: "rgba(16, 185, 129, 0.85)",
+        borderColor: "#10b981",
+        borderWidth: 1.5,
+        borderRadius: 5,
+      },
+      {
+        label: "Outstanding Balance",
+        data: perProjectPayments.map((p) => p.outstanding),
+        backgroundColor: "rgba(245, 158, 11, 0.85)",
+        borderColor: "#f59e0b",
+        borderWidth: 1.5,
+        borderRadius: 5,
+      },
+    ],
+  };
+
+  // Dedicated options for this grouped bar chart
+  const grandTotalBarOptions = {
+    ...barChartOptions,
+    plugins: {
+      ...barChartOptions.plugins,
+      legend: {
+        ...barChartOptions.plugins?.legend,
+        position: "top",
+      },
+      tooltip: {
+        ...barChartOptions.plugins?.tooltip,
+        callbacks: {
+          label: (ctx) => {
+            const label = ctx.dataset.label || "";
+            const value = ctx.parsed.y;
+            return `  ${label}: $${formatCurrency(value)}`;
+          },
+        },
+      },
+    },
+    scales: {
+      ...barChartOptions.scales,
+      x: {
+        ...barChartOptions.scales?.x,
+        grouped: true,
+      },
+    },
+  };
+
+  // 6. Avg Project Value — bar showing per-project average
+  const avgProjectValueData = {
+    labels: ["Avg Project Value", "Avg Collections", "Avg Outstanding"],
+    datasets: [
+      {
+        label: "Amount",
+        data: [
+          financialData.avgProjectValue,
+          financialData.totalProjects > 0
+            ? financialData.totalCollections / financialData.totalProjects
+            : 0,
+          financialData.projectsWithBalance > 0
+            ? financialData.totalOutstanding / financialData.projectsWithBalance
+            : 0,
+        ],
+        backgroundColor: ["#6366f1", "#10b981", "#f59e0b"],
+        borderWidth: 2,
+        borderColor: "#fff",
+        borderRadius: 6,
+      },
+    ],
+  };
+
+  // 7. Monthly Collections Trend
+  const monthlyCollectionsData = {
+    labels: monthlyLabels,
+    datasets: [
+      {
+        label: "Collections",
+        data: Object.values(financialData.monthlyData).map(
+          (d) => d.collections,
+        ),
+        borderColor: "#10b981",
+        backgroundColor: "rgba(16, 185, 129, 0.08)",
+        fill: true,
+        tension: 0.45,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: "#10b981",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 1.5,
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  // 8. Project Expenses Breakdown — materials + waste + taxes (labor excluded)
+  const projectExpensesData = {
+    labels: ["Materials", "Waste", "Tax"],
+    datasets: [
+      {
+        label: "Amount",
+        data: [
+          financialData.totalMaterialCost,
+          financialData.totalWaste,
+          financialData.totalTax,
+        ],
+        backgroundColor: ["#3498db", "#f39c12", "#9b59b6"],
+        borderWidth: 3,
+        borderColor: "#fff",
+        hoverOffset: 10,
+      },
+    ],
+  };
+
+  // 9. Company Expenses by Category
+  const companyExpensesData = {
+    labels: Object.keys(financialData.companyExpenseCategories).map(
+      getCategoryName,
+    ),
+    datasets: [
+      {
+        label: "Expense Amount",
+        data: Object.values(financialData.companyExpenseCategories),
+        backgroundColor: palette,
+        borderWidth: 3,
+        borderColor: "#fff",
+        hoverOffset: 10,
+      },
+    ],
+  };
+
+  // 10. Monthly Expenses Comparison
+  const monthlyExpensesData = {
+    labels: monthlyLabels,
+    datasets: [
+      {
+        label: "Project Costs",
+        data: Object.values(financialData.monthlyData).map(
+          (d) => d.projectExpenses,
+        ),
+        backgroundColor: "#3498db",
+        borderWidth: 2,
+        borderColor: "#fff",
+        borderRadius: 4,
+      },
+      {
+        label: "Company Expenses",
+        data: Object.values(financialData.monthlyData).map(
+          (d) => d.companyExpenses,
+        ),
+        backgroundColor: "#e74c3c",
+        borderWidth: 2,
+        borderColor: "#fff",
+        borderRadius: 4,
+      },
+    ],
+  };
+
+  // 11. Payment Methods
+  const paymentMethodsData = {
+    labels: Object.keys(financialData.paymentMethods).filter(
+      (k) => financialData.paymentMethods[k] > 0,
+    ),
+    datasets: [
+      {
+        label: "Payment Amount",
+        data: Object.keys(financialData.paymentMethods)
+          .filter((k) => financialData.paymentMethods[k] > 0)
+          .map((k) => financialData.paymentMethods[k]),
+        backgroundColor: palette,
+        borderWidth: 3,
+        borderColor: "#fff",
+        hoverOffset: 10,
+      },
+    ],
+  };
+
+  // 12. Monthly Profit Trend
+  const monthlyProfitData = {
+    labels: monthlyLabels,
+    datasets: [
+      {
+        label: "Net Profit",
+        data: Object.values(financialData.monthlyData).map((d) => d.profit),
+        borderColor: "#6366f1",
+        backgroundColor: "rgba(99, 102, 241, 0.08)",
+        fill: true,
+        tension: 0.45,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: "#6366f1",
+        pointBorderColor: "#fff",
+        pointBorderWidth: 1.5,
+        borderWidth: 2,
+      },
+    ],
+  };
+
+  // ─── Chart render helper ───────────────────────────────────────────────────
+  const renderChart = (
+    chartName,
+    title,
+    subtitle,
+    ChartComponent,
+    data,
+    options,
+    size = "half",
+    icon = faChartPie,
+  ) => {
+    if (!visibleCharts[chartName]) return null;
+    return (
+      <div
+        className={`${styles.chartCard} ${styles[`size-${size}`]}`}
+        key={chartName}
+      >
+        <div className={styles.chartHeader}>
+          <div>
+            <h3 className={styles.chartTitle}>
+              <FontAwesomeIcon icon={icon} />
+              {title}
+            </h3>
+            {subtitle && <p className={styles.chartSubtitle}>{subtitle}</p>}
+          </div>
+          <div className={styles.chartActions}>
+            <button
+              className={styles.chartButton}
+              onClick={() => toggleChart(chartName)}
+              title="Hide chart"
+            >
+              <FontAwesomeIcon icon={faEyeSlash} />
+            </button>
+          </div>
+        </div>
+        <div className={styles.chartWrapper}>
+          <ChartComponent
+            data={data}
+            options={options || premiumChartOptions}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const hiddenCharts = Object.entries(visibleCharts)
+    .filter(([, visible]) => !visible)
+    .map(([name]) => name);
+
+  // Gross margin for color
+  const grossMarginPct = financialData.grossMargin;
+  const netMarginPct = financialData.netMargin;
+
   return (
     <main className={styles.dashboard}>
-      <div className="container">
-        <header className="header">
-          <div>
-            <h1 className="title">
-              <FontAwesomeIcon icon={faChartPie} />
-              Finance Dashboard
-            </h1>
-            <p className="subtitle">
-              Comprehensive financial analytics and insights
-            </p>
-          </div>
-          <div className={styles.controls}>
-            <div
-              style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}
-            >
-              <FontAwesomeIcon
-                icon={faCalendarAlt}
-                style={{ marginRight: "0.5rem", color: "#718096" }}
-              />
+      {/* Header */}
+      <div className={styles.dashboardHeader}>
+        <h1 className={styles.dashboardTitle}>
+          <FontAwesomeIcon icon={faChartLine} />
+          Financial Analytics Dashboard
+        </h1>
+        <p className={styles.dashboardSubtitle}>
+          Comprehensive insights into your business performance and financial
+          health
+        </p>
+      </div>
 
-              <select
-                value={dateFilter.type}
+      {/* Date Filter */}
+      <div className={styles.filterSection}>
+        <div className={styles.filterHeader}>
+          <FontAwesomeIcon icon={faCalendarAlt} />
+          Date Range Filter
+        </div>
+        <div className={styles.filterControls}>
+          <select
+            value={dateFilter.type}
+            onChange={(e) =>
+              setDateFilter({ ...dateFilter, type: e.target.value })
+            }
+            className={styles.filterSelect}
+          >
+            <option value="all">All Time</option>
+            <option value="year">Specific Year</option>
+            <option value="custom">Custom Range</option>
+          </select>
+
+          {dateFilter.type === "year" && (
+            <input
+              type="number"
+              placeholder="Year"
+              value={dateFilter.year || new Date().getFullYear()}
+              onChange={(e) =>
+                setDateFilter({ ...dateFilter, year: parseInt(e.target.value) })
+              }
+              className={styles.filterInput}
+            />
+          )}
+
+          {dateFilter.type === "custom" && (
+            <>
+              <input
+                type="date"
+                value={dateFilter.startDate || ""}
                 onChange={(e) =>
-                  setDateFilter({ ...dateFilter, type: e.target.value })
+                  setDateFilter({ ...dateFilter, startDate: e.target.value })
                 }
-                className="select"
-                style={{ width: "auto" }}
-              >
-                <option value="all">All Time</option>
-                <option value="year">Yearly</option>
-                <option value="custom">Custom Range</option>
-              </select>
+                className={styles.filterInput}
+              />
+              <input
+                type="date"
+                value={dateFilter.endDate || ""}
+                onChange={(e) =>
+                  setDateFilter({ ...dateFilter, endDate: e.target.value })
+                }
+                className={styles.filterInput}
+              />
+            </>
+          )}
 
-              {dateFilter.type === "year" && (
-                <select
-                  value={dateFilter.year || new Date().getFullYear()}
-                  onChange={(e) =>
-                    setDateFilter({
-                      ...dateFilter,
-                      year: parseInt(e.target.value),
-                    })
-                  }
-                  className="select"
-                  style={{ width: "auto" }}
-                >
-                  {Array.from(
-                    { length: 5 },
-                    (_, i) => new Date().getFullYear() - i + 1,
-                  )
-                    .reverse()
-                    .map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  {Array.from(
-                    { length: 10 },
-                    (_, i) => new Date().getFullYear() - i,
-                  ).map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-              )}
-
-              {dateFilter.type === "custom" && (
-                <div
-                  style={{
-                    display: "flex",
-                    gap: "0.5rem",
-                    alignItems: "center",
-                  }}
-                >
-                  <input
-                    type="date"
-                    value={
-                      dateFilter.startDate
-                        ? new Date(dateFilter.startDate)
-                            .toISOString()
-                            .split("T")[0]
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setDateFilter({
-                        ...dateFilter,
-                        startDate: e.target.value
-                          ? new Date(e.target.value)
-                          : null,
-                      })
-                    }
-                    className="input"
-                    style={{
-                      padding: "0.5rem",
-                      borderRadius: "0.375rem",
-                      border: "1px solid #dcdfe6",
-                    }}
-                  />
-                  <span>to</span>
-                  <input
-                    type="date"
-                    value={
-                      dateFilter.endDate
-                        ? new Date(dateFilter.endDate)
-                            .toISOString()
-                            .split("T")[0]
-                        : ""
-                    }
-                    onChange={(e) =>
-                      setDateFilter({
-                        ...dateFilter,
-                        endDate: e.target.value
-                          ? new Date(e.target.value)
-                          : null,
-                      })
-                    }
-                    className="input"
-                    style={{
-                      padding: "0.5rem",
-                      borderRadius: "0.375rem",
-                      border: "1px solid #dcdfe6",
-                    }}
-                  />
-                </div>
-              )}
-            </div>
+          <div className={styles.filterBadge}>
+            <FontAwesomeIcon icon={faClipboardList} />
+            {financialData.totalProjects} Projects Analyzed
           </div>
-        </header>
-
-        {/* Key Metrics */}
-        <div className={styles.metricsGrid}>
-          <div className={styles.metricCard}>
-            <div className={styles.metricIcon}>
-              <FontAwesomeIcon icon={faDollarSign} />
-            </div>
-            <div className={styles.metricContent}>
-              <h3>Total Revenue</h3>
-              <p className={styles.metricValue}>
-                {formatCurrency(financialData.totalCollections)}
-              </p>
-            </div>
+          <div className={styles.filterBadge}>
+            <FontAwesomeIcon icon={faUsers} />
+            {financialData.totalProjects} Customers
           </div>
+        </div>
+      </div>
 
-          <div className={styles.metricCard}>
-            <div className={styles.metricIcon}>
+      {/* Key Metric Cards */}
+      <div className={styles.metricsGrid}>
+        {/* Total Collections */}
+        <div className={`${styles.metricCard} ${styles.positive}`}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+              }}
+            >
               <FontAwesomeIcon icon={faMoneyBillWave} />
             </div>
-            <div className={styles.metricContent}>
-              <h3>Total Expenses</h3>
-              <p className={styles.metricValue}>
-                {formatCurrency(financialData.totalExpenses)}
-              </p>
+            <div className={styles.metricTrend}>
+              <FontAwesomeIcon icon={faArrowUp} /> Revenue
             </div>
           </div>
+          <div className={styles.metricLabel}>Total Collections</div>
+          <div className={styles.metricValue}>
+            ${formatCurrency(financialData.totalCollections)}
+          </div>
+          <div className={styles.metricSubtext}>
+            From {financialData.totalProjects} total projects
+          </div>
+          <div className={styles.metricProgress}>
+            <div
+              className={styles.metricProgressBar}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
 
-          <div className={styles.metricCard}>
-            <div className={styles.metricIcon}>
+        {/* Material Cost (all projects, includes waste context) */}
+        <div className={styles.metricCard}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+              }}
+            >
+              <FontAwesomeIcon icon={faTools} />
+            </div>
+            <div className={styles.metricTrend}>
+              <FontAwesomeIcon icon={faCoins} /> Materials
+            </div>
+          </div>
+          <div className={styles.metricLabel}>Total Material Cost</div>
+          <div className={styles.metricValue}>
+            ${formatCurrency(financialData.totalMaterialCost)}
+          </div>
+          <div className={styles.metricSubtext}>
+            + ${formatCurrency(financialData.totalWaste)} waste factor — all
+            projects
+          </div>
+          <div className={styles.metricProgress}>
+            <div
+              className={styles.metricProgressBar}
+              style={{
+                width: `${
+                  financialData.totalCOGS > 0
+                    ? (financialData.totalMaterialCost /
+                        financialData.totalCOGS) *
+                      100
+                    : 0
+                }%`,
+                background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Labor Cost (all projects) — treated as profit */}
+        <div className={styles.metricCard}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #eb3349 0%, #f45c43 100%)",
+              }}
+            >
+              <FontAwesomeIcon icon={faPaintRoller} />
+            </div>
+            <div className={styles.metricTrend}>
+              <FontAwesomeIcon icon={faHandHoldingDollar} /> Labor
+            </div>
+          </div>
+          <div className={styles.metricLabel}>Labor Value (Profit)</div>
+          <div className={styles.metricValue}>
+            ${formatCurrency(financialData.totalLaborCost)}
+          </div>
+          <div className={styles.metricSubtext}>
+            {financialData.totalCollections > 0
+              ? (
+                  (financialData.totalLaborCost /
+                    financialData.totalCollections) *
+                  100
+                ).toFixed(1)
+              : "0.0"}
+            % of Revenue — all projects
+          </div>
+          <div className={styles.metricProgress}>
+            <div
+              className={styles.metricProgressBar}
+              style={{
+                width: `${
+                  financialData.totalCollections > 0
+                    ? Math.min(
+                        (financialData.totalLaborCost /
+                          financialData.totalCollections) *
+                          100,
+                        100,
+                      )
+                    : 0
+                }%`,
+                background: "linear-gradient(135deg, #eb3349 0%, #f45c43 100%)",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Project Expenses */}
+        <div className={styles.metricCard}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              }}
+            >
+              <FontAwesomeIcon icon={faDollarSign} />
+            </div>
+            <div className={styles.metricTrend}>Materials & Fees</div>
+          </div>
+          <div className={styles.metricLabel}>Project Expenses</div>
+          <div className={styles.metricValue}>
+            ${formatCurrency(financialData.totalCOGS)}
+          </div>
+          <div className={styles.metricSubtext}>
+            {financialData.expensePercentage.toFixed(1)}% of revenue (mat +
+            waste + tax)
+          </div>
+          <div className={styles.metricProgress}>
+            <div
+              className={styles.metricProgressBar}
+              style={{
+                width: `${Math.min(financialData.expensePercentage, 100)}%`,
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Company Expenses */}
+        <div className={`${styles.metricCard} ${styles.negative}`}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #f2994a 0%, #f2c94c 100%)",
+              }}
+            >
               <FontAwesomeIcon icon={faWallet} />
             </div>
-            <div className={styles.metricContent}>
-              <h3>Net Profit</h3>
-              <p
-                className={`${styles.metricValue} ${
-                  financialData.totalProfit >= 0
-                    ? styles.positive
-                    : styles.negative
-                }`}
-              >
-                {formatCurrency(financialData.totalProfit)}
-                <FontAwesomeIcon
-                  icon={
-                    financialData.totalProfit >= 0 ? faArrowUp : faArrowDown
-                  }
-                  style={{ fontSize: "0.7em", marginLeft: "8px" }}
-                />
-              </p>
+            <div className={`${styles.metricTrend} ${styles.negative}`}>
+              <FontAwesomeIcon icon={faArrowDown} /> Overhead
             </div>
           </div>
-
-          <div className={styles.metricCard}>
-            <div className={styles.metricIcon}>
-              <FontAwesomeIcon icon={faPercentage} />
-            </div>
-            <div className={styles.metricContent}>
-              <h3>Profit Margin</h3>
-              <p
-                className={`${styles.metricValue} ${
-                  financialData.profitMargin >= 0
-                    ? styles.positive
-                    : styles.negative
-                }`}
-              >
-                {financialData.profitMargin.toFixed(1)}%
-              </p>
-            </div>
+          <div className={styles.metricLabel}>Company Expenses</div>
+          <div className={styles.metricValue}>
+            ${formatCurrency(financialData.totalCompanyExpenses)}
           </div>
+          <div className={styles.metricSubtext}>Operating overhead costs</div>
+        </div>
 
-          <div className={styles.metricCard}>
-            <div className={styles.metricIcon}>
-              <FontAwesomeIcon icon={faChartLine} />
-            </div>
-            <div className={styles.metricContent}>
-              <h3>Project Costs</h3>
-              <p className={styles.metricValue}>
-                {formatCurrency(financialData.totalProjectExpenses)}
-              </p>
-            </div>
-          </div>
-
-          <div className={styles.metricCard}>
-            <div className={styles.metricIcon}>
+        {/* Gross Profit */}
+        <div
+          className={`${styles.metricCard} ${
+            financialData.totalGrossProfit >= 0
+              ? styles.positive
+              : styles.negative
+          }`}
+        >
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background:
+                  financialData.totalGrossProfit >= 0
+                    ? "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)"
+                    : "linear-gradient(135deg, #eb3349 0%, #f45c43 100%)",
+              }}
+            >
               <FontAwesomeIcon icon={faArrowTrendUp} />
             </div>
-            <div className={styles.metricContent}>
-              <h3>Company Expenses</h3>
-              <p className={styles.metricValue}>
-                {formatCurrency(financialData.totalOverhead)}
-              </p>
+            <div
+              className={`${styles.metricTrend} ${
+                financialData.totalGrossProfit < 0 ? styles.negative : ""
+              }`}
+            >
+              <FontAwesomeIcon
+                icon={
+                  financialData.totalGrossProfit >= 0 ? faArrowUp : faArrowDown
+                }
+              />
+              {financialData.totalGrossProfit >= 0 ? "Profitable" : "Loss"}
             </div>
+          </div>
+          <div className={styles.metricLabel}>Gross Profit</div>
+          <div
+            className={styles.metricValue}
+            style={{
+              color:
+                financialData.totalGrossProfit >= 0 ? "#27ae60" : "#e74c3c",
+            }}
+          >
+            {financialData.totalGrossProfit < 0 ? "-" : ""}$
+            {formatCurrency(Math.abs(financialData.totalGrossProfit))}
+          </div>
+          <div className={styles.metricSubtext}>Collections minus Expenses</div>
+        </div>
+
+        {/* Gross Profit Margin */}
+        <div className={styles.metricCard}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              }}
+            >
+              <FontAwesomeIcon icon={faPercentage} />
+            </div>
+            <div className={styles.metricTrend}>
+              <FontAwesomeIcon icon={faTrophy} /> Margin
+            </div>
+          </div>
+          <div className={styles.metricLabel}>Gross Profit Margin</div>
+          <div className={styles.metricValue}>
+            {formatPercentage(grossMarginPct)}
+          </div>
+          <div className={styles.metricSubtext}>
+            Target: 20-30% industry standard
+          </div>
+          <div className={styles.metricProgress}>
+            <div
+              className={styles.metricProgressBar}
+              style={{
+                width: `${Math.min((grossMarginPct / 30) * 100, 100)}%`,
+              }}
+            />
           </div>
         </div>
 
-        {/* Charts Grid */}
-        <div className={styles.chartGrid}>
-          {visibleCharts.paymentMethods && (
-            <div className={styles.chartCard}>
-              <div className={styles.chartHeader}>
-                <h3>
-                  <FontAwesomeIcon icon={faChartPie} />
-                  Payment Methods
-                </h3>
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => toggleChartVisibility("paymentMethods")}
-                  title="Hide chart"
-                >
-                  <FontAwesomeIcon icon={faEyeSlash} />
-                </button>
-              </div>
-              <div className={styles.chartWrapper}>
-                <Doughnut
-                  data={chartData.paymentMethodData}
-                  options={donutOptions}
-                />
-              </div>
+        {/* Fully Paid Projects — shows customer count */}
+        <div className={`${styles.metricCard} ${styles.positive}`}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+              }}
+            >
+              <FontAwesomeIcon icon={faCheckCircle} />
             </div>
-          )}
-
-          {visibleCharts.collections && (
-            <div className={styles.chartCard}>
-              <div className={styles.chartHeader}>
-                <h3>
-                  <FontAwesomeIcon icon={faChartLine} />
-                  Revenue & Expense Trends
-                </h3>
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => toggleChartVisibility("collections")}
-                  title="Hide chart"
-                >
-                  <FontAwesomeIcon icon={faEyeSlash} />
-                </button>
-              </div>
-              <div className={styles.chartWrapper}>
-                <Line data={chartData.collectionsData} options={chartOptions} />
-              </div>
+            <div className={styles.metricTrend}>
+              <FontAwesomeIcon icon={faShieldHalved} />
+              {financialData.collectionRate.toFixed(0)}%
             </div>
-          )}
-
-          {visibleCharts.materialTypes && (
-            <div className={styles.chartCard}>
-              <div className={styles.chartHeader}>
-                <h3>
-                  <FontAwesomeIcon icon={faChartPie} />
-                  Material Types
-                </h3>
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => toggleChartVisibility("materialTypes")}
-                  title="Hide chart"
-                >
-                  <FontAwesomeIcon icon={faEyeSlash} />
-                </button>
-              </div>
-              <div className={styles.chartWrapper}>
-                <Doughnut
-                  data={chartData.materialTypeData}
-                  options={donutOptions}
-                />
-              </div>
-            </div>
-          )}
-
-          {visibleCharts.expenses && (
-            <div className={styles.chartCard}>
-              <div className={styles.chartHeader}>
-                <h3>
-                  <FontAwesomeIcon icon={faChartPie} />
-                  Expense Categories
-                </h3>
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => toggleChartVisibility("expenses")}
-                  title="Hide chart"
-                >
-                  <FontAwesomeIcon icon={faEyeSlash} />
-                </button>
-              </div>
-              <div className={styles.chartWrapper}>
-                <Doughnut
-                  data={chartData.expenseCategoryData}
-                  options={donutOptions}
-                />
-              </div>
-            </div>
-          )}
-
-          {visibleCharts.detailedExpenses && (
-            <div className={styles.chartCard}>
-              <div className={styles.chartHeader}>
-                <h3>
-                  <FontAwesomeIcon icon={faChartBar} />
-                  Monthly Expenses Breakdown
-                </h3>
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => toggleChartVisibility("detailedExpenses")}
-                  title="Hide chart"
-                >
-                  <FontAwesomeIcon icon={faEyeSlash} />
-                </button>
-              </div>
-              <div className={styles.chartWrapper}>
-                <Bar
-                  data={chartData.detailedExpensesData}
-                  options={chartOptions}
-                />
-              </div>
-            </div>
-          )}
-
-          {visibleCharts.profit && (
-            <div className={styles.chartCard}>
-              <div className={styles.chartHeader}>
-                <h3>
-                  <FontAwesomeIcon icon={faChartBar} />
-                  Top 10 Projects by Profit
-                </h3>
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => toggleChartVisibility("profit")}
-                  title="Hide chart"
-                >
-                  <FontAwesomeIcon icon={faEyeSlash} />
-                </button>
-              </div>
-              <div className={styles.chartWrapper}>
-                <Bar
-                  data={chartData.profitData}
-                  options={{
-                    ...chartOptions,
-                    onClick: (event, elements) => {
-                      if (elements.length > 0) {
-                        const index = elements[0].index;
-                        setModalData(
-                          financialData.profitByProject[index].details,
-                        );
-                        setShowModal(true);
-                      }
-                    },
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* NEW CHART 1: Company Expenses by Category */}
-          {visibleCharts.expensesByCategory && (
-            <div className={styles.chartCard}>
-              <div className={styles.chartHeader}>
-                <h3>
-                  <FontAwesomeIcon icon={faChartPie} />
-                  Company Expenses by Category
-                </h3>
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => toggleChartVisibility("expensesByCategory")}
-                  title="Hide chart"
-                >
-                  <FontAwesomeIcon icon={faEyeSlash} />
-                </button>
-              </div>
-              <div className={styles.chartWrapper}>
-                <Doughnut
-                  data={chartData.expensesByCategoryData}
-                  options={donutOptions}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* NEW CHART 2: Income vs Expenses Comparison */}
-          {visibleCharts.incomeVsExpenses && (
-            <div className={styles.chartCard}>
-              <div className={styles.chartHeader}>
-                <h3>
-                  <FontAwesomeIcon icon={faChartBar} />
-                  Income vs Expenses Analysis
-                </h3>
-                <button
-                  className={styles.toggleButton}
-                  onClick={() => toggleChartVisibility("incomeVsExpenses")}
-                  title="Hide chart"
-                >
-                  <FontAwesomeIcon icon={faEyeSlash} />
-                </button>
-              </div>
-              <div className={styles.chartWrapper}>
-                <Bar
-                  data={chartData.incomeVsExpensesData}
-                  options={{
-                    ...chartOptions,
-                    plugins: {
-                      ...chartOptions.plugins,
-                      tooltip: {
-                        ...chartOptions.plugins.tooltip,
-                        callbacks: {
-                          footer: (tooltipItems) => {
-                            const index = tooltipItems[0].dataIndex;
-                            const income =
-                              financialData.collectionsByMonth[index];
-                            const projectCosts =
-                              financialData.projectExpensesByMonth[index];
-                            const overhead =
-                              financialData.overheadByMonth[index];
-                            const netProfit = income - projectCosts - overhead;
-                            return `Net Profit: $${netProfit.toLocaleString()}`;
-                          },
-                        },
-                      },
-                    },
-                  }}
-                />
-              </div>
-            </div>
-          )}
+          </div>
+          <div className={styles.metricLabel}>Fully Paid Projects</div>
+          <div className={styles.metricValue}>
+            {financialData.fullyPaidProjects} / {financialData.totalProjects}
+          </div>
+          <div className={styles.metricSubtext}>
+            {financialData.totalProjects} customers —{" "}
+            {financialData.collectionRate.toFixed(1)}% collection rate
+          </div>
+          <div className={styles.metricProgress}>
+            <div
+              className={styles.metricProgressBar}
+              style={{ width: `${financialData.collectionRate}%` }}
+            />
+          </div>
         </div>
 
-        {/* Hidden Charts Toggle */}
-        {Object.values(visibleCharts).includes(false) && (
-          <section className={styles.hiddenCharts}>
-            <h3>Show Hidden Charts</h3>
-            <div className={styles.hiddenChartsList}>
-              {Object.entries(visibleCharts).map(
-                ([key, visible]) =>
-                  !visible && (
-                    <button
-                      key={key}
-                      className="button button--secondary"
-                      onClick={() => toggleChartVisibility(key)}
-                    >
-                      <FontAwesomeIcon icon={faEye} />
-                      Show {key.replace(/([A-Z])/g, " $1").toLowerCase()}
-                    </button>
-                  ),
-              )}
+        {/* Outstanding Balance */}
+        <div className={`${styles.metricCard} ${styles.warning}`}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #f2994a 0%, #f2c94c 100%)",
+              }}
+            >
+              <FontAwesomeIcon icon={faClockRotateLeft} />
             </div>
-          </section>
+            <div className={`${styles.metricTrend} ${styles.negative}`}>
+              <FontAwesomeIcon icon={faExclamationTriangle} /> Pending
+            </div>
+          </div>
+          <div className={styles.metricLabel}>Outstanding Balance</div>
+          <div className={styles.metricValue} style={{ color: "#e67e22" }}>
+            ${formatCurrency(financialData.totalOutstanding)}
+          </div>
+          <div className={styles.metricSubtext}>
+            From {financialData.projectsWithBalance} projects
+          </div>
+        </div>
+
+        {/* Overdue */}
+        <div className={`${styles.metricCard} ${styles.negative}`}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #eb3349 0%, #f45c43 100%)",
+              }}
+            >
+              <FontAwesomeIcon icon={faFire} />
+            </div>
+            <div className={`${styles.metricTrend} ${styles.negative}`}>
+              <FontAwesomeIcon icon={faExclamationTriangle} /> Urgent
+            </div>
+          </div>
+          <div className={styles.metricLabel}>Overdue Amount</div>
+          <div className={styles.metricValue} style={{ color: "#e74c3c" }}>
+            ${formatCurrency(financialData.totalOverdue)}
+          </div>
+          <div className={styles.metricSubtext}>
+            Requires immediate attention
+          </div>
+        </div>
+
+        {/* Additional Revenue — fully-paid only */}
+        <div className={`${styles.metricCard} ${styles.positive}`}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)",
+              }}
+            >
+              <FontAwesomeIcon icon={faArrowUp} />
+            </div>
+            <div className={styles.metricTrend}>
+              <FontAwesomeIcon icon={faHandHoldingDollar} /> Markup + Transport
+            </div>
+          </div>
+          <div className={styles.metricLabel}>Additional Revenue</div>
+          <div className={styles.metricValue} style={{ color: "#27ae60" }}>
+            ${formatCurrency(financialData.additionalRevenue.total)}
+          </div>
+          <div className={styles.metricSubtext}>
+            From {financialData.fullyPaidProjects} fully paid projects
+          </div>
+        </div>
+
+        {/* Avg Project Value — based on grand totals, not collections */}
+        <div className={styles.metricCard}>
+          <div className={styles.metricCardHeader}>
+            <div
+              className={styles.metricIcon}
+              style={{
+                background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+              }}
+            >
+              <FontAwesomeIcon icon={faFileInvoiceDollar} />
+            </div>
+            <div className={styles.metricTrend}>
+              <FontAwesomeIcon icon={faChartBar} /> Average
+            </div>
+          </div>
+          <div className={styles.metricLabel}>Avg Project Value</div>
+          <div className={styles.metricValue}>
+            ${formatCurrency(financialData.avgProjectValue)}
+          </div>
+          <div className={styles.metricSubtext}>
+            Based on {financialData.totalProjects} projects
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Charts: Revenue & Collections ─────────────────────────────────── */}
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>
+          <FontAwesomeIcon icon={faMoneyBillWave} />
+          Revenue & Collections Analysis
+        </h2>
+      </div>
+
+      <div className={styles.chartGrid}>
+        {renderChart(
+          "projectStatus",
+          "Projects — Paid vs Outstanding",
+          `${financialData.totalProjects} customers total`,
+          Doughnut,
+          projectStatusData,
+          premiumChartOptions,
+          "third",
+          faUsers,
+        )}
+        {renderChart(
+          "monthlyCollections",
+          "Monthly Collections Trend",
+          "Revenue timeline and seasonal patterns",
+          Line,
+          monthlyCollectionsData,
+          lineChartOptions,
+          "twothirds",
+          faChartLine,
+        )}
+        {renderChart(
+          "paymentMethods",
+          "Payment Methods Distribution",
+          "How customers prefer to pay",
+          Doughnut,
+          paymentMethodsData,
+          premiumChartOptions,
+          "third",
+          faChartPie,
         )}
       </div>
 
-      {/* Modal */}
-      {showModal && modalData && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setShowModal(false)}
-        >
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3>Project Details</h3>
-              <button
-                className={styles.modalClose}
-                onClick={() => setShowModal(false)}
-              >
-                <FontAwesomeIcon icon={faTimes} />
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <div className={styles.projectInfo}>
-                <h4>Customer: {modalData.customer}</h4>
-                <div className={styles.financialSummary}>
-                  <div className={styles.summaryItem}>
-                    <span>Total Collections:</span>
-                    <span>{formatCurrency(modalData.collections)}</span>
-                  </div>
-                  <div className={styles.summaryItem}>
-                    <span>Total Expenses:</span>
-                    <span>{formatCurrency(modalData.expenses)}</span>
-                  </div>
-                  <div className={`${styles.summaryItem} ${styles.profitItem}`}>
-                    <span>Net Profit:</span>
-                    <span
-                      className={
-                        modalData.collections - modalData.expenses >= 0
-                          ? styles.positive
-                          : styles.negative
-                      }
-                    >
-                      {formatCurrency(
-                        modalData.collections - modalData.expenses,
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </div>
+      {/* Grand Total chart — full width so every project bar is clear */}
+      <div className={styles.chartGrid}>
+        {renderChart(
+          "grandTotalVsPayments",
+          "Grand Total vs Collections vs Outstanding",
+          "Per-project breakdown — contract value, money collected, and remaining balance",
+          Bar,
+          grandTotalVsPaymentsData,
+          grandTotalBarOptions,
+          "full",
+          faMoneyBillWave,
+        )}
+      </div>
 
-              {modalData.payments.length > 0 && (
-                <div className={styles.paymentsSection}>
-                  <h5>Payment History</h5>
-                  <div className={styles.tableWrapper}>
-                    <table className={styles.modalTable}>
-                      <thead>
-                        <tr>
-                          <th>Date</th>
-                          <th>Amount</th>
-                          <th>Method</th>
-                          <th>Status</th>
-                          <th>Note</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {modalData.deposit > 0 && (
-                          <tr className={styles.depositRow}>
-                            <td>Initial</td>
-                            <td>{formatCurrency(modalData.deposit)}</td>
-                            <td>Deposit</td>
-                            <td>
-                              <span className={styles.statusPaid}>Paid</span>
-                            </td>
-                            <td>Project deposit</td>
-                          </tr>
-                        )}
-                        {modalData.payments.map((payment, i) => (
-                          <tr key={i}>
-                            <td>
-                              {new Date(payment.date).toLocaleDateString()}
-                            </td>
-                            <td>{formatCurrency(payment.amount)}</td>
-                            <td>{payment.method || "N/A"}</td>
-                            <td>
-                              <span
-                                className={
-                                  payment.isPaid
-                                    ? styles.statusPaid
-                                    : styles.statusPending
-                                }
-                              >
-                                {payment.isPaid ? "Paid" : "Pending"}
-                              </span>
-                            </td>
-                            <td>{payment.note || "-"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
+      {/* ─── Charts: Cost Analysis ──────────────────────────────────────────── */}
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>
+          <FontAwesomeIcon icon={faDollarSign} />
+          Cost Analysis & Breakdown
+        </h2>
+      </div>
+
+      <div className={styles.chartGrid}>
+        {renderChart(
+          "materialCost",
+          "Total Material Cost (All Projects)",
+          "Material costs + waste factor across all projects",
+          Doughnut,
+          materialCostData,
+          premiumChartOptions,
+          "third",
+          faTools,
+        )}
+        {renderChart(
+          "laborCost",
+          "Labor Value (Profit) — All Projects",
+          "Monthly labor value trend — counted as owner profit",
+          Line,
+          laborCostData,
+          lineChartOptions,
+          "twothirds",
+          faPaintRoller,
+        )}
+        {renderChart(
+          "additionalRevenue",
+          "Additional Revenue (Fully Paid Only)",
+          "Markup + transportation — only from fully paid projects",
+          Doughnut,
+          additionalRevenueData,
+          premiumChartOptions,
+          "third",
+          faHandHoldingDollar,
+        )}
+        {renderChart(
+          "avgProjectValue",
+          "Avg Project Value",
+          "Average contract value, collections per project, and avg outstanding",
+          Bar,
+          avgProjectValueData,
+          barChartOptions,
+          "twothirds",
+          faFileInvoiceDollar,
+        )}
+        {renderChart(
+          "projectExpenses",
+          "Project Expenses Breakdown",
+          "Materials, waste, and taxes (Labor excluded)",
+          Pie,
+          projectExpensesData,
+          premiumChartOptions,
+          "third",
+          faChartPie,
+        )}
+      </div>
+
+      {/* ─── Charts: Company Expenses ───────────────────────────────────────── */}
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>
+          <FontAwesomeIcon icon={faWallet} />
+          Company Expenses & Overhead
+        </h2>
+      </div>
+
+      <div className={styles.chartGrid}>
+        {renderChart(
+          "companyExpensesByCategory",
+          "Company Expenses by Category",
+          "Operating overhead breakdown",
+          Doughnut,
+          companyExpensesData,
+          premiumChartOptions,
+          "half",
+          faWallet,
+        )}
+        {renderChart(
+          "monthlyExpenses",
+          "Monthly Expenses Comparison",
+          "Project costs vs company overhead",
+          Bar,
+          monthlyExpensesData,
+          barChartOptions,
+          "half",
+          faChartBar,
+        )}
+      </div>
+
+      {/* ─── Charts: Profitability ──────────────────────────────────────────── */}
+      <div className={styles.sectionHeader}>
+        <h2 className={styles.sectionTitle}>
+          <FontAwesomeIcon icon={faArrowTrendUp} />
+          Profitability & Performance
+        </h2>
+      </div>
+
+      <div className={styles.chartGrid}>
+        {renderChart(
+          "monthlyProfit",
+          "Monthly Profit Trend",
+          "Track profitability over time",
+          Line,
+          monthlyProfitData,
+          lineChartOptions,
+          "full",
+          faChartLine,
+        )}
+      </div>
+
+      {/* ─── Detailed Financial Summary ─────────────────────────────────────── */}
+      <div className={styles.summaryGrid}>
+        {/* Revenue & Collections */}
+        <div className={`${styles.summarySection} ${styles.revenue}`}>
+          <h3 className={styles.summaryTitle}>
+            <FontAwesomeIcon icon={faMoneyBillWave} />
+            Revenue &amp; Collections
+          </h3>
+          <div className={styles.summaryItems}>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Total Collections</span>
+              <span className={`${styles.summaryValue} ${styles.positive}`}>
+                ${formatCurrency(financialData.totalCollections)}
+              </span>
             </div>
-            <div className={styles.modalFooter}>
-              <button
-                className="button button--secondary"
-                onClick={() => setShowModal(false)}
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>
+                Grand Total (All Projects)
+              </span>
+              <span className={styles.summaryValue}>
+                ${formatCurrency(financialData.totalGrandValue)}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Total Deposits</span>
+              <span className={styles.summaryValue}>
+                ${formatCurrency(financialData.totalDeposits)}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Average Project Value</span>
+              <span className={styles.summaryValue}>
+                ${formatCurrency(financialData.avgProjectValue)}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Additional Revenue</span>
+              <span className={`${styles.summaryValue} ${styles.positive}`}>
+                ${formatCurrency(financialData.additionalRevenue.total)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Costs & Expenses */}
+        <div className={`${styles.summarySection} ${styles.costs}`}>
+          <h3 className={styles.summaryTitle}>
+            <FontAwesomeIcon icon={faTools} />
+            Costs &amp; Expenses
+          </h3>
+          <div className={styles.summaryItems}>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Material Costs</span>
+              <span className={styles.summaryValue}>
+                ${formatCurrency(financialData.totalMaterialCost)}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Labor Value (Profit)</span>
+              <span className={`${styles.summaryValue} ${styles.positive}`}>
+                ${formatCurrency(financialData.totalLaborCost)}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Waste &amp; Tax</span>
+              <span className={styles.summaryValue}>
+                $
+                {formatCurrency(
+                  financialData.totalWaste + financialData.totalTax,
+                )}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Total Expenses (COGS)</span>
+              <span className={`${styles.summaryValue} ${styles.negative}`}>
+                ${formatCurrency(financialData.totalCOGS)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Profitability */}
+        <div className={`${styles.summarySection} ${styles.profit}`}>
+          <h3 className={styles.summaryTitle}>
+            <FontAwesomeIcon icon={faArrowTrendUp} />
+            Profitability
+          </h3>
+          <div className={styles.summaryItems}>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Gross Profit</span>
+              <span
+                className={`${styles.summaryValue} ${
+                  financialData.totalGrossProfit >= 0
+                    ? styles.positive
+                    : styles.negative
+                }`}
               >
-                Close
-              </button>
+                {financialData.totalGrossProfit < 0 ? "-" : ""}$
+                {formatCurrency(Math.abs(financialData.totalGrossProfit))}
+              </span>
             </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Gross Margin</span>
+              <span className={styles.summaryValue}>
+                {formatPercentage(grossMarginPct)}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Net Profit</span>
+              <span
+                className={`${styles.summaryValue} ${
+                  financialData.totalNetProfit >= 0
+                    ? styles.positive
+                    : styles.negative
+                }`}
+              >
+                {financialData.totalNetProfit < 0 ? "-" : ""}$
+                {formatCurrency(Math.abs(financialData.totalNetProfit))}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Net Margin</span>
+              <span
+                className={`${styles.summaryValue} ${
+                  netMarginPct >= 0 ? "" : styles.negative
+                }`}
+              >
+                {formatPercentage(netMarginPct)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Project Status */}
+        <div className={`${styles.summarySection} ${styles.status}`}>
+          <h3 className={styles.summaryTitle}>
+            <FontAwesomeIcon icon={faClipboardList} />
+            Project Status
+          </h3>
+          <div className={styles.summaryItems}>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Total Projects</span>
+              <span className={styles.summaryValue}>
+                {financialData.totalProjects}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Customers</span>
+              <span className={styles.summaryValue}>
+                {financialData.totalProjects}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Fully Paid</span>
+              <span className={`${styles.summaryValue} ${styles.positive}`}>
+                {financialData.fullyPaidProjects}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>With Balance</span>
+              <span className={`${styles.summaryValue} ${styles.negative}`}>
+                {financialData.projectsWithBalance}
+              </span>
+            </div>
+            <div className={styles.summaryItem}>
+              <span className={styles.summaryLabel}>Collection Rate</span>
+              <span className={styles.summaryValue}>
+                {financialData.collectionRate.toFixed(1)}%
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Extra stat grid */}
+      <div className={styles.statGrid} style={{ marginTop: "2rem" }}>
+        <div className={`${styles.statCard} ${styles.success}`}>
+          <div className={styles.statLabel}>Markup Revenue</div>
+          <div className={styles.statValue}>
+            ${formatCurrency(financialData.additionalRevenue.markup)}
+          </div>
+        </div>
+        <div className={`${styles.statCard} ${styles.success}`}>
+          <div className={styles.statLabel}>Transportation</div>
+          <div className={styles.statValue}>
+            ${formatCurrency(financialData.additionalRevenue.transportation)}
+          </div>
+        </div>
+        <div className={`${styles.statCard} ${styles.danger}`}>
+          <div className={styles.statLabel}>Company Expenses</div>
+          <div className={styles.statValue}>
+            ${formatCurrency(financialData.totalCompanyExpenses)}
+          </div>
+        </div>
+        <div className={`${styles.statCard} ${styles.danger}`}>
+          <div className={styles.statLabel}>Outstanding</div>
+          <div className={styles.statValue}>
+            ${formatCurrency(financialData.totalOutstanding)}
+          </div>
+        </div>
+        <div className={`${styles.statCard} ${styles.danger}`}>
+          <div className={styles.statLabel}>Overdue</div>
+          <div className={styles.statValue}>
+            ${formatCurrency(financialData.totalOverdue)}
+          </div>
+        </div>
+      </div>
+
+      {/* Hidden charts restore */}
+      {hiddenCharts.length > 0 && (
+        <div className={styles.hiddenChartsSection}>
+          <h3 className={styles.hiddenChartsTitle}>
+            <FontAwesomeIcon icon={faEye} />
+            Show Hidden Charts ({hiddenCharts.length})
+          </h3>
+          <div className={styles.hiddenChartsList}>
+            {hiddenCharts.map((chartName) => (
+              <button
+                key={chartName}
+                onClick={() => toggleChart(chartName)}
+                className={styles.hiddenChartButton}
+              >
+                <FontAwesomeIcon icon={faEye} />
+                {chartName.replace(/([A-Z])/g, " $1").trim()}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Overhead Coverage Analysis Chart */}
-      <div className={styles.chartSection}>
-        <div className={styles.chartHeader}>
-          <h2>
-            <FontAwesomeIcon icon={faWallet} /> Overhead Coverage Analysis
+      {/* Overhead Coverage Analysis */}
+      <div className={styles.overheadAnalysis}>
+        <div className={styles.overheadHeader}>
+          <h2 className={styles.overheadTitle}>
+            <FontAwesomeIcon
+              icon={faShieldHalved}
+              style={{ marginRight: "1rem" }}
+            />
+            Overhead Coverage Analysis
           </h2>
-          <p className={styles.chartDescription}>
-            Comparing markup and transportation revenue against company expenses
+          <p className={styles.overheadSubtitle}>
+            Additional Revenue vs Company Expenses
           </p>
         </div>
-        <div className={styles.chartsGrid}>
-          <div className={styles.chartCard}>
-            <h3>
-              <FontAwesomeIcon icon={faChartBar} /> Revenue vs Expenses
-              Comparison
-            </h3>
-            <div className={styles.chartContainer}>
-              <Bar
-                data={{
-                  labels: ["Additional Revenue", "Company Expenses"],
-                  datasets: [
-                    {
-                      label: "Markup",
-                      data: [financialData.additionalRevenue.markup, 0],
-                      backgroundColor: "#3498db",
-                      borderRadius: 6,
-                    },
-                    {
-                      label: "Transportation",
-                      data: [financialData.additionalRevenue.transportation, 0],
-                      backgroundColor: "#2ecc71",
-                      borderRadius: 6,
-                    },
-                    {
-                      label: "Overhead",
-                      data: [0, financialData.totalOverhead],
-                      backgroundColor: "#e74c3c",
-                      borderRadius: 6,
-                    },
-                  ],
-                }}
-                options={{
-                  ...chartOptions,
-                  plugins: {
-                    ...chartOptions.plugins,
-                    title: {
-                      display: true,
-                      text: `Total Additional Revenue: ${formatCurrency(
-                        financialData.additionalRevenue.total,
-                      )} | Total Overhead: ${formatCurrency(
-                        financialData.totalOverhead,
-                      )}`,
-                      font: { family: "Poppins", size: 14, weight: 600 },
-                    },
-                  },
-                }}
-              />
-            </div>
 
-            {/* Detailed Breakdown */}
-            <div
-              style={{
-                marginTop: "1.5rem",
-                padding: "1.5rem",
-                background: "#f8f9fa",
-                borderRadius: "8px",
-              }}
-            >
-              <h4
-                style={{
-                  marginBottom: "1rem",
-                  fontSize: "1.1rem",
-                  fontWeight: "bold",
-                  color: "#2c3e50",
-                }}
-              >
-                Detailed Breakdown
-              </h4>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                  gap: "1.5rem",
-                }}
-              >
-                {/* Additional Revenue Section */}
-                <div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      fontWeight: "600",
-                      color: "#7f8c8d",
-                      marginBottom: "0.75rem",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Additional Revenue
-                  </div>
-                  <div
-                    style={{
-                      marginBottom: "0.5rem",
-                      padding: "0.5rem",
-                      background: "white",
-                      borderRadius: "4px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span style={{ fontSize: "0.9rem", color: "#34495e" }}>
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: "12px",
-                          height: "12px",
-                          background: "#3498db",
-                          borderRadius: "2px",
-                          marginRight: "8px",
-                        }}
-                      ></span>
-                      Markup
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "0.95rem",
-                        fontWeight: "bold",
-                        color: "#2c3e50",
-                      }}
-                    >
-                      {formatCurrency(financialData.additionalRevenue.markup)}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      marginBottom: "0.5rem",
-                      padding: "0.5rem",
-                      background: "white",
-                      borderRadius: "4px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span style={{ fontSize: "0.9rem", color: "#34495e" }}>
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: "12px",
-                          height: "12px",
-                          background: "#2ecc71",
-                          borderRadius: "2px",
-                          marginRight: "8px",
-                        }}
-                      ></span>
-                      Transportation
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "0.95rem",
-                        fontWeight: "bold",
-                        color: "#2c3e50",
-                      }}
-                    >
-                      {formatCurrency(
-                        financialData.additionalRevenue.transportation,
-                      )}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      marginTop: "0.75rem",
-                      paddingTop: "0.75rem",
-                      borderTop: "2px solid #dee2e6",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "1rem",
-                        fontWeight: "bold",
-                        color: "#2c3e50",
-                      }}
-                    >
-                      Total Additional Revenue
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "1.1rem",
-                        fontWeight: "bold",
-                        color: "#3498db",
-                      }}
-                    >
-                      {formatCurrency(financialData.additionalRevenue.total)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Company Expenses Section */}
-                <div>
-                  <div
-                    style={{
-                      fontSize: "0.85rem",
-                      fontWeight: "600",
-                      color: "#7f8c8d",
-                      marginBottom: "0.75rem",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                    }}
-                  >
-                    Company Expenses
-                  </div>
-                  <div
-                    style={{
-                      padding: "0.5rem",
-                      background: "white",
-                      borderRadius: "4px",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span style={{ fontSize: "0.9rem", color: "#34495e" }}>
-                      <span
-                        style={{
-                          display: "inline-block",
-                          width: "12px",
-                          height: "12px",
-                          background: "#e74c3c",
-                          borderRadius: "2px",
-                          marginRight: "8px",
-                        }}
-                      ></span>
-                      Total Overhead
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "0.95rem",
-                        fontWeight: "bold",
-                        color: "#2c3e50",
-                      }}
-                    >
-                      {formatCurrency(financialData.totalOverhead)}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      marginTop: "0.75rem",
-                      paddingTop: "0.75rem",
-                      borderTop: "2px solid #dee2e6",
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "1rem",
-                        fontWeight: "bold",
-                        color: "#2c3e50",
-                      }}
-                    >
-                      Net Difference
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "1.1rem",
-                        fontWeight: "bold",
-                        color:
-                          financialData.additionalRevenue.total >=
-                          financialData.totalOverhead
-                            ? "#27ae60"
-                            : "#e74c3c",
-                      }}
-                    >
-                      {financialData.additionalRevenue.total >=
-                      financialData.totalOverhead
-                        ? "+"
-                        : ""}
-                      {formatCurrency(
-                        financialData.additionalRevenue.total -
-                          financialData.totalOverhead,
-                      )}
-                    </span>
-                  </div>
-                </div>
+        <div className={styles.overheadContent}>
+          <div className={styles.overheadCard}>
+            <h4>Additional Revenue (Fully Paid Projects)</h4>
+            <div className={styles.overheadBreakdown}>
+              <div className={styles.overheadItem}>
+                <span>
+                  <span
+                    className={styles.overheadColorDot}
+                    style={{ background: "#3498db" }}
+                  />
+                  Markup
+                </span>
+                <span>
+                  ${formatCurrency(financialData.additionalRevenue.markup)}
+                </span>
+              </div>
+              <div className={styles.overheadItem}>
+                <span>
+                  <span
+                    className={styles.overheadColorDot}
+                    style={{ background: "#2ecc71" }}
+                  />
+                  Transportation
+                </span>
+                <span>
+                  $
+                  {formatCurrency(
+                    financialData.additionalRevenue.transportation,
+                  )}
+                </span>
+              </div>
+              <div className={`${styles.overheadItem} ${styles.overheadTotal}`}>
+                <span style={{ fontWeight: "700", fontSize: "1.125rem" }}>
+                  Total Additional Revenue
+                </span>
+                <span style={{ fontWeight: "800", fontSize: "1.25rem" }}>
+                  ${formatCurrency(financialData.additionalRevenue.total)}
+                </span>
               </div>
             </div>
+          </div>
 
-            {/* Coverage Status */}
-            <div
-              style={{
-                marginTop: "1rem",
-                padding: "1rem",
-                background:
-                  financialData.additionalRevenue.total >=
-                  financialData.totalOverhead
-                    ? "#d4edda"
-                    : "#f8d7da",
-                borderRadius: "8px",
-                border: `2px solid ${
-                  financialData.additionalRevenue.total >=
-                  financialData.totalOverhead
-                    ? "#28a745"
-                    : "#dc3545"
-                }`,
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "1.1rem",
-                  fontWeight: "bold",
-                  color:
-                    financialData.additionalRevenue.total >=
-                    financialData.totalOverhead
-                      ? "#155724"
-                      : "#721c24",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                {financialData.additionalRevenue.total >=
-                financialData.totalOverhead
-                  ? "✓ Overhead Fully Covered"
-                  : "✗ Overhead Not Covered"}
+          <div className={styles.overheadCard}>
+            <h4>Company Expenses</h4>
+            <div className={styles.overheadBreakdown}>
+              <div className={styles.overheadItem}>
+                <span>
+                  <span
+                    className={styles.overheadColorDot}
+                    style={{ background: "#e74c3c" }}
+                  />
+                  Total Overhead
+                </span>
+                <span>
+                  ${formatCurrency(financialData.totalCompanyExpenses)}
+                </span>
               </div>
-              <div
-                style={{
-                  fontSize: "0.95rem",
-                  color:
-                    financialData.additionalRevenue.total >=
-                    financialData.totalOverhead
-                      ? "#155724"
-                      : "#721c24",
-                }}
-              >
-                {financialData.additionalRevenue.total >=
-                financialData.totalOverhead
-                  ? `Surplus: ${formatCurrency(
-                      financialData.additionalRevenue.total -
-                        financialData.totalOverhead,
-                    )} (${(
-                      (financialData.additionalRevenue.total /
-                        financialData.totalOverhead) *
-                      100
-                    ).toFixed(1)}% coverage)`
-                  : `Shortfall: ${formatCurrency(
-                      financialData.totalOverhead -
-                        financialData.additionalRevenue.total,
-                    )} (${(
-                      (financialData.additionalRevenue.total /
-                        financialData.totalOverhead) *
-                      100
-                    ).toFixed(1)}% coverage)`}
+              <div className={`${styles.overheadItem} ${styles.overheadTotal}`}>
+                <span style={{ fontWeight: "700", fontSize: "1.125rem" }}>
+                  Net Difference
+                </span>
+                <span
+                  style={{
+                    fontWeight: "800",
+                    fontSize: "1.25rem",
+                    color:
+                      financialData.additionalRevenue.total >=
+                      financialData.totalCompanyExpenses
+                        ? "#2ecc71"
+                        : "#e74c3c",
+                  }}
+                >
+                  {financialData.additionalRevenue.total >=
+                  financialData.totalCompanyExpenses
+                    ? "+"
+                    : ""}
+                  $
+                  {formatCurrency(
+                    financialData.additionalRevenue.total -
+                      financialData.totalCompanyExpenses,
+                  )}
+                </span>
               </div>
             </div>
+          </div>
+        </div>
+
+        <div
+          className={`${styles.overheadStatus} ${
+            financialData.additionalRevenue.total >=
+            financialData.totalCompanyExpenses
+              ? styles.covered
+              : styles.deficit
+          }`}
+        >
+          <div className={styles.overheadStatusIcon}>
+            {financialData.additionalRevenue.total >=
+            financialData.totalCompanyExpenses
+              ? "✓"
+              : "✗"}
+          </div>
+          <div className={styles.overheadStatusTitle}>
+            {financialData.additionalRevenue.total >=
+            financialData.totalCompanyExpenses
+              ? "Overhead Fully Covered"
+              : "Overhead Not Covered"}
+          </div>
+          <div className={styles.overheadStatusText}>
+            {financialData.additionalRevenue.total >=
+            financialData.totalCompanyExpenses
+              ? `Surplus: $${formatCurrency(
+                  financialData.additionalRevenue.total -
+                    financialData.totalCompanyExpenses,
+                )}`
+              : `Shortfall: $${formatCurrency(
+                  financialData.totalCompanyExpenses -
+                    financialData.additionalRevenue.total,
+                )}`}
+          </div>
+          <div className={styles.overheadPercentage}>
+            {financialData.totalCompanyExpenses > 0
+              ? `${(
+                  (financialData.additionalRevenue.total /
+                    financialData.totalCompanyExpenses) *
+                  100
+                ).toFixed(1)}% Coverage`
+              : "0% Coverage"}
           </div>
         </div>
       </div>

@@ -20,18 +20,14 @@ class ErrorBoundary extends React.Component {
     const componentName = errorInfo.componentStack
       .split('\n')[1]
       ?.replace(/^\s*at\s+(\w+).*$/, '$1') || 'Unknown';
-    
-    // Convert error to safe string for reporting
-    const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
-    
-    this.props.addError(errorMessage, {
+    this.props.addError(error, {
       severity: ERROR_SEVERITY.CRITICAL,
       category: ERROR_CATEGORIES.SYSTEM,
       component: componentName,
       context: {
         componentStack: errorInfo.componentStack,
-        isErrorBoundary: true
-      }
+        isErrorBoundary: true,
+      },
     });
 
     // Log detailed error information
@@ -43,7 +39,7 @@ class ErrorBoundary extends React.Component {
 
   render() {
     if (this.state.hasError) {
-      // Fallback UI - render a simple error message instead of crashing
+      // Fallback UI — render a simple error message instead of crashing
       const errorMessage = this.state.error?.message || 'Something went wrong';
       return (
         <div style={{
@@ -52,7 +48,7 @@ class ErrorBoundary extends React.Component {
           border: '1px solid #ff6b6b',
           borderRadius: '4px',
           backgroundColor: '#ffe6e6',
-          color: '#d63031'
+          color: '#d63031',
         }}>
           <h3 style={{ margin: '0 0 10px 0' }}>
             <i className="fas fa-exclamation-triangle" style={{ marginRight: '8px' }}></i>
@@ -63,15 +59,15 @@ class ErrorBoundary extends React.Component {
       );
     }
 
-    return this.props.children; 
+    return this.props.children;
   }
 }
 
 export default function ErrorBoundaryWrapper({ children, boundaryName = 'App' }) {
   const { addError } = useError();
-  
+
   return (
-    <ErrorBoundary 
+    <ErrorBoundary
       addError={addError}
       boundaryName={boundaryName}
     >
@@ -82,6 +78,6 @@ export default function ErrorBoundaryWrapper({ children, boundaryName = 'App' })
 
 ErrorBoundaryWrapper.propTypes = {
   children: PropTypes.node.isRequired,
-  boundaryName: PropTypes.string
+  boundaryName: PropTypes.string,
 };
 
