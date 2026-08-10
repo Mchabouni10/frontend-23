@@ -104,9 +104,6 @@ function HomePageContent() {
 
   const workTypeContext = useWorkType();
   const {
-    getMeasurementType,
-    isValidSubtype,
-    getWorkTypeDetails,
     // ── FIX: use taxonomyReady (data actually loaded) instead of checking
     //    whether functions exist (they always exist immediately).
     taxonomyReady,

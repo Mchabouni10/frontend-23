@@ -125,7 +125,7 @@ export function saveProject(projectData) {
 
   return sendRequest(BASE_URL, 'POST', projectData).catch((err) => {
     // If it's a network error or fetch failed, save offline
-    if (err.message && err.message.includes('fetch') || err.message.includes('Network')) {
+    if (err.message && (err.message.includes('fetch') || err.message.includes('Network'))) {
       console.warn('Network offline or fetch failed, saving project locally.');
       return saveLocalProject(projectData);
     }
@@ -157,7 +157,7 @@ export function updateProject(id, projectData) {
   }
 
   return sendRequest(`${BASE_URL}${id}`, 'PUT', projectData).catch((err) => {
-    if (err.message && err.message.includes('fetch') || err.message.includes('Network')) {
+    if (err.message && (err.message.includes('fetch') || err.message.includes('Network'))) {
       console.warn(`Network offline or fetch failed, saving update for project ${id} locally.`);
       // Ensure we keep the original ID so when we sync it does a PUT
       return saveLocalProject({ ...projectData, _id: id });
