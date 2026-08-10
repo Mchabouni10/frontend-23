@@ -1,3 +1,5 @@
+// src/components/Calculator/CostBreakdown/CostBreakdown.jsx
+
 import { useState, useMemo, useEffect, useContext } from "react";
 import { CategoriesContext } from "../../../context/CategoriesContext";
 import { SettingsContext } from "../../../context/SettingsContext";
@@ -5,6 +7,9 @@ import { CalculationContext } from "../../../context/CalculationContext";
 import { useError } from "../../../context/ErrorContext";
 import { useWorkType } from "../../../context/WorkTypeContext";
 import { CalculatorEngine } from "../engine/CalculatorEngine";
+// ✅ FIX 1: Import formatCurrency and parseNumber from the engine — the single
+// source of truth. The local formatCurrency definition has been removed.
+import { formatCurrency, parseNumber } from "../engine/CalculatorEngine";
 import styles from "./CostBreakdown.module.css";
 
 // ─── CostBreakdown ────────────────────────────────────────────────────────────
@@ -29,9 +34,9 @@ export default function CostBreakdown({
   settings: propSettings,
 }) {
   // ── Unconditional context reads (never wrapped in try/catch) ──────────────
-  const calcCtx = useContext(CalculationContext); // null outside provider
+  const calcCtx = useContext(CalculationContext);   // null outside provider
   const categoryCtx = useContext(CategoriesContext); // null outside provider
-  const settingsCtx = useContext(SettingsContext); // null outside provider
+  const settingsCtx = useContext(SettingsContext);   // null outside provider
 
   // useError is always available (ErrorProvider wraps the whole app)
   const { addError } = useError();
@@ -51,25 +56,24 @@ export default function CostBreakdown({
     [settingsCtx?.settings, propSettings],
   );
 
-  // ── UI state ──────────────────────────────────────────────────────────────
-  const [showMaterialDetails, setShowMaterialDetails] = useState(false);
-  const [showLaborDetails, setShowLaborDetails] = useState(false);
-  const [showMiscDetails, setShowMiscDetails] = useState(false);
-  const [showPaymentDetails, setShowPaymentDetails] = useState(false);
-  const [showWasteDetails, setShowWasteDetails] = useState(false);
+  // ── UI state — one object instead of 5 separate booleans ─────────────────
+  // ✅ FIX 7: Consolidated 5 boolean useState calls into a single Set-based
+  // state. Add new expandable sections by adding a new panel name — no new
+  // useState needed.
+  const [openPanels, setOpenPanels] = useState(new Set());
+
+  const togglePanel = (panel) =>
+    setOpenPanels((prev) => {
+      const next = new Set(prev);
+      next.has(panel) ? next.delete(panel) : next.add(panel);
+      return next;
+    });
+
+  const isPanelOpen = (panel) => openPanels.has(panel);
+
   const [materialBreakdown, setMaterialBreakdown] = useState([]);
   const [laborBreakdown, setLaborBreakdown] = useState([]);
   const [isProcessingBreakdowns, setIsProcessingBreakdowns] = useState(false);
-
-  // ── Waste entries total (always derived from settings directly) ───────────
-  const wasteEntriesTotal = useMemo(() => {
-    const wasteEntries = settings.wasteEntries || [];
-    return wasteEntries.reduce((total, entry) => {
-      const surfaceCost = parseFloat(entry.surfaceCost) || 0;
-      const wasteFactor = parseFloat(entry.wasteFactor) || 0;
-      return total + surfaceCost * wasteFactor;
-    }, 0);
-  }, [settings.wasteEntries]);
 
   // ── Engine (only created in standalone mode) ──────────────────────────────
   // When calcCtx is present we reuse its already-computed results and skip
@@ -105,19 +109,27 @@ export default function CostBreakdown({
     laborCost: "0.00",
     laborCostBeforeDiscount: "0.00",
     laborDiscount: "0.00",
+    // ✅ FIX 2: wasteCost is the engine's field name — no local re-calculation.
     wasteCost: "0.00",
     taxAmount: "0.00",
     markupAmount: "0.00",
     transportationFee: "0.00",
     miscFeesTotal: "0.00",
+    creditsTotal: "0.00",
     subtotal: "0.00",
     errors: [],
   };
   const EMPTY_PAYMENTS = {
     totalPaid: "0.00",
+    totalRefunded: "0.00",
+    totalCredits: "0.00",
     totalDue: "0.00",
     overduePayments: "0.00",
     deposit: "0.00",
+    isFullyPaid: false,
+    isOverpaid: false,
+    overpaidAmount: "0.00",
+    refundReady: false,
     summary: { paidPayments: 0, totalPayments: 0, overduePayments: 0 },
     errors: [],
   };
@@ -241,28 +253,32 @@ export default function CostBreakdown({
 
               const workTypeDisplay = getWorkTypeDisplayName(item);
 
-              if (parseFloat(materialCost) > 0) {
+              if (parseNumber(materialCost) > 0) {
                 materialItems.push({
                   itemNumber: itemCounter,
+                  // ✅ FIX 3: Use stable, unique IDs instead of array index as key.
+                  // Combines category name + item id/name + counter for uniqueness.
+                  id: `${category.name}::${item.id ?? item.name ?? itemCounter}::mat`,
                   category: category.name,
                   workType: workTypeDisplay,
                   quantity: units,
                   unitType: unitLabel,
-                  costPerUnit: parseFloat(item.materialCost) || 0,
+                  costPerUnit: parseNumber(item.materialCost),
                   total: materialCost,
                   units,
                 });
               }
 
-              if (parseFloat(laborCost) > 0) {
+              if (parseNumber(laborCost) > 0) {
                 laborItems.push({
                   itemNumber: itemCounter,
+                  id: `${category.name}::${item.id ?? item.name ?? itemCounter}::lab`,
                   category: category.name,
                   workType: workTypeDisplay,
                   description: item.description || "",
                   quantity: units,
                   unitType: unitLabel,
-                  costPerUnit: parseFloat(item.laborCost) || 0,
+                  costPerUnit: parseNumber(item.laborCost),
                   total: laborCost,
                   units,
                 });
@@ -291,15 +307,6 @@ export default function CostBreakdown({
     processBreakdowns();
   }, [categories, detailEngine, addError]);
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  const formatCurrency = (value) =>
-    new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(parseFloat(value) || 0);
-
   // ── Early exit ────────────────────────────────────────────────────────────
   if (!categories || !Array.isArray(categories)) {
     return (
@@ -312,6 +319,17 @@ export default function CostBreakdown({
 
   const hasData = categories.some((cat) => cat.workItems?.length > 0);
   const wasteEntries = settings.wasteEntries || [];
+
+  // ✅ FIX 6: Derive conditional-render flags from engine values so zero-value
+  // rows are hidden automatically — engine is still the only source of truth.
+  const hasTax          = parseNumber(calculations.totals.taxAmount) > 0;
+  const hasMarkup       = parseNumber(calculations.totals.markupAmount) > 0;
+  const hasTransport    = parseNumber(calculations.totals.transportationFee) > 0;
+  const hasLaborDiscount = parseNumber(calculations.totals.laborDiscount) > 0;
+  const hasMiscFees = parseNumber(calculations.totals.miscFeesTotal) > 0;
+  const hasCredits = parseNumber(calculations.totals.creditsTotal) > 0;
+  // ✅ FIX 2: Use engine's wasteCost field — no local re-calculation.
+  const hasWaste        = parseNumber(calculations.totals.wasteCost) > 0;
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -334,7 +352,8 @@ export default function CostBreakdown({
               ...(calculations.totals.errors || []),
               ...(calculations.payments.errors || []),
             ].map((error, index) => (
-              <li key={index}>{error}</li>
+              // Error messages are unique strings — safe to use as key here.
+              <li key={`err-${index}-${error}`}>{error}</li>
             ))}
           </ul>
         </div>
@@ -354,26 +373,32 @@ export default function CostBreakdown({
               </tr>
             </thead>
             <tbody>
-              {calculations.categoryBreakdowns.map((cat, index) => (
-                <tr key={index} className={styles.categoryRow}>
-                  <td>{cat.name}</td>
-                  <td className={styles.centerAlign}>{cat.itemCount}</td>
-                  <td className={styles.rightAlign}>
+              {calculations.categoryBreakdowns.map((cat) => (
+                // ✅ FIX 3: cat.name is a stable, unique key for categories.
+                <tr key={cat.key ?? cat.name} className={styles.categoryRow}>
+                  <td data-label="Category">{cat.name}</td>
+                  <td className={styles.centerAlign} data-label="Items">
+                    {cat.itemCount}
+                  </td>
+                  <td className={styles.rightAlign} data-label="Material">
                     {formatCurrency(cat.materialCost)}
                   </td>
-                  <td className={styles.rightAlign}>
+                  <td className={styles.rightAlign} data-label="Labor">
                     {formatCurrency(cat.laborCost)}
                   </td>
-                  <td className={`${styles.rightAlign} ${styles.subtotal}`}>
+                  <td
+                    className={`${styles.rightAlign} ${styles.subtotal}`}
+                    data-label="Subtotal"
+                  >
                     {formatCurrency(cat.subtotal)}
                   </td>
                 </tr>
               ))}
               <tr className={styles.totalRow}>
-                <td>
+                <td data-label="Total">
                   <strong>Total</strong>
                 </td>
-                <td className={styles.centerAlign}>
+                <td className={styles.centerAlign} data-label="Items">
                   <strong>
                     {calculations.categoryBreakdowns.reduce(
                       (sum, cat) => sum + cat.itemCount,
@@ -381,17 +406,20 @@ export default function CostBreakdown({
                     )}
                   </strong>
                 </td>
-                <td className={styles.rightAlign}>
+                <td className={styles.rightAlign} data-label="Material">
                   <strong>
                     {formatCurrency(calculations.totals.materialCost)}
                   </strong>
                 </td>
-                <td className={styles.rightAlign}>
+                <td className={styles.rightAlign} data-label="Labor">
                   <strong>
                     {formatCurrency(calculations.totals.laborCost)}
                   </strong>
                 </td>
-                <td className={`${styles.rightAlign} ${styles.subtotal}`}>
+                <td
+                  className={`${styles.rightAlign} ${styles.subtotal}`}
+                  data-label="Subtotal"
+                >
                   <strong>
                     {formatCurrency(calculations.totals.subtotal)}
                   </strong>
@@ -408,24 +436,28 @@ export default function CostBreakdown({
           <tbody>
             {/* ── Material costs ── */}
             <tr className={styles.detailRow}>
-              <td>
+              <td data-label="Line Item">
                 <div className={styles.labelWithButton}>
                   <span>Material Costs</span>
                   <button
                     className={styles.toggleButton}
-                    onClick={() => setShowMaterialDetails(!showMaterialDetails)}
+                    onClick={() => togglePanel("material")}
+                    aria-expanded={isPanelOpen("material")}
                   >
-                    {showMaterialDetails ? "▼ Hide" : "▶ Show"} Details
+                    <i
+                      className={`fas ${isPanelOpen("material") ? "fa-chevron-down" : "fa-chevron-right"}`}
+                    />
+                    {isPanelOpen("material") ? " Hide" : " Show"} Details
                   </button>
                 </div>
               </td>
-              <td className={styles.rightAlign}>
+              <td className={styles.rightAlign} data-label="Amount">
                 <span className={styles.totalValue}>
                   {formatCurrency(calculations.totals.materialCost)}
                 </span>
               </td>
             </tr>
-            {showMaterialDetails && (
+            {isPanelOpen("material") && (
               <tr>
                 <td colSpan="2">
                   <div className={styles.detailBreakdown}>
@@ -446,8 +478,9 @@ export default function CostBreakdown({
                           </tr>
                         </thead>
                         <tbody>
-                          {materialBreakdown.map((item, index) => (
-                            <tr key={index}>
+                          {materialBreakdown.map((item) => (
+                            // ✅ FIX 3: stable composite ID set in the effect above.
+                            <tr key={item.id}>
                               <td className={styles.itemNumber}>
                                 #{item.itemNumber}
                               </td>
@@ -496,24 +529,28 @@ export default function CostBreakdown({
 
             {/* ── Labor costs ── */}
             <tr className={styles.detailRow}>
-              <td>
+              <td data-label="Line Item">
                 <div className={styles.labelWithButton}>
                   <span>Labor Costs</span>
                   <button
                     className={styles.toggleButton}
-                    onClick={() => setShowLaborDetails(!showLaborDetails)}
+                    onClick={() => togglePanel("labor")}
+                    aria-expanded={isPanelOpen("labor")}
                   >
-                    {showLaborDetails ? "▼ Hide" : "▶ Show"} Details
+                    <i
+                      className={`fas ${isPanelOpen("labor") ? "fa-chevron-down" : "fa-chevron-right"}`}
+                    />
+                    {isPanelOpen("labor") ? " Hide" : " Show"} Details
                   </button>
                 </div>
               </td>
-              <td className={styles.rightAlign}>
+              <td className={styles.rightAlign} data-label="Amount">
                 <span className={styles.totalValue}>
                   {formatCurrency(calculations.totals.laborCostBeforeDiscount)}
                 </span>
               </td>
             </tr>
-            {showLaborDetails && (
+            {isPanelOpen("labor") && (
               <tr>
                 <td colSpan="2">
                   <div className={styles.detailBreakdown}>
@@ -535,8 +572,8 @@ export default function CostBreakdown({
                           </tr>
                         </thead>
                         <tbody>
-                          {laborBreakdown.map((item, index) => (
-                            <tr key={index}>
+                          {laborBreakdown.map((item) => (
+                            <tr key={item.id}>
                               <td className={styles.itemNumber}>
                                 #{item.itemNumber}
                               </td>
@@ -588,14 +625,14 @@ export default function CostBreakdown({
               </tr>
             )}
 
-            {/* ── Labor discount ── */}
-            {parseFloat(calculations.totals.laborDiscount) > 0 && (
+            {/* ── Labor discount — only shown when non-zero ── */}
+            {hasLaborDiscount && (
               <tr className={styles.discountRow}>
-                <td>
+                <td data-label="Line Item">
                   Labor Discount (
                   {((settings?.laborDiscount || 0) * 100).toFixed(1)}%)
                 </td>
-                <td className={styles.rightAlign}>
+                <td className={styles.rightAlign} data-label="Amount">
                   -{formatCurrency(calculations.totals.laborDiscount)}
                 </td>
               </tr>
@@ -603,36 +640,41 @@ export default function CostBreakdown({
 
             {/* ── Base subtotal ── */}
             <tr className={styles.subtotalRow}>
-              <td>
+              <td data-label="Line Item">
                 <strong>Base Subtotal</strong>
               </td>
-              <td className={styles.rightAlign}>
+              <td className={styles.rightAlign} data-label="Amount">
                 <strong>{formatCurrency(calculations.totals.subtotal)}</strong>
               </td>
             </tr>
 
-            {/* ── Waste by surface ── */}
-            {wasteEntries.length > 0 && (
+            {/* ── Waste by surface — only shown when non-zero ── */}
+            {/* ✅ FIX 2: reads engine's wasteCost; wasteEntriesTotal removed. */}
+            {hasWaste && (
               <>
                 <tr className={styles.detailRow}>
-                  <td>
+                  <td data-label="Line Item">
                     <div className={styles.labelWithButton}>
                       <span>Waste Factor by Surface</span>
                       <button
                         className={styles.toggleButton}
-                        onClick={() => setShowWasteDetails(!showWasteDetails)}
+                        onClick={() => togglePanel("waste")}
+                        aria-expanded={isPanelOpen("waste")}
                       >
-                        {showWasteDetails ? "▼ Hide" : "▶ Show"} Details
+                        <i
+                          className={`fas ${isPanelOpen("waste") ? "fa-chevron-down" : "fa-chevron-right"}`}
+                        />
+                        {isPanelOpen("waste") ? " Hide" : " Show"} Details
                       </button>
                     </div>
                   </td>
-                  <td className={styles.rightAlign}>
+                  <td className={styles.rightAlign} data-label="Amount">
                     <span className={styles.totalValue}>
-                      {formatCurrency(wasteEntriesTotal)}
+                      {formatCurrency(calculations.totals.wasteCost)}
                     </span>
                   </td>
                 </tr>
-                {showWasteDetails && (
+                {isPanelOpen("waste") && (
                   <tr>
                     <td colSpan="2">
                       <div className={styles.detailBreakdown}>
@@ -650,25 +692,40 @@ export default function CostBreakdown({
                           <tbody>
                             {wasteEntries.map((entry, index) => {
                               const surfaceCost =
-                                parseFloat(entry.surfaceCost) || 0;
+                                parseNumber(entry.surfaceCost);
                               const wasteFactor =
-                                parseFloat(entry.wasteFactor) || 0;
+                                parseNumber(entry.wasteFactor);
                               const wasteCost = surfaceCost * wasteFactor;
+                              // Waste entries have no stable ID — use composite
+                              // of surface name + index (entries rarely reorder).
+                              const entryKey =
+                                entry.surfaceName
+                                  ? `waste-${entry.surfaceName}`
+                                  : `waste-${index}`;
                               return (
-                                <tr key={index}>
-                                  <td>
+                                <tr key={entryKey}>
+                                  <td data-label="Surface">
                                     <strong>
                                       {entry.surfaceName ||
                                         `Surface ${index + 1}`}
                                     </strong>
                                   </td>
-                                  <td className={styles.rightAlign}>
+                                  <td
+                                    className={styles.rightAlign}
+                                    data-label="Material Cost"
+                                  >
                                     {formatCurrency(surfaceCost)}
                                   </td>
-                                  <td className={styles.rightAlign}>
+                                  <td
+                                    className={styles.rightAlign}
+                                    data-label="Waste %"
+                                  >
                                     {(wasteFactor * 100).toFixed(1)}%
                                   </td>
-                                  <td className={styles.rightAlign}>
+                                  <td
+                                    className={styles.rightAlign}
+                                    data-label="Waste Cost"
+                                  >
                                     <strong>{formatCurrency(wasteCost)}</strong>
                                   </td>
                                 </tr>
@@ -680,7 +737,9 @@ export default function CostBreakdown({
                               </td>
                               <td className={styles.rightAlign}>
                                 <strong>
-                                  {formatCurrency(wasteEntriesTotal)}
+                                  {formatCurrency(
+                                    calculations.totals.wasteCost,
+                                  )}
                                 </strong>
                               </td>
                             </tr>
@@ -693,48 +752,67 @@ export default function CostBreakdown({
               </>
             )}
 
-            {/* ── Tax, markup, transportation ── */}
-            <tr>
-              <td>Tax ({((settings?.taxRate || 0) * 100).toFixed(1)}%)</td>
-              <td className={styles.rightAlign}>
-                {formatCurrency(calculations.totals.taxAmount)}
-              </td>
-            </tr>
-            <tr>
-              <td>Markup ({((settings?.markup || 0) * 100).toFixed(1)}%)</td>
-              <td className={styles.rightAlign}>
-                {formatCurrency(calculations.totals.markupAmount)}
-              </td>
-            </tr>
-            <tr>
-              <td>Transportation Fee</td>
-              <td className={styles.rightAlign}>
-                {formatCurrency(calculations.totals.transportationFee)}
-              </td>
-            </tr>
+            {/* ── Tax — only shown when non-zero ── */}
+            {/* ✅ FIX 6: Conditionally rendered; no $0.00 clutter. */}
+            {hasTax && (
+              <tr>
+                <td data-label="Line Item">
+                  Tax ({((settings?.taxRate || 0) * 100).toFixed(1)}%)
+                </td>
+                <td className={styles.rightAlign} data-label="Amount">
+                  {formatCurrency(calculations.totals.taxAmount)}
+                </td>
+              </tr>
+            )}
 
-            {/* ── Misc fees ── */}
-            {parseFloat(calculations.totals.miscFeesTotal) > 0 && (
+            {/* ── Markup — only shown when non-zero ── */}
+            {hasMarkup && (
+              <tr>
+                <td data-label="Line Item">
+                  Markup ({((settings?.markup || 0) * 100).toFixed(1)}%)
+                </td>
+                <td className={styles.rightAlign} data-label="Amount">
+                  {formatCurrency(calculations.totals.markupAmount)}
+                </td>
+              </tr>
+            )}
+
+            {/* ── Transportation fee — only shown when non-zero ── */}
+            {hasTransport && (
+              <tr>
+                <td data-label="Line Item">Transportation Fee</td>
+                <td className={styles.rightAlign} data-label="Amount">
+                  {formatCurrency(calculations.totals.transportationFee)}
+                </td>
+              </tr>
+            )}
+
+            {/* ── Misc fees — only shown when non-zero ── */}
+            {hasMiscFees && (
               <>
                 <tr className={styles.detailRow}>
-                  <td>
+                  <td data-label="Line Item">
                     <div className={styles.labelWithButton}>
                       <span>Miscellaneous Fees</span>
                       <button
                         className={styles.toggleButton}
-                        onClick={() => setShowMiscDetails(!showMiscDetails)}
+                        onClick={() => togglePanel("misc")}
+                        aria-expanded={isPanelOpen("misc")}
                       >
-                        {showMiscDetails ? "▼ Hide" : "▶ Show"} Details
+                        <i
+                          className={`fas ${isPanelOpen("misc") ? "fa-chevron-down" : "fa-chevron-right"}`}
+                        />
+                        {isPanelOpen("misc") ? " Hide" : " Show"} Details
                       </button>
                     </div>
                   </td>
-                  <td className={styles.rightAlign}>
+                  <td className={styles.rightAlign} data-label="Amount">
                     <span className={styles.totalValue}>
                       {formatCurrency(calculations.totals.miscFeesTotal)}
                     </span>
                   </td>
                 </tr>
-                {showMiscDetails && (
+                {isPanelOpen("misc") && (
                   <tr>
                     <td colSpan="2">
                       <div className={styles.detailBreakdown}>
@@ -747,11 +825,15 @@ export default function CostBreakdown({
                           </thead>
                           <tbody>
                             {(settings?.miscFees || []).map((fee, i) => (
-                              <tr key={i}>
-                                <td>
+                              // ✅ FIX 3: fee.name is the most stable key available.
+                              <tr key={fee.id ?? fee.name ?? `misc-${i}`}>
+                                <td data-label="Description">
                                   <strong>{fee.name || "Unnamed Fee"}</strong>
                                 </td>
-                                <td className={styles.rightAlign}>
+                                <td
+                                  className={styles.rightAlign}
+                                  data-label="Amount"
+                                >
                                   {formatCurrency(fee.amount)}
                                 </td>
                               </tr>
@@ -777,12 +859,83 @@ export default function CostBreakdown({
               </>
             )}
 
+            {/* ── Credits / price adjustments — only shown when non-zero ── */}
+            {hasCredits && (
+              <>
+                <tr className={styles.detailRow}>
+                  <td data-label="Line Item">
+                    <div className={styles.labelWithButton}>
+                      <span>Credits / Price Adjustments</span>
+                      <button
+                        className={styles.toggleButton}
+                        onClick={() => togglePanel("credits")}
+                        aria-expanded={isPanelOpen("credits")}
+                      >
+                        <i
+                          className={`fas ${isPanelOpen("credits") ? "fa-chevron-down" : "fa-chevron-right"}`}
+                        />
+                        {isPanelOpen("credits") ? " Hide" : " Show"} Details
+                      </button>
+                    </div>
+                  </td>
+                  <td className={styles.rightAlign} data-label="Amount">
+                    <span className={styles.refundAmount}>
+                      −{formatCurrency(calculations.totals.creditsTotal)}
+                    </span>
+                  </td>
+                </tr>
+                {isPanelOpen("credits") && (
+                  <tr>
+                    <td colSpan="2">
+                      <div className={styles.detailBreakdown}>
+                        <table className={styles.innerTable}>
+                          <thead>
+                            <tr>
+                              <th>Reason</th>
+                              <th className={styles.rightAlign}>Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(settings?.credits || []).map((credit, i) => (
+                              <tr key={credit.id ?? `credit-${i}`}>
+                                <td data-label="Reason">
+                                  <strong>{credit.reason || "Credit"}</strong>
+                                  {credit.date && (
+                                    <span style={{ marginLeft: "0.5em", opacity: 0.7 }}>
+                                      ({new Date(credit.date).toLocaleDateString()})
+                                    </span>
+                                  )}
+                                </td>
+                                <td className={styles.rightAlign} data-label="Amount">
+                                  −{formatCurrency(credit.amount)}
+                                </td>
+                              </tr>
+                            ))}
+                            <tr className={styles.subtotalRow}>
+                              <td className={styles.rightAlign}>
+                                <strong>Total Credits:</strong>
+                              </td>
+                              <td className={styles.rightAlign}>
+                                <strong>
+                                  −{formatCurrency(calculations.totals.creditsTotal)}
+                                </strong>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </>
+            )}
+
             {/* ── Grand total ── */}
             <tr className={styles.grandTotalRow}>
-              <td>
+              <td data-label="Grand Total">
                 <strong>Grand Total</strong>
               </td>
-              <td className={styles.rightAlign}>
+              <td className={styles.rightAlign} data-label="Amount">
                 <strong>{formatCurrency(calculations.totals.total)}</strong>
               </td>
             </tr>
@@ -796,38 +949,44 @@ export default function CostBreakdown({
           <span>Payment Summary</span>
           <button
             className={styles.toggleButton}
-            onClick={() => setShowPaymentDetails(!showPaymentDetails)}
+            onClick={() => togglePanel("payments")}
+            aria-expanded={isPanelOpen("payments")}
           >
-            {showPaymentDetails ? "▼ Hide" : "▶ Show"} Details
+            <i
+              className={`fas ${isPanelOpen("payments") ? "fa-chevron-down" : "fa-chevron-right"}`}
+            />
+            {isPanelOpen("payments") ? " Hide" : " Show"} Details
           </button>
         </h4>
         <table className={styles.breakdownTable}>
           <tbody>
             <tr>
-              <td>Project Total</td>
-              <td className={styles.rightAlign}>
+              <td data-label="Description">Project Total</td>
+              <td className={styles.rightAlign} data-label="Amount">
                 {formatCurrency(calculations.totals.total)}
               </td>
             </tr>
             <tr className={styles.paidRow}>
-              <td>Total Paid</td>
-              <td className={styles.rightAlign}>
+              <td data-label="Description">Total Paid</td>
+              <td className={styles.rightAlign} data-label="Amount">
                 -{formatCurrency(calculations.payments.totalPaid)}
               </td>
             </tr>
-            {parseFloat(calculations.payments.overduePayments) > 0 && (
+            {parseNumber(calculations.payments.overduePayments) > 0 && (
               <tr className={styles.overdueRow}>
-                <td>⚠ Overdue Payments</td>
-                <td className={styles.rightAlign}>
+                <td data-label="Description">
+                  <i className="fas fa-exclamation-triangle" /> Overdue Payments
+                </td>
+                <td className={styles.rightAlign} data-label="Amount">
                   {formatCurrency(calculations.payments.overduePayments)}
                 </td>
               </tr>
             )}
             <tr className={styles.remainingBalanceRow}>
-              <td>
+              <td data-label="Description">
                 <strong>Remaining Balance</strong>
               </td>
-              <td className={styles.rightAlign}>
+              <td className={styles.rightAlign} data-label="Amount">
                 <strong>
                   {formatCurrency(calculations.payments.totalDue)}
                 </strong>
@@ -836,10 +995,10 @@ export default function CostBreakdown({
           </tbody>
         </table>
 
-        {showPaymentDetails && (
+        {isPanelOpen("payments") && (
           <div className={styles.detailBreakdown}>
             <h5 className={styles.paymentDetailsTitle}>Payment History</h5>
-            {!settings?.payments?.length && !settings?.deposit ? (
+            {!settings?.payments?.length ? (
               <p className={styles.emptyText}>No payments recorded yet.</p>
             ) : (
               <table className={styles.innerTable}>
@@ -854,55 +1013,71 @@ export default function CostBreakdown({
                   </tr>
                 </thead>
                 <tbody>
-                  {settings?.deposit > 0 && (
-                    <tr className={styles.depositRow}>
-                      <td>
-                        {settings.depositDate
-                          ? new Date(settings.depositDate).toLocaleDateString()
-                          : "—"}
-                      </td>
-                      <td>
-                        <i
-                          className="fas fa-hand-holding-usd"
-                          style={{
-                            marginRight: "6px",
-                            color: "var(--primary)",
-                          }}
-                        />
-                        <strong>Deposit</strong>
-                      </td>
-                      <td className={styles.rightAlign}>
-                        <strong>{formatCurrency(settings.deposit)}</strong>
-                      </td>
-                      <td>—</td>
-                      <td>Initial Project Deposit</td>
-                      <td className={styles.centerAlign}>
-                        <span className={styles.paidBadge}>✓ Paid</span>
-                      </td>
-                    </tr>
-                  )}
-                  {(settings?.payments || []).map((payment, index) => (
-                    <tr key={index}>
-                      <td>
-                        {payment.date
-                          ? new Date(payment.date).toLocaleDateString()
-                          : "—"}
-                      </td>
-                      <td>Payment</td>
-                      <td className={styles.rightAlign}>
-                        <strong>{formatCurrency(payment.amount)}</strong>
-                      </td>
-                      <td>{payment.method || "—"}</td>
-                      <td>{payment.note || "—"}</td>
-                      <td className={styles.centerAlign}>
-                        {payment.isPaid ? (
-                          <span className={styles.paidBadge}>✓ Paid</span>
-                        ) : (
-                          <span className={styles.dueBadge}>⏳ Due</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {(settings?.payments || []).map((payment, index) => {
+                    const isDeposit = payment.type === "Deposit";
+                    const isRefund = payment.type === "Refund";
+                    return (
+                      // ✅ FIX 3: payment.id is the stable key; index is a fallback.
+                      <tr
+                        key={payment.id ?? `payment-${index}`}
+                        className={
+                          isDeposit
+                            ? styles.depositRow
+                            : isRefund
+                            ? styles.refundRow
+                            : undefined
+                        }
+                      >
+                        <td data-label="Date">
+                          {payment.date
+                            ? new Date(payment.date).toLocaleDateString()
+                            : "—"}
+                        </td>
+                        <td data-label="Type">
+                          {isDeposit && (
+                            // ✅ FIX 4: Inline styles replaced by CSS module classes.
+                            <i
+                              className={`fas fa-hand-holding-usd ${styles.iconDeposit}`}
+                            />
+                          )}
+                          {isRefund && (
+                            <i
+                              className={`fas fa-undo ${styles.iconRefund}`}
+                            />
+                          )}
+                          <strong>{payment.type ?? "Payment"}</strong>
+                        </td>
+                        <td className={styles.rightAlign} data-label="Amount">
+                          <strong
+                            className={isRefund ? styles.refundAmount : undefined}
+                          >
+                            {isRefund ? "−" : ""}
+                            {formatCurrency(payment.amount)}
+                          </strong>
+                        </td>
+                        <td data-label="Method">{payment.method || "—"}</td>
+                        <td data-label="Note">{payment.note || "—"}</td>
+                        <td
+                          className={styles.centerAlign}
+                          data-label="Status"
+                        >
+                          {isRefund ? (
+                            <span className={styles.refundBadge}>
+                              <i className="fas fa-undo" /> Refund
+                            </span>
+                          ) : payment.isPaid ? (
+                            <span className={styles.paidBadge}>
+                              <i className="fas fa-check" /> Paid
+                            </span>
+                          ) : (
+                            <span className={styles.dueBadge}>
+                              <i className="fas fa-clock" /> Due
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}

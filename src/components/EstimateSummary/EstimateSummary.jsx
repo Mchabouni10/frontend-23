@@ -6,8 +6,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { CalculatorEngine } from '../Calculator/engine/CalculatorEngine';
-import { getProject } from '../../services/projectService';
+import { getProject, updateProject } from '../../services/projectService';
 import { useWorkType } from '../../context/WorkTypeContext';
+import SignaturePad from './SignaturePad';
 import styles from './EstimateSummary.module.css';
 import logoImage from '../../assets/CompanyLogo.png';
 
@@ -19,6 +20,7 @@ export default function EstimateSummary() {
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showSignaturePad, setShowSignaturePad] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -63,6 +65,7 @@ export default function EstimateSummary() {
           lastName: project.customerInfo.lastName || '',
           street: project.customerInfo.street || '',
           unit: project.customerInfo.unit || '',
+          city: project.customerInfo.city || '',
           state: project.customerInfo.state || 'IL',
           zipCode: project.customerInfo.zipCode || '',
           phone: project.customerInfo.phone || '',
@@ -77,6 +80,7 @@ export default function EstimateSummary() {
             ? new Date(project.customerInfo.finishDate).toISOString().split('T')[0]
             : '',
           notes: project.customerInfo.notes || '',
+          signature: project.customerInfo.signature || null,
         };
 
         setCustomer(normalizedCustomer);
@@ -232,14 +236,45 @@ export default function EstimateSummary() {
   const transportationFee = parseFloat(totals.transportationFee) || 0;
   const grandTotal = parseFloat(totals.total) || 0;
 
-  const depositPayment = settings?.payments?.find(p => p.method === 'Deposit') || null;
-  const depositAmount = depositPayment ? parseFloat(depositPayment.amount) : 0;
-  const otherPayments = settings?.payments?.filter(p => p.method !== 'Deposit' && p.isPaid) || [];
-  const otherPaymentsTotal = otherPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+  // Payment numbers come straight from the engine (same source CostBreakdown
+  // and PaymentTracking use) instead of being recomputed here — that's what
+  // was causing this document to mislabel the deposit and add refunds
+  // instead of subtracting them.
+  const paymentDetails = useMemo(() => {
+    if (!calculatorEngine) return null;
+    try {
+      return calculatorEngine.calculatePaymentDetails(totals.total);
+    } catch (error) {
+      console.error('Error calculating payment details:', error);
+      return null;
+    }
+  }, [calculatorEngine, totals.total]);
+
+  const paymentKind = (p) => (p?.type || p?.paymentType || '').toString().trim().toLowerCase();
+
+  const depositPayment = settings?.payments?.find(p => paymentKind(p) === 'deposit') || null;
+  const depositAmount = depositPayment && depositPayment.isPaid ? parseFloat(depositPayment.amount) || 0 : 0;
+
+  // Installments/one-time payments actually made — explicitly excludes the
+  // deposit (shown separately above) and refunds (shown separately below;
+  // a refund is money going back out, never a payment coming in).
+  const otherPayments = (settings?.payments || []).filter(
+    p => p && paymentKind(p) !== 'deposit' && paymentKind(p) !== 'refund' && p.isPaid
+  );
+  const otherPaymentsTotal = otherPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+
+  const refundPayments = (settings?.payments || []).filter(p => p && paymentKind(p) === 'refund');
+  const totalRefunded = parseFloat(paymentDetails?.totalRefunded) || 0;
+
+  const credits = settings?.credits || [];
+  const totalCredits = parseFloat(paymentDetails?.totalCredits) || 0;
+  // grandTotal below already has credits subtracted (it comes from the
+  // engine); this reconstructs the pre-credit total purely for display.
+  const originalGrandTotal = grandTotal + totalCredits;
 
   const adjustedGrandTotal = Math.max(0, grandTotal - depositAmount);
-  const remainingBalance = Math.max(0, adjustedGrandTotal - otherPaymentsTotal);
-  const overpayment = (depositAmount + otherPaymentsTotal) > grandTotal ? (depositAmount + otherPaymentsTotal - grandTotal) : 0;
+  const remainingBalance = paymentDetails ? parseFloat(paymentDetails.totalDue) || 0 : Math.max(0, adjustedGrandTotal - otherPaymentsTotal + totalRefunded);
+  const overpayment = paymentDetails?.isOverpaid ? parseFloat(paymentDetails.overpaidAmount) || 0 : 0;
 
   const wasteEntries = settings?.wasteEntries || [];
   const miscFees = settings?.miscFees || [];
@@ -492,6 +527,20 @@ export default function EstimateSummary() {
           }
         });
       }
+
+      if (totalCredits > 0) {
+        calcBody.push([
+          { content: 'Credits / Price Adjustments', styles: { textColor: [43,147,72] } },
+          { content: `-${formatCurrency(totalCredits)}`, styles: { textColor: [43,147,72] } }
+        ]);
+        credits.forEach(c => {
+          const amt = parseFloat(c.amount) || 0;
+          if (amt > 0) {
+            const label = c.reason ? `  • ${c.reason}` : '  • Credit';
+            calcBody.push([label, `-${formatCurrency(amt)}`]);
+          }
+        });
+      }
       
       calcBody.push([
         { content: 'PROJECT TOTAL', styles: { fontStyle: 'bold', fontSize: 10, fillColor: lightGray } },
@@ -550,6 +599,24 @@ export default function EstimateSummary() {
           { content: `-${formatCurrency(otherPaymentsTotal)}`, styles: { fontStyle: 'bold' } }
         ]);
       }
+
+      if (refundPayments.length > 0) {
+        payBody.push([
+          { content: 'Refunded:', styles: { fontStyle: 'bold', fillColor: [250,250,250] } },
+          { content: '', styles: { fillColor: [250,250,250] } }
+        ]);
+
+        refundPayments.forEach(p => {
+          const d = new Date(p.date).toLocaleDateString();
+          const n = p.note ? ` - ${p.note}` : '';
+          payBody.push([`  • ${d} (${p.method})${n}`, `+${formatCurrency(p.amount)}`]);
+        });
+
+        payBody.push([
+          { content: 'Total Refunded', styles: { fontStyle: 'bold', textColor: [208,0,0] } },
+          { content: `+${formatCurrency(totalRefunded)}`, styles: { fontStyle: 'bold', textColor: [208,0,0] } }
+        ]);
+      }
       
       payBody.push([
         { content: 'BALANCE DUE', styles: { fontStyle: 'bold', fontSize: 10, fillColor: lightGray } },
@@ -558,7 +625,7 @@ export default function EstimateSummary() {
       
       if (overpayment > 0) {
         payBody.push([
-          { content: 'CREDIT BALANCE', styles: { fontStyle: 'bold' } },
+          { content: 'OVERPAYMENT (refund pending)', styles: { fontStyle: 'bold' } },
           { content: formatCurrency(overpayment), styles: { fontStyle: 'bold', textColor: [43,147,72] } }
         ]);
       }
@@ -636,7 +703,7 @@ export default function EstimateSummary() {
       }
 
       // Authorization & Acceptance
-      checkAddPage(20);
+      checkAddPage(80);
       pdf.setFontSize(11); 
       pdf.setFont('helvetica', 'bold'); 
       pdf.setTextColor(...primary);
@@ -647,19 +714,105 @@ export default function EstimateSummary() {
       
       autoTable(pdf, {
         startY: yPosition,
-        body: [
-          [authText],
-          [''],
-          [{ content: 'Customer Signature: _________________________________     Date: _____________\n\nPrinted Name: _________________________________', styles: { fontSize: 9 }}],
-          [''],
-          [{ content: 'Contractor Signature: _________________________________     Date: _____________\n\nPrinted Name: _________________________________', styles: { fontSize: 9 }}]
-        ],
+        body: [[authText]],
         theme: 'grid',
         styles: { fontSize: 8, cellPadding: 10, lineColor: borderColor, lineWidth: 0.7, textColor: darkGray },
         bodyStyles: { fillColor: [240, 248, 255] },
         margin: { left: margin, right: margin }
       });
-      yPosition = pdf.lastAutoTable.finalY + 10;
+      yPosition = pdf.lastAutoTable.finalY + 8;
+
+      // ── Customer Signature Block ──────────────────────────────────────────
+      const sigBoxHeight = 42;
+      pdf.setDrawColor(...borderColor);
+      pdf.setLineWidth(0.3);
+      pdf.setFillColor(240, 248, 255);
+      pdf.rect(margin, yPosition, pageWidth - 2 * margin, sigBoxHeight, 'FD');
+
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...darkGray);
+      pdf.text('Customer Signature:', margin + 4, yPosition + 7);
+
+      if (customer.signature && customer.signature.dataUrl) {
+        // Embed the actual drawn signature image
+        try {
+          pdf.addImage(
+            customer.signature.dataUrl,
+            'PNG',
+            margin + 4,          // x
+            yPosition + 9,       // y — just below the label
+            70,                  // width (mm)
+            22,                  // height (mm)
+          );
+        } catch (sigErr) {
+          console.warn('Could not embed signature image:', sigErr);
+          pdf.setFont('helvetica', 'normal');
+          pdf.text('[Signature on file]', margin + 4, yPosition + 20);
+        }
+
+        // Signed-on date
+        const signedDate = new Date(customer.signature.date).toLocaleDateString();
+        pdf.setFontSize(8);
+        pdf.setFont('helvetica', 'normal');
+        pdf.text(`Signed: ${signedDate}`, margin + 4, yPosition + 35);
+
+        // Printed name
+        pdf.text(
+          `Printed Name: ${customer.firstName} ${customer.lastName}`,
+          margin + 80,
+          yPosition + 35,
+        );
+      } else {
+        // No signature yet — draw blank lines
+        pdf.setDrawColor(...darkGray);
+        pdf.setLineWidth(0.4);
+        // Signature line
+        pdf.line(margin + 4, yPosition + 28, margin + 100, yPosition + 28);
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(120, 120, 120);
+        pdf.text('Signature', margin + 4, yPosition + 31);
+
+        // Date line
+        pdf.line(margin + 115, yPosition + 28, pageWidth - margin - 4, yPosition + 28);
+        pdf.text('Date', margin + 115, yPosition + 31);
+
+        // Printed name line
+        pdf.line(margin + 4, yPosition + 39, margin + 100, yPosition + 39);
+        pdf.text('Printed Name', margin + 4, yPosition + 38);
+      }
+
+      yPosition += sigBoxHeight + 6;
+
+      // ── Contractor Signature Block ────────────────────────────────────────
+      checkAddPage(sigBoxHeight + 6);
+      pdf.setDrawColor(...borderColor);
+      pdf.setLineWidth(0.3);
+      pdf.setFillColor(240, 248, 255);
+      pdf.rect(margin, yPosition, pageWidth - 2 * margin, sigBoxHeight, 'FD');
+
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...darkGray);
+      pdf.text('Contractor Signature:', margin + 4, yPosition + 7);
+
+      // Blank contractor lines (always — contractor signs a physical copy)
+      pdf.setDrawColor(...darkGray);
+      pdf.setLineWidth(0.4);
+      pdf.line(margin + 4, yPosition + 28, margin + 100, yPosition + 28);
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(120, 120, 120);
+      pdf.text('Signature', margin + 4, yPosition + 31);
+
+      pdf.line(margin + 115, yPosition + 28, pageWidth - margin - 4, yPosition + 28);
+      pdf.text('Date', margin + 115, yPosition + 31);
+
+      pdf.line(margin + 4, yPosition + 39, margin + 100, yPosition + 39);
+      pdf.text('Printed Name & Title', margin + 4, yPosition + 38);
+
+      yPosition += sigBoxHeight + 10;
 
       // Footer
       const footerY = pageHeight - 15;
@@ -687,17 +840,41 @@ export default function EstimateSummary() {
         };
       } else {
         // Fallback to download if popup blocked
-        pdf.save(`Estimate_${id}.pdf`);
+        pdf.save(`Estimate_${customer.firstName}_${customer.lastName}.pdf`);
       }
-    } catch (e) {
-      console.error('PDF generation error:', e);
-      alert('Failed to generate PDF. Please try again.');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      setError('Failed to generate PDF. Please try again.');
     } finally {
       setIsPrinting(false);
     }
   };
 
-  // UI RENDERING
+  const handleSaveSignature = async (dataUrl) => {
+    try {
+      setLoading(true);
+      const updatedCustomerInfo = {
+        ...customer,
+        signature: { dataUrl, date: new Date().toISOString() }
+      };
+
+      const projectData = {
+        customerInfo: updatedCustomerInfo,
+        categories,
+        settings
+      };
+
+      await updateProject(id, projectData);
+      setCustomer(updatedCustomerInfo);
+      setShowSignaturePad(false);
+    } catch (err) {
+      console.error('Error saving signature:', err);
+      setError('Failed to save signature.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) return <div className={styles.loadingSpinner}>Loading...</div>;
   if (error) return <div className={styles.error}>{error}</div>;
   if (!customer) return <div className={styles.error}>No project data available</div>;
@@ -1010,6 +1187,25 @@ export default function EstimateSummary() {
             <div className={styles.tableContainer}>
               <table className={styles.paymentTable} aria-label="Payment Summary">
                 <tbody>
+                  {totalCredits > 0 && (
+                    <>
+                      <tr className={styles.paymentRow}>
+                        <td className={styles.paymentLabel}>Original Project Total</td>
+                        <td className={styles.paymentValue}>{formatCurrency(originalGrandTotal)}</td>
+                      </tr>
+                      <tr className={styles.paymentHeaderRow}>
+                        <td className={styles.paymentLabel} colSpan="2"><strong>Credits / Price Adjustments:</strong></td>
+                      </tr>
+                      {credits.map((credit, index) => (
+                        <tr key={credit.id || index} className={styles.paymentDetailRow}>
+                          <td className={styles.paymentLabel}>
+                            • {new Date(credit.date).toLocaleDateString()}{credit.reason ? ` - ${credit.reason}` : ''}
+                          </td>
+                          <td className={styles.paymentValueNegative}>-{formatCurrency(credit.amount)}</td>
+                        </tr>
+                      ))}
+                    </>
+                  )}
                   <tr className={styles.paymentRow}>
                     <td className={styles.paymentLabel}>Project Total</td>
                     <td className={styles.paymentValue}>{formatCurrency(grandTotal)}</td>
@@ -1049,6 +1245,29 @@ export default function EstimateSummary() {
                       </tr>
                     </>
                   )}
+                  {refundPayments.length > 0 && (
+                    <>
+                      <tr className={styles.paymentHeaderRow}>
+                        <td className={styles.paymentLabel} colSpan="2"><strong>Refunded:</strong></td>
+                      </tr>
+                      {refundPayments.map((payment, index) => {
+                        const paymentDate = new Date(payment.date).toLocaleDateString();
+                        const paymentNote = payment.note ? ` - ${payment.note}` : '';
+                        return (
+                          <tr key={payment.id || index} className={styles.paymentDetailRow}>
+                            <td className={styles.paymentLabel}>
+                              • {paymentDate} ({payment.method}){paymentNote}
+                            </td>
+                            <td className={styles.paymentValuePositive}>+{formatCurrency(payment.amount)}</td>
+                          </tr>
+                        );
+                      })}
+                      <tr className={styles.paymentRow}>
+                        <td className={styles.paymentLabel}><strong>Total Refunded</strong></td>
+                        <td className={styles.paymentValuePositive}><strong>+{formatCurrency(totalRefunded)}</strong></td>
+                      </tr>
+                    </>
+                  )}
                   <tr className={styles.balanceRow}>
                     <td className={styles.paymentLabel}><strong>BALANCE DUE</strong></td>
                     <td className={styles.balanceValue}>
@@ -1059,7 +1278,7 @@ export default function EstimateSummary() {
                   </tr>
                   {overpayment > 0 && (
                     <tr className={styles.paymentRow}>
-                      <td className={styles.paymentLabel}><strong>CREDIT BALANCE</strong></td>
+                      <td className={styles.paymentLabel}><strong>OVERPAYMENT (refund pending)</strong></td>
                       <td className={styles.paymentValuePositive}><strong>{formatCurrency(overpayment)}</strong></td>
                     </tr>
                   )}
@@ -1118,11 +1337,30 @@ export default function EstimateSummary() {
               <div className={styles.signatureContainer}>
                 <div className={styles.signatureBlock}>
                   <div className={styles.signatureLabel}>Customer Signature:</div>
-                  <div className={styles.signatureLine}></div>
-                  <div className={styles.signatureInfo}>
-                    <span>Printed Name: _______________________________</span>
-                    <span>Date: _______________</span>
-                  </div>
+                  {customer.signature && customer.signature.dataUrl ? (
+                    <div className="signature-display" style={{ marginTop: '10px', marginBottom: '10px' }}>
+                      <img src={customer.signature.dataUrl} alt="Customer Signature" style={{ maxHeight: '80px', maxWidth: '100%' }} />
+                      <div className={styles.signatureInfo} style={{ marginTop: '10px' }}>
+                        <span>Signed On: {new Date(customer.signature.date).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className={styles.signatureLine}></div>
+                      <div className={styles.signatureInfo}>
+                        <span>Printed Name: _______________________________</span>
+                        <span>Date: _______________</span>
+                      </div>
+                      {!isPrinting && (
+                        <button 
+                          onClick={() => setShowSignaturePad(true)}
+                          style={{ marginTop: '15px', padding: '8px 16px', background: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                          Sign Electronically
+                        </button>
+                      )}
+                    </>
+                  )}
                 </div>
                 <div className={styles.signatureBlock}>
                   <div className={styles.signatureLabel}>Contractor Signature:</div>
@@ -1147,6 +1385,12 @@ export default function EstimateSummary() {
           </footer>
         </div>
       </div>
+      {showSignaturePad && (
+        <SignaturePad 
+          onSave={handleSaveSignature} 
+          onCancel={() => setShowSignaturePad(false)} 
+        />
+      )}
     </main>
   );
 }

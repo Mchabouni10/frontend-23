@@ -74,7 +74,6 @@ const sanitizeCategoriesWithEngine = (categories) => {
         ? category.workItems
             .map((item) => {
               if (!item || typeof item !== "object") return null;
-              // Remove manual measurementType setting - let WorkItem handle it
               const surfaces = Array.isArray(item.surfaces)
                 ? item.surfaces.filter(Boolean)
                 : [];
@@ -101,12 +100,19 @@ function HomePageContent() {
       : location.state?.customerInfo || {};
 
   const { categories, setCategories } = useCategories();
-  // FIX (Issue 10): destructure resetSettings so resetAll can use it
   const { settings, setSettings, resetSettings } = useSettings();
 
   const workTypeContext = useWorkType();
-  const { getMeasurementType, isValidSubtype, getWorkTypeDetails } =
-    workTypeContext;
+  const {
+    getMeasurementType,
+    isValidSubtype,
+    getWorkTypeDetails,
+    // ── FIX: use taxonomyReady (data actually loaded) instead of checking
+    //    whether functions exist (they always exist immediately).
+    taxonomyReady,
+    taxonomyLoading,
+    taxonomyError,
+  } = workTypeContext;
 
   const [customer, setCustomer] = useState({
     firstName: initialCustomerInfo.firstName || "",
@@ -139,13 +145,6 @@ function HomePageContent() {
   const isNewMode =
     location.pathname === "/home/customer" ||
     location.pathname === "/home/new-customer-project";
-
-  // Check if workType functions are ready
-  const workTypeFunctionsReady = !!(
-    getMeasurementType &&
-    isValidSubtype &&
-    getWorkTypeDetails
-  );
 
   // Validation for required customer fields
   const validateCustomerFields = useCallback(() => {
@@ -191,10 +190,16 @@ function HomePageContent() {
 
   const isCustomerDataValid = validateCustomerFields();
 
-  // Load project data from server
+  // ── FIX: Load project only after taxonomy is ready (data fetched from DB).
+  // Previously this gated on workTypeFunctionsReady which checked whether
+  // getMeasurementType/isValidSubtype/getWorkTypeDetails *exist* — they always
+  // exist immediately (they're plain functions), so the project would load
+  // before the taxonomy API call had returned any data. The category dropdowns
+  // and work-type dropdowns would appear empty, and saved work types looked
+  // "stale" because the taxonomy was still an empty array.
   useEffect(() => {
     const loadProject = async () => {
-      if (id && (isEditMode || isDetailsMode) && workTypeFunctionsReady) {
+      if (id && (isEditMode || isDetailsMode) && taxonomyReady) {
         setLoading(true);
         try {
           const project = await getProject(id);
@@ -251,7 +256,8 @@ function HomePageContent() {
       }
     };
 
-    if (workTypeFunctionsReady) {
+    // Only run when taxonomy is ready — not before.
+    if (taxonomyReady) {
       loadProject();
     }
   }, [
@@ -259,25 +265,17 @@ function HomePageContent() {
     isEditMode,
     isDetailsMode,
     navigate,
-    workTypeFunctionsReady,
+    taxonomyReady, // ← was workTypeFunctionsReady
     setCategories,
     setSettings,
   ]);
 
-  // Save or update project using CalculatorEngine
+  // Save or update project
   const saveOrUpdateProject = async () => {
-    console.log(
-      "Save button clicked, workTypeFunctionsReady:",
-      workTypeFunctionsReady,
-    );
+    console.log("Save button clicked, taxonomyReady:", taxonomyReady);
 
-    if (!workTypeFunctionsReady) {
+    if (!taxonomyReady) {
       alert("System not ready. Please wait a moment and try again.");
-      console.error("WorkType functions not ready:", {
-        getMeasurementType: !!getMeasurementType,
-        isValidSubtype: !!isValidSubtype,
-        getWorkTypeDetails: !!getWorkTypeDetails,
-      });
       return;
     }
 
@@ -338,8 +336,6 @@ function HomePageContent() {
         paymentDetails,
       };
 
-      console.log("Project data to save:", projectData);
-
       setLoading(true);
 
       if (isEditMode && projectId) {
@@ -362,11 +358,6 @@ function HomePageContent() {
     }
   };
 
-  // FIX (Issue 10): Use resetSettings() from SettingsContext so that ALL
-  // fields are reset to DEFAULT_SETTINGS — no risk of partial or stale state.
-  // Previously this called setSettings({...}) with a hardcoded subset that was
-  // missing fields like `wasteEntries` and would drift whenever DEFAULT_SETTINGS
-  // was updated.
   const resetAll = () => {
     if (
       window.confirm(
@@ -391,7 +382,7 @@ function HomePageContent() {
         notes: "",
       });
       setCategories([]);
-      resetSettings(); // ← replaces the old partial setSettings({...}) call
+      resetSettings();
       setProjectId(null);
       alert("All data reset.");
     }
@@ -403,16 +394,35 @@ function HomePageContent() {
 
   const toggleCustomerInfo = () => setIsCustomerInfoVisible((prev) => !prev);
 
-  if (loading && !workTypeFunctionsReady) {
+  // ── Loading / error states ──────────────────────────────────────────────────
+
+  // Taxonomy fetch still in progress
+  if (taxonomyLoading) {
     return (
       <main className={styles.mainContent}>
         <div className={styles.container}>
-          <p className={styles.loadingText}>Initializing system...</p>
+          <p className={styles.loadingText}>
+            Loading work types from database...
+          </p>
         </div>
       </main>
     );
   }
 
+  // Taxonomy fetch failed
+  if (taxonomyError) {
+    return (
+      <main className={styles.mainContent}>
+        <div className={styles.container}>
+          <p className={styles.loadingText} style={{ color: "#ef4444" }}>
+            Failed to load work types: {taxonomyError}. Please refresh the page.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  // Project data is loading (taxonomy is ready, now loading the project itself)
   if (loading) {
     return (
       <main className={styles.mainContent}>
@@ -422,15 +432,6 @@ function HomePageContent() {
       </main>
     );
   }
-
-  console.log(
-    "Render - workTypeFunctionsReady:",
-    workTypeFunctionsReady,
-    "loading:",
-    loading,
-    "isCustomerDataValid:",
-    isCustomerDataValid,
-  );
 
   return (
     <main
@@ -448,7 +449,6 @@ function HomePageContent() {
                 ? "Edit Project"
                 : "New Project"}
             </h1>
-            {/* Status Badge */}
             {(isEditMode || isDetailsMode) && customer.status && (
               <span
                 className={styles.statusBadge}
@@ -561,12 +561,10 @@ function HomePageContent() {
               <button
                 onClick={saveOrUpdateProject}
                 className={styles.saveButton}
-                disabled={
-                  loading || !workTypeFunctionsReady || !isCustomerDataValid
-                }
+                disabled={loading || !taxonomyReady || !isCustomerDataValid}
                 title={
-                  !workTypeFunctionsReady
-                    ? "Waiting for system to initialize..."
+                  !taxonomyReady
+                    ? "Waiting for work types to load..."
                     : !isCustomerDataValid
                     ? "Please fill in all required customer information fields"
                     : ""
@@ -606,8 +604,7 @@ function HomePageContent() {
   );
 }
 
-// HomePage with providers - CategoriesProvider and SettingsProvider stay here
-// since they are specific to the project editor. WorkTypeProvider is now in App.js.
+// HomePage with providers
 export default function HomePage() {
   const { id } = useParams();
   const projectKey = id || "new-project";
@@ -623,22 +620,41 @@ export default function HomePage() {
   );
 }
 
-// Wrapper component to ensure proper context access timing
+// ── FIX: Gate on taxonomyReady (actual data loaded), not on function existence.
+// The old HomePageContentWrapper checked getMeasurementType/isValidSubtype/
+// getWorkTypeDetails — those are always defined immediately (plain functions
+// created on the first render), so the wrapper passed through instantly and
+// HomePageContent tried to load a project against an empty taxonomy array.
 function HomePageContentWrapper() {
-  const { getMeasurementType, isValidSubtype, getWorkTypeDetails } =
-    useWorkType();
+  const { taxonomyReady, taxonomyLoading, taxonomyError } = useWorkType();
 
-  const isContextReady = !!(
-    getMeasurementType &&
-    isValidSubtype &&
-    getWorkTypeDetails
-  );
-
-  if (!isContextReady) {
+  if (taxonomyLoading) {
     return (
-      <main className={styles.mainContent}>
-        <div className={styles.container}>
-          <p className={styles.loadingText}>Initializing system...</p>
+      <main>
+        <div>
+          <p>Loading work types from database...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (taxonomyError) {
+    return (
+      <main>
+        <div>
+          <p style={{ color: "#ef4444" }}>
+            Failed to load work types: {taxonomyError}. Please refresh the page.
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!taxonomyReady) {
+    return (
+      <main>
+        <div>
+          <p>Initializing...</p>
         </div>
       </main>
     );

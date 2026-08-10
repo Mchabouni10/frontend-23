@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Remodel Pro</string>
-    <string name="title_activity_main">Remodel Pro</string>
-    <string name="package_name">com.remodelproapp.mobile</string>
-    <string name="custom_url_scheme">com.remodelproapp.mobile</string>
+    <string name="app_name">Rawdah Remodeling</string>
+    <string name="title_activity_main">Rawdah Remodeling</string>
+    <string name="package_name">com.rawdahremodeling.app</string>
+    <string name="custom_url_scheme">com.rawdahremodeling.app</string>
 </resources>
+</content>

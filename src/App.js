@@ -7,7 +7,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import { getUser } from './utilities/users-service';
 import { ErrorProvider } from './context/ErrorContext';
 import { WorkTypeProvider } from './context/WorkTypeContext';
+import { WorkTypeTaxonomyProvider } from './context/WorkTypeTaxonomyContext';
 import ErrorBoundaryWrapper from './components/ErrorBoundary';
+import { syncOfflineProjects } from './services/offlineSyncService';
 import Navbar from './components/Navbar/Navbar';
 import AuthPage from './components/AuthPage/AuthPage';
 import UserLogOut from './components/UserLogOut/UserLogOut';
@@ -18,6 +20,7 @@ import EstimateSummaryPage from './components/EstimateSummary/EstimateSummary';
 import FinanceDashboard from './components/FinanceDashboard/FinanceDashboard';
 import FloorPlanDesigner from './components/SketchPad/FloorPlanDesigner';
 import CompanyExpenses from './components/CompanyExpenses/CompanyExpenses';
+import ProjectCalendar from './components/Calendar/ProjectCalendar';
 
 export default function App() {
   const [user, setUser] = useState(getUser());
@@ -37,15 +40,31 @@ export default function App() {
     }
   }, [isDarkMode]);
 
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log('App is online. Attempting to sync offline projects...');
+      syncOfflineProjects();
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    // Initial check on load
+    if (navigator.onLine) {
+      syncOfflineProjects();
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
   const toggleDarkMode = () => {
     setIsDarkMode((prevMode) => !prevMode);
   };
 
   return (
     <ErrorProvider>
-      {/* WorkTypeProvider is now at the root so ALL routes have access to it */}
-      <WorkTypeProvider>
-        <div className="App">
+      <div className="App">
           <ToastContainer
             position="top-right"
             autoClose={5000}
@@ -59,102 +78,106 @@ export default function App() {
           />
           <div className="backgroundEffects"></div>
 
-          {/* Top-level error boundary for critical app structure */}
           <ErrorBoundaryWrapper boundaryName="AppRoot">
             {user ? (
-              <>
-                <Navbar
-                  user={user}
-                  setUser={setUser}
-                  toggleDarkMode={toggleDarkMode}
-                  isDarkMode={isDarkMode}
-                />
-                <main className="mainContent">
-                  {/* Separate boundary for main content */}
-                  <ErrorBoundaryWrapper boundaryName="MainContent">
-                    <Routes>
-                      {/* HomePage gets its own boundary since it's complex */}
-                      <Route path="/home/customer" element={
-                        <ErrorBoundaryWrapper boundaryName="HomePage">
-                          <HomePage />
-                        </ErrorBoundaryWrapper>
-                      } />
-                      <Route path="/home/customer/:id" element={
-                        <ErrorBoundaryWrapper boundaryName="HomePageDetail">
-                          <HomePage />
-                        </ErrorBoundaryWrapper>
-                      } />
-                      <Route path="/home/edit/:id" element={
-                        <ErrorBoundaryWrapper boundaryName="HomePageEdit">
-                          <HomePage />
-                        </ErrorBoundaryWrapper>
-                      } />
-
-                      {/* Sketch Designer Route */}
-                      <Route path="/home/sketch" element={
-                        <ErrorBoundaryWrapper boundaryName="FloorPlanDesigner">
-                          <FloorPlanDesigner />
-                        </ErrorBoundaryWrapper>
-                      } />
-
-                      {/* Print/Estimate route */}
-                      <Route path="/home/print/:id" element={
-                        <ErrorBoundaryWrapper boundaryName="EstimateSummary">
-                          <EstimateSummaryPage />
-                        </ErrorBoundaryWrapper>
-                      } />
-
-                      {/* Other routes with appropriate boundaries */}
-                      <Route path="/home/customers" element={
-                        <ErrorBoundaryWrapper boundaryName="CustomersList">
-                          <CustomersList />
-                        </ErrorBoundaryWrapper>
-                      } />
-                      <Route path="/home/customer-projects" element={
-                        <ErrorBoundaryWrapper boundaryName="CustomerProjects">
-                          <CustomerProjects />
-                        </ErrorBoundaryWrapper>
-                      } />
-                      <Route path="/home/new-customer-project" element={
-                        <ErrorBoundaryWrapper boundaryName="NewProject">
-                          <HomePage />
-                        </ErrorBoundaryWrapper>
-                      } />
-                      <Route path="/home/finance" element={
-                        <ErrorBoundaryWrapper boundaryName="FinanceDashboard">
-                          <FinanceDashboard />
-                        </ErrorBoundaryWrapper>
-                      } />
-                      <Route path="/home/company-expenses" element={
-                        <ErrorBoundaryWrapper boundaryName="CompanyExpenses">
-                          <CompanyExpenses />
-                        </ErrorBoundaryWrapper>
-                      } />
-                      <Route path="/logout" element={
-                        <ErrorBoundaryWrapper boundaryName="Logout">
-                          <UserLogOut user={user} setUser={setUser} />
-                        </ErrorBoundaryWrapper>
-                      } />
-                      <Route path="/" element={<Navigate to="/home/customers" />} />
-                    </Routes>
-                  </ErrorBoundaryWrapper>
-                </main>
-              </>
-            ) : (
-              <>
-                {/* Auth page gets its own boundary */}
-                <ErrorBoundaryWrapper boundaryName="AuthPage">
-                  <AuthPage
+              // FIX: WorkTypeTaxonomyProvider is now INSIDE the auth check.
+              // Previously it wrapped the entire app, so it mounted before login
+              // and fired the fetch with no token — got a 401, hasFetched was
+              // already true, and the taxonomy stayed empty for the whole session.
+              // Now it only mounts (and fetches) when the user is authenticated.
+              <WorkTypeTaxonomyProvider>
+                <WorkTypeProvider>
+                  <>
+                  <Navbar
+                    user={user}
                     setUser={setUser}
                     toggleDarkMode={toggleDarkMode}
                     isDarkMode={isDarkMode}
                   />
-                </ErrorBoundaryWrapper>
-              </>
+                  <main className="mainContent">
+                    <ErrorBoundaryWrapper boundaryName="MainContent">
+                      <Routes>
+                        <Route path="/home/customer" element={
+                          <ErrorBoundaryWrapper boundaryName="HomePage">
+                            <HomePage />
+                          </ErrorBoundaryWrapper>
+                        } />
+                        <Route path="/home/customer/:id" element={
+                          <ErrorBoundaryWrapper boundaryName="HomePageDetail">
+                            <HomePage />
+                          </ErrorBoundaryWrapper>
+                        } />
+                        <Route path="/home/edit/:id" element={
+                          <ErrorBoundaryWrapper boundaryName="HomePageEdit">
+                            <HomePage />
+                          </ErrorBoundaryWrapper>
+                        } />
+
+                        <Route path="/home/sketch" element={
+                          <ErrorBoundaryWrapper boundaryName="FloorPlanDesigner">
+                            <FloorPlanDesigner />
+                          </ErrorBoundaryWrapper>
+                        } />
+
+                        <Route path="/home/print/:id" element={
+                          <ErrorBoundaryWrapper boundaryName="EstimateSummary">
+                            <EstimateSummaryPage />
+                          </ErrorBoundaryWrapper>
+                        } />
+
+                        <Route path="/home/customers" element={
+                          <ErrorBoundaryWrapper boundaryName="CustomersList">
+                            <CustomersList />
+                          </ErrorBoundaryWrapper>
+                        } />
+                        <Route path="/home/customer-projects" element={
+                          <ErrorBoundaryWrapper boundaryName="CustomerProjects">
+                            <CustomerProjects />
+                          </ErrorBoundaryWrapper>
+                        } />
+                        <Route path="/home/new-customer-project" element={
+                          <ErrorBoundaryWrapper boundaryName="NewProject">
+                            <HomePage />
+                          </ErrorBoundaryWrapper>
+                        } />
+                        <Route path="/home/finance" element={
+                          <ErrorBoundaryWrapper boundaryName="FinanceDashboard">
+                            <FinanceDashboard />
+                          </ErrorBoundaryWrapper>
+                        } />
+                        <Route path="/home/company-expenses" element={
+                          <ErrorBoundaryWrapper boundaryName="CompanyExpenses">
+                            <CompanyExpenses />
+                          </ErrorBoundaryWrapper>
+                        } />
+                        <Route path="/home/calendar" element={
+                          <ErrorBoundaryWrapper boundaryName="ProjectCalendar">
+                            <ProjectCalendar />
+                          </ErrorBoundaryWrapper>
+                        } />
+                        <Route path="/logout" element={
+                          <ErrorBoundaryWrapper boundaryName="Logout">
+                            <UserLogOut user={user} setUser={setUser} />
+                          </ErrorBoundaryWrapper>
+                        } />
+                        <Route path="/" element={<Navigate to="/home/customers" />} />
+                      </Routes>
+                    </ErrorBoundaryWrapper>
+                  </main>
+                </>
+              </WorkTypeProvider>
+            </WorkTypeTaxonomyProvider>
+          ) : (
+              <ErrorBoundaryWrapper boundaryName="AuthPage">
+                <AuthPage
+                  setUser={setUser}
+                  toggleDarkMode={toggleDarkMode}
+                  isDarkMode={isDarkMode}
+                />
+              </ErrorBoundaryWrapper>
             )}
           </ErrorBoundaryWrapper>
         </div>
-      </WorkTypeProvider>
     </ErrorProvider>
   );
 }

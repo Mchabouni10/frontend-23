@@ -26,9 +26,14 @@ export default function SignUpForm({ setUser }) {
 
   const handleSubmit = async (evt) => {
     evt.preventDefault();
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
     setIsLoading(true);
     try {
-      const user = await signUp(formData);
+      const { confirm, ...userData } = formData;
+      const user = await signUp(userData);
       setUser(user);
     } catch {
       setError('Registration Failed');
@@ -37,7 +42,11 @@ export default function SignUpForm({ setUser }) {
     }
   };
 
-  const disable = formData.password !== formData.confirm || !formData.name || !formData.email;
+  const disable =
+    formData.password !== formData.confirm ||
+    formData.password.length < 8 ||
+    !formData.name ||
+    !formData.email;
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);

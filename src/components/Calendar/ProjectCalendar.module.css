@@ -1,0 +1,815 @@
+/* ProjectCalendar.module.css
+ *
+ * Single source of truth — replaces both ProjectCalendar.css and
+ * ProjectCalendar_module.css. Uses only CSS variables from index.css.
+ *
+ * Sections:
+ *   1. Layout wrapper
+ *   2. Header
+ *   3. Filter / toggle controls
+ *   4. Summary strip
+ *   5. Main area (calendar + panel)
+ *   6. react-big-calendar overrides
+ *   7. Detail panel — header, body, sections
+ *   8. Detail panel — financial block
+ *   9. Detail panel — installment table
+ *  10. Detail panel — status / days chips
+ *  11. Loading / error states
+ *  12. Legend
+ *  13. Responsive
+ *  14. Print
+ */
+
+/* ─── 1. Layout wrapper ──────────────────────────────────────────────────────── */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  background: var(--background);
+  min-height: 100vh;
+  font-family: var(--font-family);
+}
+
+/* ─── 2. Header ──────────────────────────────────────────────────────────────── */
+
+.calHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--spacing-md);
+}
+
+.calHeaderLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.calTitle {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--primary);
+  letter-spacing: 0.5px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+:global(.dark) .calTitle {
+  text-shadow: 0 0 20px var(--glow-primary);
+}
+
+.calSubtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  margin: 0;
+}
+
+.calHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+/* ─── 3. Filter / toggle controls ───────────────────────────────────────────── */
+
+.filterSelect {
+  padding: 6px var(--spacing-md);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 1.2em 1.2em;
+  padding-right: 2rem;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--shadow);
+}
+
+:global(.dark) .filterSelect {
+  background-color: var(--surface-raised);
+  border-color: var(--border-strong);
+}
+
+.toggleGroup {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.togglePill {
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-strong);
+  background: transparent;
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.togglePill:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.togglePillActive {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  font-weight: var(--font-weight-bold);
+}
+
+/* ─── 4. Summary strip ───────────────────────────────────────────────────────── */
+
+.summaryStrip {
+  display: flex;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: var(--spacing-md);
+}
+
+.summaryStat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--surface);
+  gap: 2px;
+  transition: background 0.15s ease;
+}
+
+.summaryStat:hover {
+  background: var(--surface-raised);
+}
+
+:global(.dark) .summaryStat          { background: var(--surface); }
+:global(.dark) .summaryStat:hover    { background: var(--surface-raised); }
+
+.summaryValue {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-extrabold);
+  line-height: 1;
+  color: var(--text);
+}
+
+.summaryValue[data-accent="primary"]   { color: var(--primary); }
+.summaryValue[data-accent="secondary"] { color: var(--secondary); }
+.summaryValue[data-accent="success"]   { color: var(--success); }
+.summaryValue[data-accent="error"]     { color: var(--error); }
+.summaryValue[data-accent="warning"]   { color: var(--warning); }
+
+.summaryLabel {
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: var(--font-weight-medium);
+}
+
+/* ─── 5. Main area ───────────────────────────────────────────────────────────── */
+
+.mainArea {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+  transition: grid-template-columns 0.3s ease;
+}
+
+.wrapperWithPanel .mainArea {
+  grid-template-columns: 1fr 360px;
+}
+
+.calendarPane {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 16px var(--shadow);
+  height: 70vh;
+  min-height: 480px;
+  padding: var(--spacing-md);
+}
+
+:global(.dark) .calendarPane {
+  box-shadow: 0 6px 24px var(--shadow-lg);
+}
+
+/* ─── 6. react-big-calendar overrides ───────────────────────────────────────── */
+
+.calendarPane :global(.rbc-toolbar) {
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.calendarPane :global(.rbc-toolbar button) {
+  color: var(--text);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  transition: all 0.15s ease;
+  padding: 4px 10px;
+}
+
+.calendarPane :global(.rbc-toolbar button:hover),
+.calendarPane :global(.rbc-toolbar button.rbc-active) {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary-dark);
+}
+
+.calendarPane :global(.rbc-toolbar button.rbc-active) {
+  font-weight: var(--font-weight-bold);
+}
+
+.calendarPane :global(.rbc-toolbar .rbc-toolbar-label) {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-base);
+  color: var(--text);
+}
+
+.calendarPane :global(.rbc-month-view),
+.calendarPane :global(.rbc-time-view),
+.calendarPane :global(.rbc-agenda-view) {
+  border: none;
+  border-radius: 0;
+}
+
+.calendarPane :global(.rbc-header) {
+  border-color: var(--border);
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 6px 0;
+}
+
+.calendarPane :global(.rbc-day-bg)       { border-color: var(--border); }
+.calendarPane :global(.rbc-off-range-bg) { background: var(--surface-raised); opacity: 0.6; }
+.calendarPane :global(.rbc-today)        { background: color-mix(in srgb, var(--secondary) 8%, transparent); }
+
+.calendarPane :global(.rbc-date-cell) {
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  padding: 2px 4px;
+}
+
+.calendarPane :global(.rbc-date-cell.rbc-now) {
+  color: var(--secondary);
+  font-weight: var(--font-weight-bold);
+}
+
+.calendarPane :global(.rbc-event)     { padding: 1px 4px; }
+.calendarPane :global(.rbc-show-more) {
+  color: var(--secondary);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  background: transparent;
+}
+
+.calendarPane :global(.rbc-agenda-table) {
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  color: var(--text);
+}
+
+:global(.dark) .calendarPane :global(.rbc-month-view),
+:global(.dark) .calendarPane :global(.rbc-time-view) { border-color: var(--border); }
+
+:global(.dark) .calendarPane :global(.rbc-day-bg),
+:global(.dark) .calendarPane :global(.rbc-header)    { border-color: var(--border-strong); }
+
+:global(.dark) .calendarPane :global(.rbc-off-range-bg) {
+  background: color-mix(in srgb, var(--surface-raised) 60%, transparent);
+}
+
+/* ─── 7. Detail panel — structure ───────────────────────────────────────────── */
+
+.detailPanel {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4px 20px var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.22s ease;
+  align-self: start;
+  position: sticky;
+  top: var(--spacing-md);
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+:global(.dark) .detailPanel {
+  box-shadow: 0 6px 30px var(--shadow-lg);
+  border-color: var(--border-strong);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Header */
+.detailHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-sm);
+  gap: var(--spacing-sm);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-raised);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.detailHeaderMain {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.detailBadgeRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.detailKindBadge {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-raised);
+  color: var(--text-light);
+}
+
+.detailKindBadge[data-kind="payment"]       { background: color-mix(in srgb, #7c3aed 15%, transparent); color: #7c3aed; }
+.detailKindBadge[data-kind="project-span"]  { background: var(--info-bg);  color: var(--info); }
+.detailKindBadge[data-kind="project-start"] { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.detailKindBadge[data-kind="project-end"]   { background: var(--muted-bg); color: var(--muted); }
+
+.detailTitle {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--text);
+  margin: 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.detailCustomer {
+  font-size: var(--font-size-sm);
+  color: var(--text-light);
+  margin: 0;
+}
+
+.detailClose {
+  background: none;
+  border: none;
+  color: var(--text-light);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.detailClose:hover {
+  color: var(--error);
+  background: var(--error-bg);
+}
+
+/* Body */
+.detailBody {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.detailDivider {
+  height: 1px;
+  background: var(--border);
+}
+
+/* Sections */
+.detailSection {
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.detailSectionLabel {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+/* Rows */
+.detailRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--font-size-sm);
+}
+
+.detailRow:last-child { border-bottom: none; }
+
+.detailRowHighlight .detailValue {
+  color: var(--error);
+  font-weight: var(--font-weight-bold);
+}
+
+.detailLabel {
+  color: var(--text-light);
+  flex-shrink: 0;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.detailValue {
+  color: var(--text);
+  text-align: right;
+  word-break: break-word;
+}
+
+.detailValueMono {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-bold);
+}
+
+.detailLink {
+  color: var(--secondary);
+  text-decoration: none;
+}
+
+.detailLink:hover { text-decoration: underline; }
+
+/* Notes */
+.notesText {
+  font-size: var(--font-size-sm);
+  color: var(--text);
+  line-height: 1.5;
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+}
+
+/* ─── 8. Detail panel — financial block ──────────────────────────────────────── */
+
+.financialBlock {
+  background: var(--surface-raised);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  margin: 4px 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.financialGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.finStat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.finStatLabel {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-light);
+}
+
+.finStatValue {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-extrabold);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.finStatPaid     { color: var(--success); }
+.finStatDue      { color: var(--error); }
+.finStatSettled  { color: var(--success); }
+.finStatDeposit  { color: #7c3aed; }
+
+/* Mini progress bar */
+.miniProgress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.miniProgressTrack {
+  flex: 1;
+  height: 6px;
+  background: var(--border-strong);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.miniProgressFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.progressFillNormal   { background: var(--secondary); }
+.progressFillDanger   { background: var(--error); }
+.progressFillComplete { background: var(--success); }
+
+.miniProgressPct {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--text-light);
+  white-space: nowrap;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* Overdue alert */
+.overdueAlert {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--error);
+  background: var(--error-bg, color-mix(in srgb, var(--error) 10%, transparent));
+  border: 1px solid color-mix(in srgb, var(--error) 30%, transparent);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  margin-top: 2px;
+}
+
+/* ─── 9. Detail panel — installment table ────────────────────────────────────── */
+
+.installmentBadge {
+  margin-left: auto;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-full);
+  padding: 1px 8px;
+  color: var(--text-light);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.installmentTable {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  margin-top: 6px;
+  font-size: var(--font-size-xs);
+}
+
+.installmentTableHeader {
+  display: grid;
+  grid-template-columns: 48px 1fr auto 64px;
+  gap: 6px;
+  padding: 4px 8px;
+  background: var(--surface-raised);
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+  font-size: 10px;
+}
+
+.installmentRow {
+  display: grid;
+  grid-template-columns: 48px 1fr auto 64px;
+  gap: 6px;
+  align-items: center;
+  padding: 5px 8px;
+  background: var(--surface);
+  transition: background 0.12s ease;
+}
+
+.installmentRow:hover         { background: var(--surface-raised); }
+.installmentRowOverdue        { background: color-mix(in srgb, var(--error) 5%, var(--surface)); }
+.installmentRowOverdue:hover  { background: color-mix(in srgb, var(--error) 10%, var(--surface)); }
+
+.instNum    { color: var(--text-light); font-weight: var(--font-weight-bold); }
+.instDate   { color: var(--text); }
+.instAmount { color: var(--text); font-weight: var(--font-weight-bold); font-variant-numeric: tabular-nums; text-align: right; }
+
+.instTag {
+  font-size: 10px;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tagPaid    { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.tagOverdue { background: color-mix(in srgb, var(--error) 15%, transparent);   color: var(--error); }
+.tagPending { background: var(--surface-raised); color: var(--text-light); border: 1px solid var(--border-strong); }
+
+/* ─── 10. Status / days chips ────────────────────────────────────────────────── */
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+}
+
+.statusCompleted  { background: color-mix(in srgb, var(--success) 15%, transparent); color: var(--success); }
+.statusInProgress { background: color-mix(in srgb, var(--secondary) 15%, transparent); color: var(--secondary); }
+.statusPending    { background: color-mix(in srgb, var(--warning) 15%, transparent); color: var(--warning); }
+.statusOverdue    { background: color-mix(in srgb, var(--error) 15%, transparent);   color: var(--error); }
+.statusUnknown    { background: var(--surface-raised); color: var(--text-light); }
+
+.daysChip {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--surface-raised);
+  color: var(--text-light);
+  border: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+
+.daysChipOverdue { background: color-mix(in srgb, var(--error) 12%, transparent); color: var(--error); border-color: color-mix(in srgb, var(--error) 30%, transparent); }
+.daysChipWarning { background: color-mix(in srgb, var(--warning) 12%, transparent); color: var(--warning); border-color: color-mix(in srgb, var(--warning) 30%, transparent); }
+
+/* ─── 11. Loading / error states ─────────────────────────────────────────────── */
+
+.loadingState,
+.errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: var(--spacing-md);
+  color: var(--text-light);
+  font-size: var(--font-size-base);
+}
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.errorState span { font-size: 2rem; }
+
+/* ─── 12. Legend ──────────────────────────────────────────────────────────────── */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  margin-top: var(--spacing-sm);
+  border-top: 1px solid var(--border);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  font-weight: var(--font-weight-medium);
+}
+
+.legendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+/* ─── 13. Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .wrapper { padding: var(--spacing-md); }
+
+  .wrapperWithPanel .mainArea { grid-template-columns: 1fr; }
+
+  .detailPanel {
+    position: static;
+    max-height: none;
+    order: -1;
+  }
+
+  .summaryStrip    { flex-wrap: wrap; }
+  .summaryStat     { flex: 1 1 calc(33% - 1px); }
+
+  .financialGrid   { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .calHeader { flex-direction: column; }
+
+  .calHeaderRight {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .toggleGroup  { flex-wrap: wrap; }
+  .calendarPane { height: 55vh; }
+  .summaryStat  { flex: 1 1 calc(50% - 1px); }
+
+  .installmentTableHeader,
+  .installmentRow {
+    grid-template-columns: 40px 1fr auto;
+  }
+
+  /* Hide the status tag column on very small screens */
+  .installmentTableHeader > span:last-child,
+  .instTag { display: none; }
+}
+
+/* ─── 14. Print ───────────────────────────────────────────────────────────────── */
+
+@media print {
+  .calHeaderRight,
+  .toggleGroup,
+  .detailPanel,
+  .legend { display: none; }
+
+  .calendarPane {
+    height: auto;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}

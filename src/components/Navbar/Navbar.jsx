@@ -10,7 +10,8 @@ import {
   faSun,
   faChartPie,
   faPencilRuler,
-  faMoneyBillWave // Changed icon for expenses
+  faMoneyBillWave, // Changed icon for expenses
+  faCalendarAlt
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './Navbar.module.css';
 
@@ -22,7 +23,7 @@ export default function Navbar({ user, setUser, toggleDarkMode, isDarkMode }) {
   return (
     <nav className={styles.navbar}>
       <div className={styles.logoContainer}>
-        <span className={styles.logo}>Remodel Pro</span>
+        <span className={styles.logo}>Rawdah Remodeling</span>
         <span className={styles.logoSubtitle}>Project Management</span>
       </div>
 
@@ -63,6 +64,12 @@ export default function Navbar({ user, setUser, toggleDarkMode, isDarkMode }) {
           <Link to="/home/company-expenses" className={styles.navLink}>
             <FontAwesomeIcon icon={faMoneyBillWave} className={styles.navIcon} /> {/* Updated icon */}
             <span>Expenses</span> {/* Kept concise */}
+          </Link>
+        </li>
+        <li>
+          <Link to="/home/calendar" className={styles.navLink}>
+            <FontAwesomeIcon icon={faCalendarAlt} className={styles.navIcon} />
+            <span>Calendar</span>
           </Link>
         </li>
         <li>

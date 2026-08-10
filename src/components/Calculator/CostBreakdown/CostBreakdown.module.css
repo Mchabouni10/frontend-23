@@ -251,6 +251,28 @@
     padding: var(--spacing-xs) var(--spacing-sm);
 }
 
+/* ✅ Removed hardcoded #fff8e6 fallback — var(--warning-bg) is always        */
+/* defined in both :root and .dark in index.css.                              */
+.refundRow td {
+    background: var(--warning-bg);
+    font-weight: var(--font-weight-medium);
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.refundBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--warning);
+    font-weight: var(--font-weight-medium);
+    background: var(--warning-bg);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    border: 1px solid var(--warning-border, var(--warning));
+    box-shadow: 0 2px 4px var(--shadow);
+}
+
 /* ── Remaining Balance Row ──────────────────────────────────────────────── */
 .remainingBalanceRow {
     border-top: 3px solid var(--error);
@@ -499,6 +521,24 @@
     background: linear-gradient(90deg, var(--info-bg), transparent);
     padding-left: var(--spacing-sm);
     border-radius: var(--radius-sm);
+}
+
+/* ── Payment icon colors — replaces inline style props (FIX 4) ──────────── */
+/* Previously: style={{ marginRight: "6px", color: "var(--primary)" }}       */
+.iconDeposit {
+    color: var(--primary);
+    margin-right: 6px;
+}
+
+/* Previously: style={{ marginRight: "6px", color: "var(--warning)" }}       */
+.iconRefund {
+    color: var(--warning);
+    margin-right: 6px;
+}
+
+/* Previously: style={isRefund ? { color: "var(--warning)" } : undefined}    */
+.refundAmount {
+    color: var(--warning);
 }
 
 /* ── Utility ────────────────────────────────────────────────────────────── */

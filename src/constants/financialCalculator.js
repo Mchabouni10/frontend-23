@@ -17,133 +17,59 @@
  * ================================================================
  */
 
+import { CalculatorEngine } from "../components/Calculator/engine/CalculatorEngine";
+
 // ─── CORE: single project cost calculator ────────────────────────────────────
 
 /**
  * Calculate all costs, fees, and the grand total for one project.
- * Matches CalculatorEngine._calculateAdjustments exactly.
+ * Uses CalculatorEngine as the single source of truth.
  */
 export const calculateProjectCosts = (project) => {
-  const categories = project.categories || [];
-  let materialCost = 0;
-  let laborCost = 0;
+  const engine = new CalculatorEngine(project.categories || [], project.settings || {});
+  const totals = engine.calculateTotals();
+
   const materialBreakdown = [];
   const laborBreakdown = [];
 
-  categories.forEach((cat) => {
+  (project.categories || []).forEach((cat) => {
     (cat.workItems || []).forEach((item) => {
-      // Match CalculatorEngine.calculateWorkUnits exactly:
-      // surfaces use sqft OR width×height (SQUARE_FOOT), linearFt, or units.
-      // Without this, items stored as width/height get 0 units → wrong totals.
-      const surfaces = item.surfaces || [];
-      let units = 0;
-
-      if (surfaces.length > 0) {
-        const mType = (item.measurementType || "").toLowerCase();
-        const isLinear = mType.includes("linear") || mType === "linearfoot";
-        const isByUnit = mType.includes("unit") || mType.includes("piece") || mType.includes("each");
-
-        units = surfaces.reduce((sum, surf) => {
-          if (isLinear) {
-            return sum + (parseFloat(surf.linearFt) || 0);
-          } else if (isByUnit) {
-            return sum + (parseInt(surf.units) || 0);
-          } else {
-            // SQUARE_FOOT: prefer sqft, fall back to width × height
-            const sqft = parseFloat(surf.sqft) || 0;
-            if (sqft > 0) return sum + sqft;
-            const w = parseFloat(surf.width) || 0;
-            const h = parseFloat(surf.height) || 0;
-            return sum + (w * h);
-          }
-        }, 0);
-      }
-
-      // No surfaces — read direct item-level measurement fields
-      if (units === 0) {
-        units =
-          parseFloat(item.sqft) ||
-          parseFloat(item.linearFt) ||
-          parseInt(item.units) ||
-          0;
-      }
-
-      const itemMaterial = (parseFloat(item.materialCost) || 0) * units;
-      const itemLabor = (parseFloat(item.laborCost) || 0) * units;
-
-      materialCost += itemMaterial;
-      laborCost += itemLabor;
-
-      if (itemMaterial > 0) {
-        materialBreakdown.push({
-          category: cat.name,
-          workType: item.type || item.customWorkName || "Unknown",
-          units,
-          costPerUnit: parseFloat(item.materialCost) || 0,
-          total: itemMaterial,
-        });
-      }
-      if (itemLabor > 0) {
-        laborBreakdown.push({
-          category: cat.name,
-          workType: item.type || item.customWorkName || "Unknown",
-          units,
-          costPerUnit: parseFloat(item.laborCost) || 0,
-          total: itemLabor,
-        });
+      const costResult = engine.calculateWorkCost(item);
+      if (costResult.units > 0) {
+        if (parseFloat(costResult.materialCost) > 0) {
+          materialBreakdown.push({
+            category: cat.name,
+            workType: item.type || item.customWorkName || "Unknown",
+            units: costResult.units,
+            costPerUnit: parseFloat(item.materialCost) || 0,
+            total: parseFloat(costResult.materialCost),
+          });
+        }
+        if (parseFloat(costResult.laborCost) > 0) {
+          laborBreakdown.push({
+            category: cat.name,
+            workType: item.type || item.customWorkName || "Unknown",
+            units: costResult.units,
+            costPerUnit: parseFloat(item.laborCost) || 0,
+            total: parseFloat(costResult.laborCost),
+          });
+        }
       }
     });
   });
 
-  // Labor discount
-  const laborDiscountRate = parseFloat(project.settings?.laborDiscount) || 0;
-  const laborDiscountAmount = laborCost * laborDiscountRate;
-  const adjustedLaborCost = laborCost - laborDiscountAmount;
-
-  // Waste — uses wasteEntries[] when available, falls back to flat wasteFactor
-  // Applied to materialCost ONLY, matching CalculatorEngine._calculateWaste
-  let waste = 0;
-  if ((project.settings?.wasteEntries || []).length > 0) {
-    waste = project.settings.wasteEntries.reduce(
-      (sum, entry) =>
-        sum +
-        (parseFloat(entry.surfaceCost) || 0) *
-          (parseFloat(entry.wasteFactor) || 0),
-      0
-    );
-  } else {
-    waste = materialCost * (parseFloat(project.settings?.wasteFactor) || 0);
-  }
-
-  // Subtotal = (material + waste) + labor  ← CalculatorEngine formula
-  const subtotal = materialCost + waste + adjustedLaborCost;
-
-  // Tax & markup applied to subtotal (which includes waste)
-  const taxRate = parseFloat(project.settings?.taxRate) || 0;
-  const markupRate = parseFloat(project.settings?.markup) || 0;
-  const tax = subtotal * taxRate;
-  const markup = subtotal * markupRate;
-
-  const transportation = parseFloat(project.settings?.transportationFee) || 0;
-  const miscFees = (project.settings?.miscFees || []).reduce(
-    (sum, fee) => sum + (parseFloat(fee.amount) || 0),
-    0
-  );
-
-  const totalProjectValue = subtotal + markup + tax + transportation + miscFees;
-
   return {
-    materialCost,
-    laborCost: adjustedLaborCost,
-    laborCostBeforeDiscount: laborCost,
-    laborDiscountAmount,
-    waste,
-    tax,
-    markup,
-    transportation,
-    miscFees,
-    subtotal,
-    totalProjectValue,
+    materialCost: parseFloat(totals.materialCost),
+    laborCost: parseFloat(totals.laborCost),
+    laborCostBeforeDiscount: parseFloat(totals.laborCostBeforeDiscount),
+    laborDiscountAmount: parseFloat(totals.laborDiscount),
+    waste: parseFloat(totals.wasteCost),
+    tax: parseFloat(totals.taxAmount),
+    markup: parseFloat(totals.markupAmount),
+    transportation: parseFloat(totals.transportationFee),
+    miscFees: parseFloat(totals.miscFeesTotal),
+    subtotal: parseFloat(totals.subtotal),
+    totalProjectValue: parseFloat(totals.total),
     materialBreakdown,
     laborBreakdown,
   };
@@ -153,57 +79,52 @@ export const calculateProjectCosts = (project) => {
 
 /**
  * Calculate all payment metrics for one project.
- *
- * PaymentTracking stores the deposit as a payments[] entry with
- * type === "Deposit" and isPaid === true.
- * We count ALL paid entries (including that deposit entry) then guard
- * against the legacy case where settings.deposit flat field also exists.
+ * Uses CalculatorEngine for total sums and balances, while maintaining
+ * legacy deposit checks and building payment arrays for UI.
  */
 export const calculateProjectPayments = (project) => {
+  const engine = new CalculatorEngine(project.categories || [], project.settings || {});
+  const totals = engine.calculateTotals();
+  const paymentDetails = engine.calculatePaymentDetails(totals.total);
+
   const payments = project.settings?.payments || [];
   const now = new Date();
 
-  // Does a Deposit-type entry already exist in the payments array?
+  // Legacy deposit handling
   const hasDepositEntry = payments.some(
-    (p) => p.type === "Deposit" || (p.method || "").toLowerCase() === "deposit"
+    (p) =>
+      (p.type || "").toLowerCase() === "deposit" ||
+      (p.method || "").toLowerCase() === "deposit" ||
+      (p.note || p.description || "").toLowerCase().includes("deposit")
   );
 
-  // Only read the flat deposit field when no payment entry holds it
-  // (avoids double-counting legacy vs new format)
   const flatDeposit = hasDepositEntry
     ? 0
     : parseFloat(project.settings?.deposit) || 0;
 
-  // Canonical deposit value for display
-  const depositEntry = payments.find(
-    (p) => p.type === "Deposit" || (p.method || "").toLowerCase() === "deposit"
-  );
-  const deposit = hasDepositEntry
-    ? parseFloat(depositEntry?.amount || 0)
-    : flatDeposit;
+  const deposit = (parseFloat(paymentDetails.deposit) || 0) + flatDeposit;
+  const totalPaid = (parseFloat(paymentDetails.totalPaid) || 0) + flatDeposit;
+  
+  const totalProjectValue = parseFloat(totals.total) || 0;
+  const remainingBalance = Math.max(0, totalProjectValue - totalPaid);
 
-  let totalPaid = flatDeposit;
   const paidPayments = [];
   const pendingPayments = [];
-  const overduePayments = [];
+  const overdueArray = [];
 
   payments.forEach((p) => {
     const amount = parseFloat(p.amount) || 0;
     const dueDate = p.date ? new Date(p.date) : null;
 
     if (p.isPaid) {
-      totalPaid += amount;
       paidPayments.push({ ...p, amount });
     } else {
       pendingPayments.push({ ...p, amount });
       if (dueDate && dueDate < now) {
-        overduePayments.push({ ...p, amount });
+        overdueArray.push({ ...p, amount });
       }
     }
   });
-
-  const { totalProjectValue } = calculateProjectCosts(project);
-  const remainingBalance = Math.max(0, totalProjectValue - totalPaid);
 
   return {
     deposit,
@@ -212,7 +133,7 @@ export const calculateProjectPayments = (project) => {
     totalProjectValue,
     paidPayments,
     pendingPayments,
-    overduePayments,
+    overduePayments: overdueArray,
     isFullyPaid: remainingBalance <= 0.01,
   };
 };

@@ -10,7 +10,6 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 
-import { WORK_TYPES } from "../components/Calculator/data/workTypes";
 import {
   MEASUREMENT_TYPES,
   MEASUREMENT_TYPE_UNITS,
@@ -56,9 +55,6 @@ function sanitizeCategory(category) {
           ? Number(item.laborCost)
           : 0;
 
-      // FIX #1: Build sanitised item WITHOUT legacy measurement fields.
-      // We spread item first (preserving all custom fields), then overwrite
-      // critical fields, then explicitly delete legacy measurement keys.
       const sanitized = {
         ...item,
         measurementType: fixedType,
@@ -81,7 +77,7 @@ function sanitizeCategory(category) {
   };
 }
 
-function validateWorkItem(item, categoryKey) {
+function validateWorkItem(item) {
   const errors = [];
   if (!item.type || item.type.trim() === "")
     errors.push("Work item is missing a work type");
@@ -92,14 +88,26 @@ function validateWorkItem(item, categoryKey) {
   return errors;
 }
 
+/**
+ * Returns true if a category key looks valid.
+ *
+ * Previously this checked against a static WORK_TYPES import, which caused
+ * every DB-seeded category key (e.g. "basement", "garage", "walk-in-closet")
+ * to be silently rejected because those keys weren't present in the static
+ * file. Now we accept any non-empty string — validation of what keys actually
+ * exist is the taxonomy API's responsibility.
+ */
+function isValidCategoryKey(key) {
+  if (!key || typeof key !== "string") return false;
+  return key.trim().length > 0;
+}
+
 export function CategoriesProvider({ children, initialCategories = [] }) {
   const [categories, setCategoriesState] = useState(
     initialCategories.map((c) => sanitizeCategory(c)),
   );
   const [validationWarnings, setValidationWarnings] = useState([]);
 
-  // FIX #2: Use a ref to track the previous warning list so the effect doesn't
-  // depend on the state it writes, breaking the feedback loop.
   const prevWarningsRef = useRef([]);
 
   useEffect(() => {
@@ -109,7 +117,7 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
         warnings.push(`Category at index ${catIndex} is missing key or name`);
 
       category.workItems?.forEach((item, itemIndex) => {
-        const itemErrors = validateWorkItem(item, category.key);
+        const itemErrors = validateWorkItem(item);
         if (itemErrors.length > 0) {
           warnings.push(
             `Category "${
@@ -120,7 +128,6 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
       });
     });
 
-    // Only update state when the set of warnings actually changes
     const warningsString = warnings.join("|");
     const prevString = prevWarningsRef.current.join("|");
     if (warningsString !== prevString) {
@@ -130,9 +137,9 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
         console.warn("⚠️ Categories validation warnings:", warnings);
       }
     }
-  }, [categories]); // FIX #2: `validationWarnings` removed from deps
+  }, [categories]);
 
-  // FIX #3: Every write is funnelled through setCategories (with sanitisation)
+  // Every write is funnelled through setCategories (with sanitisation)
   const setCategories = useCallback((updater) => {
     setCategoriesState((prev) => {
       const next = typeof updater === "function" ? updater(prev) : updater;
@@ -172,20 +179,22 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
         console.warn("⚠️ Invalid category object:", category);
         return;
       }
-      if (!category.key.startsWith("custom_") && !WORK_TYPES[category.key]) {
-        console.warn(
-          `⚠️ Category key "${category.key}" is not a valid WORK_TYPES key or custom key`,
-        );
+
+      // FIX: The old guard checked the static WORK_TYPES map which did NOT
+      // contain DB-seeded keys (basement, garage, walk-in-closet, etc.), so
+      // every real DB category was silently dropped here. We now accept any
+      // well-formed key string — the taxonomy API owns key validation.
+      if (!isValidCategoryKey(category.key)) {
+        console.warn(`⚠️ Category key "${category.key}" is not a valid key`);
         return;
       }
+
       console.log(`➕ Adding category: "${category.name}" (${category.key})`);
       setCategories((prev) => [...prev, sanitizeCategory(category)]);
     },
     [setCategories],
   );
 
-  // FIX #3: updateCategory now uses setCategories (sanitized wrapper) instead
-  // of setCategoriesState directly.
   const updateCategory = useCallback(
     (index, updates) => {
       setCategories((prev) => {
@@ -193,11 +202,9 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
           console.warn(`⚠️ Invalid category index: ${index}`);
           return prev;
         }
-        if (
-          updates.key &&
-          !updates.key.startsWith("custom_") &&
-          !WORK_TYPES[updates.key]
-        ) {
+
+        // FIX: Same guard problem applied to key updates — removed static check.
+        if (updates.key && !isValidCategoryKey(updates.key)) {
           console.warn(`⚠️ Updated category key "${updates.key}" is not valid`);
           return prev;
         }
@@ -238,7 +245,6 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
                   ? Number(mergedItem.laborCost)
                   : 0;
 
-              // FIX #1: Build without legacy measurement fields
               const sanitizedItem = {
                 ...mergedItem,
                 measurementType,
@@ -310,7 +316,7 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
     const incomplete = [];
     categories.forEach((category, catIndex) => {
       category.workItems?.forEach((item, itemIndex) => {
-        const errors = validateWorkItem(item, category.key);
+        const errors = validateWorkItem(item);
         if (errors.length > 0) {
           incomplete.push({
             categoryIndex: catIndex,
@@ -337,7 +343,7 @@ export function CategoriesProvider({ children, initialCategories = [] }) {
       if (!category.workItems || category.workItems.length === 0)
         errors.push(`Category "${category.name}" has no work items`);
       category.workItems?.forEach((item, itemIndex) => {
-        const itemErrors = validateWorkItem(item, category.key);
+        const itemErrors = validateWorkItem(item);
         if (itemErrors.length > 0) {
           errors.push(
             `Category "${category.name}", Item ${itemIndex}: ${itemErrors.join(
@@ -419,9 +425,6 @@ CategoriesProvider.propTypes = {
   initialCategories: PropTypes.array,
 };
 
-// Preferred hook for components always inside the provider.
-// Components that may render outside the provider should call
-// useContext(CategoriesContext) directly and handle the null case.
 export const useCategories = () => {
   const context = useContext(CategoriesContext);
   if (!context) {

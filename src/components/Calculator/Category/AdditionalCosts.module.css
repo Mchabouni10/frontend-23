@@ -1,4 +1,7 @@
-/* AdditionalCosts.module.css - Compact Modern Redesign */
+/* AdditionalCosts.module.css
+   Flat design — matches index.css: no gradients, no glow, semantic colors
+   used only for their semantic meaning (success = positive/savings,
+   secondary = neutral action, muted = disabled/inactive). */
 
 /* ========================================
    SECTION & LAYOUT
@@ -7,15 +10,14 @@
 .section {
   margin: var(--spacing-md) 0;
   background: var(--surface);
-  border-radius: var(--radius-md);
-  box-shadow: 0 2px 4px var(--shadow);
-  overflow: hidden;
-  transition: all 0.3s ease;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
+  box-shadow: 0 6px 20px var(--shadow);
+  overflow: hidden;
 }
 
 /* ========================================
-   HEADER STATS (rendered inside a gradient header by parent)
+   HEADER STATS (rendered inside parent's header bar)
    ======================================== */
 
 .statsContainer {
@@ -46,7 +48,6 @@
 
 .statValue {
   font-weight: var(--font-weight-bold);
-  font-size: 1em;
   color: #ffffff;
 }
 
@@ -63,14 +64,11 @@
 
 .settingsContent {
   padding: var(--spacing-md);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: var(--spacing-md);
   align-items: start;
+  background: var(--background);
 }
 
 /* ========================================
@@ -84,16 +82,9 @@
   padding: var(--spacing-sm) var(--spacing-md);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  transition: all 0.2s ease;
+  gap: 6px;
   min-height: 50px;
   justify-content: center;
-}
-
-.field:hover {
-  border-color: var(--secondary);
-  box-shadow: 0 2px 6px var(--shadow-md);
-  transform: translateY(-1px);
 }
 
 .field label {
@@ -103,28 +94,26 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 0;
-  flex: 0 0 auto;
 }
 
 .field label i {
   color: var(--secondary);
   font-size: 0.9em;
+  width: 1em;
+  text-align: center;
 }
 
-/* Input and select inside field cards */
 .field input,
 .field select {
-  padding: 4px var(--spacing-sm);
+  padding: 6px var(--spacing-sm);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
-  flex: 1;
   background-color: var(--surface);
   color: var(--text);
-  transition: all 0.2s ease;
   font-family: var(--font-family);
   min-width: 0;
+  width: 100%;
 }
 
 .field input::placeholder {
@@ -140,8 +129,7 @@
 .field select:focus {
   border-color: var(--secondary);
   outline: none;
-  box-shadow: 0 0 0 2px var(--glow-secondary);
-  background-color: var(--surface-raised);
+  box-shadow: 0 0 0 2px var(--secondary-dark, var(--secondary));
 }
 
 .field input:disabled,
@@ -151,12 +139,6 @@
   cursor: not-allowed;
   opacity: 0.6;
   color: var(--text-muted);
-}
-
-.field input[type="checkbox"] {
-  width: auto;
-  accent-color: var(--secondary);
-  flex: 0 0 auto;
 }
 
 /* Row within field cards */
@@ -170,17 +152,18 @@
 .fieldRow:first-child {
   flex: 1;
   min-width: 0;
+  width: 100%;
 }
 
 /* Cost display badge inside field cards */
 .costDisplay {
   font-size: var(--font-size-xs);
-  color: var(--success);
+  color: var(--success-dark);
   font-weight: var(--font-weight-bold);
   background: var(--success-bg);
   border: 1px solid var(--success-border);
   padding: 2px 8px;
-  border-radius: 12px;
+  border-radius: var(--radius-full);
   white-space: nowrap;
 }
 
@@ -197,30 +180,30 @@
 
 .checkbox input[type="checkbox"] {
   margin: 0;
+  accent-color: var(--secondary);
 }
 
 /* ========================================
-   WASTE FACTOR SECTION — Redesigned to match field card style
+   WASTE SECTION
    ======================================== */
 
 .wasteSection {
   grid-column: 1 / -1;
-  margin-top: var(--spacing-xs);
-  background: var(--surface);
-  border: 1px solid var(--success-border);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: 0 2px 6px var(--shadow);
 }
 
-/* Waste Header — gradient bar matching other section headers */
 .wasteHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
   padding: var(--spacing-sm) var(--spacing-md);
-  background: linear-gradient(135deg, var(--success-dark) 0%, var(--success) 100%);
-  gap: var(--spacing-md);
+  background: var(--success-bg);
+  border-bottom: 1px solid var(--success-border);
 }
 
 .wasteToggle {
@@ -229,167 +212,311 @@
   gap: var(--spacing-sm);
   background: transparent;
   border: none;
-  color: #ffffff;
+  color: var(--success-dark);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   cursor: pointer;
   padding: 0;
-  transition: all 0.2s ease;
   flex: 1;
+  min-width: 0;
 }
 
 .wasteToggle:hover {
-  transform: translateX(4px);
-  opacity: 0.9;
+  opacity: 0.8;
 }
 
 .wasteToggle i:first-child {
   font-size: var(--font-size-sm);
-  transition: transform 0.3s ease;
+  flex-shrink: 0;
 }
 
 .wasteToggle i:nth-child(2) {
-  font-size: 1.1em;
-  opacity: 0.95;
+  flex-shrink: 0;
 }
 
 .wasteToggle span {
-  letter-spacing: 0.3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.headerAddButton {
-  background: rgba(255, 255, 255, 0.18);
+.wasteBadge {
+  background: var(--success);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  flex-shrink: 0;
+}
+
+.wasteHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.autoGenerateBtn,
+.headerAddButton {
+  background: var(--surface);
+  color: var(--success-dark);
+  border: 1px solid var(--success-border);
   padding: 6px var(--spacing-md);
-  border-radius: 20px;
+  border-radius: var(--radius-full);
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  transition: all 0.2s ease;
   white-space: nowrap;
-  backdrop-filter: blur(10px);
 }
 
-.headerAddButton:hover {
-  background: rgba(255, 255, 255, 0.28);
-  border-color: rgba(255, 255, 255, 0.45);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px var(--shadow-md);
+.autoGenerateBtn:hover:not(:disabled),
+.headerAddButton:hover:not(:disabled) {
+  background: var(--success-bg);
+  border-color: var(--success);
 }
 
-.headerAddButton i {
-  font-size: 0.9em;
-}
-
-/* Waste Content Area */
+/* Waste Content Area — compact to minimise scrolling */
 .wasteContent {
-  padding: var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ========================================
+   GLOBAL WASTE FALLBACK FIELD
+   ======================================== */
+
+.globalWasteField {
   background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
 }
 
+.globalWasteField .fieldRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.globalWasteField label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.globalWasteField label i {
+  color: var(--success);
+}
+
+.helpText {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.helpText i {
+  color: var(--secondary);
+}
+
 /* ========================================
-   WASTE ENTRY ROW — Consistent with .field card style
+   WASTE ENTRY ROW
+   Two-line structure: main (surface + type badge) / sub (cost + waste% + total)
+   This avoids the cramped 5-column squeeze and the badge-overlap bug —
+   each piece gets real space at every viewport width, no breakpoint cliff.
    ======================================== */
 
 .wasteEntryRow {
+  /* Single compact row: [#] [surface select — flex] [type] [waste%] [waste$] [del] */
   display: grid;
-  grid-template-columns: 2fr 1.2fr 1fr auto auto;
-  gap: var(--spacing-sm);
+  grid-template-columns: auto 1fr auto 72px 68px auto;
+  gap: 6px;
   align-items: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--surface-raised);
+  padding: 5px var(--spacing-sm);
+  background: var(--surface);
   border: 1px solid var(--border-strong);
   border-left: 3px solid var(--success);
   border-radius: var(--radius-sm);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px var(--shadow);
-  position: relative;
-  min-height: 50px;
+  min-height: 0; /* don't stretch — let content dictate height */
 }
 
 .wasteEntryRow:hover {
-  border-left-color: var(--success-dark);
   border-color: var(--success-border);
   border-left-color: var(--success);
-  box-shadow: 0 4px 12px var(--shadow-md);
-  transform: translateX(3px);
-  background: var(--surface-raised);
+}
+
+/* Legacy sub-row classes kept so old markup doesn't break — now unused */
+.wasteEntryMain,
+.wasteEntrySub {
+  display: contents; /* dissolved into parent grid */
 }
 
 /* Icon inside waste inputs */
-.wasteEntryRow .inputWrapper {
+.inputWrapper {
   position: relative;
+  flex: 1;
+  min-width: 0;
 }
 
-.wasteEntryRow .inputWrapper i {
+.inputIcon {
   position: absolute;
-  left: 10px;
+  left: var(--spacing-sm);
   top: 50%;
   transform: translateY(-50%);
   color: var(--success);
-  font-size: var(--font-size-sm);
-  z-index: 1;
-  transition: all 0.2s ease;
+  font-size: var(--font-size-xs);
   pointer-events: none;
+  z-index: 1;
 }
 
-.wasteEntryRow:hover .inputWrapper i {
-  color: var(--success-dark);
-  transform: translateY(-50%) scale(1.1);
+.wasteEntryLocked .inputIcon {
+  color: var(--text-muted);
 }
 
-/* All three waste inputs use the same style as .field inputs */
-.surfaceNameInput,
-.costInput,
-.wasteSelect {
-  padding: 6px var(--spacing-sm) 6px 2rem;
+/* Surface selector */
+.surfaceSelect {
+  padding: 6px var(--spacing-sm) 6px 1.8rem;
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-sm);
-  background-color: var(--surface);
+  background-color: var(--surface-raised);
   color: var(--text);
-  transition: all 0.2s ease;
   font-family: var(--font-family);
   width: 100%;
-}
-
-.surfaceNameInput::placeholder,
-.costInput::placeholder {
-  color: var(--text-muted);
-  font-style: italic;
-}
-
-.surfaceNameInput:focus,
-.costInput:focus,
-.wasteSelect:focus {
-  border-color: var(--success);
-  outline: none;
-  box-shadow: 0 0 0 2px var(--glow-success);
-  background-color: var(--surface-raised);
-}
-
-.costInput {
-  text-align: right;
-  font-weight: var(--font-weight-medium);
-}
-
-/* Waste percentage select */
-.wasteSelect {
-  cursor: pointer;
-  font-weight: var(--font-weight-medium);
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2338a169' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
   background-position: right 8px center;
   background-repeat: no-repeat;
   background-size: 1.2em 1.2em;
   padding-right: 2rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.surfaceSelect:focus {
+  border-color: var(--success);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--success-border);
+}
+
+/* ── Item number badge — "1-1", "4-2" — matches category list numbering ── */
+
+.itemNumberBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 6px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+  background: var(--secondary-dark);
+  color: var(--surface);
+  border: 1px solid var(--secondary-dark);
+}
+
+.itemNumberBadgeEmpty {
+  display: inline-block;
+  min-width: 32px;
+  height: 28px;
+}
+
+/* ── Measurement type badge — real grid cell, never overlaps ── */
+
+.typeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+/* Empty placeholder keeps row heights equal when no type is resolved yet */
+.typeBadgeEmpty {
+  display: inline-block;
+  min-width: 32px;
+  height: 28px;
+}
+
+.typeBadgeActive {
+  background: var(--success-bg);
+  color: var(--success-dark);
+  border: 1px solid var(--success-border);
+}
+
+.typeBadgeLocked {
+  background: var(--muted-bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border-strong);
+}
+
+/* Surface cost input */
+.costInput {
+  padding: 6px var(--spacing-sm) 6px 1.8rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  background-color: var(--surface-raised);
+  color: var(--text);
+  font-family: var(--font-family);
+  width: 100%;
+  text-align: right;
+  font-weight: var(--font-weight-medium);
+}
+
+.costInput::placeholder {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: left;
+}
+
+.costInput:focus {
+  border-color: var(--success);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--success-border);
+}
+
+/* Waste percentage select — compact, fixed-width column */
+.wasteSelect {
+  padding: 6px 1.5rem 6px 1.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  background-color: var(--surface-raised);
+  color: var(--text);
+  font-family: var(--font-family);
+  width: 100%;
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
   appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 4px center;
+  background-repeat: no-repeat;
+  background-size: 1em 1em;
+  text-align: center;
+  text-align-last: center;
 }
 
 .wasteSelect option {
@@ -397,82 +524,97 @@
   color: var(--text);
 }
 
-/* Waste cost display badge — matching .costDisplay style */
+.wasteSelect:focus {
+  border-color: var(--success);
+  outline: none;
+  box-shadow: 0 0 0 2px var(--success-border);
+}
+
+.wasteSelectLocked {
+  background-color: var(--muted-bg);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  font-style: italic;
+}
+
+/* Waste cost display — plain text, no pill background */
 .wasteCostDisplay {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  color: var(--success);
-  background: var(--success-bg);
-  border: 1px solid var(--success-border);
-  padding: 6px var(--spacing-md);
-  border-radius: 20px;
-  min-width: 80px;
-  text-align: center;
-  letter-spacing: 0.3px;
-  transition: all 0.2s ease;
+  color: var(--success-dark);
+  white-space: nowrap;
+  text-align: right;
+  padding: 0 4px;
 }
 
-.wasteEntryRow:hover .wasteCostDisplay {
-  background: var(--success-bg);
-  border-color: var(--success);
-  transform: scale(1.04);
+.wasteBreakdown {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  opacity: 0.75;
+  color: inherit;
 }
 
-/* Waste total row — solid gradient bar */
+.wasteCostNA {
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: var(--font-weight-normal);
+}
+
+/* Locked (BY_UNIT) rows — dimmed, no green accent */
+.wasteEntryLocked {
+  border-left-color: var(--border-strong);
+  opacity: 0.85;
+}
+
+.wasteEntryLocked:hover {
+  border-left-color: var(--border-strong);
+}
+
+/* Waste total row */
 .wasteTotalRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: var(--spacing-md);
-  background: linear-gradient(135deg, var(--success-dark) 0%, var(--success) 100%);
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
   border-radius: var(--radius-sm);
-  margin-top: var(--spacing-sm);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
-  color: #ffffff;
-  box-shadow: 0 4px 12px var(--shadow-md);
-  position: relative;
-  overflow: hidden;
-}
-
-.wasteTotalRow::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.08) 100%);
-  pointer-events: none;
+  color: var(--success-dark);
 }
 
 .wasteTotalRow > span:first-child {
   display: flex;
   align-items: center;
-  gap: var(--spacing-sm);
-  letter-spacing: 0.5px;
-  position: relative;
-  z-index: 1;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
-.wasteTotalRow > span:first-child::before {
-  content: '∑';
-  font-size: 1.3em;
-  opacity: 0.8;
+.wasteTotalDetail {
+  font-weight: var(--font-weight-normal);
+  opacity: 0.85;
+  margin-left: var(--spacing-xs);
+  font-size: 0.85em;
 }
 
 .wasteTotalAmount {
   font-size: var(--font-size-lg);
-  color: #ffffff;
+  color: var(--success-dark);
   font-weight: var(--font-weight-extrabold);
-  padding: 6px var(--spacing-lg);
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 20px;
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-  letter-spacing: 0.5px;
-  position: relative;
-  z-index: 1;
-  backdrop-filter: blur(10px);
+  padding: 4px var(--spacing-md);
+  background: var(--surface);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--success-border);
+}
+
+.wastePercent {
+  margin-left: var(--spacing-sm);
+  font-weight: var(--font-weight-medium);
+  opacity: 0.85;
+  font-size: 0.8em;
 }
 
 /* ========================================
@@ -481,7 +623,6 @@
 
 .miscFees {
   grid-column: 1 / -1;
-  margin-top: var(--spacing-xs);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
@@ -494,14 +635,12 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  margin-bottom: 4px;
 }
 
 .miscFees > label i {
   color: var(--secondary);
 }
 
-/* Misc fee row — same pattern as .wasteEntryRow */
 .miscFeeRow {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
@@ -512,26 +651,14 @@
   border: 1px solid var(--border-strong);
   border-left: 3px solid var(--secondary);
   border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-  min-height: 50px;
 }
 
 .miscFeeRow:hover {
   border-color: var(--secondary);
   border-left-color: var(--secondary);
-  box-shadow: 0 2px 6px var(--shadow-md);
-  transform: translateX(3px);
 }
 
-/* ========================================
-   INPUT WRAPPER (misc fees + general)
-   ======================================== */
-
-.inputWrapper {
-  position: relative;
-  flex: 1;
-}
-
+/* Generic input wrapper inputs (misc fees use the shared .inputWrapper above) */
 .inputWrapper input,
 .inputWrapper select {
   width: 100%;
@@ -541,7 +668,6 @@
   font-size: var(--font-size-sm);
   background-color: var(--surface);
   color: var(--text);
-  transition: all 0.2s ease;
   font-family: var(--font-family);
 }
 
@@ -558,19 +684,7 @@
 .inputWrapper select:focus {
   border-color: var(--secondary);
   outline: none;
-  box-shadow: 0 0 0 2px var(--glow-secondary);
-  background-color: var(--surface-raised);
-}
-
-.inputIcon {
-  position: absolute;
-  left: var(--spacing-sm);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-light);
-  font-size: var(--font-size-xs);
-  pointer-events: none;
-  z-index: 1;
+  box-shadow: 0 0 0 2px var(--secondary-dark, var(--secondary));
 }
 
 /* ========================================
@@ -578,7 +692,7 @@
    ======================================== */
 
 .addButton {
-  background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+  background: var(--secondary);
   color: #ffffff;
   border: none;
   padding: 6px var(--spacing-md);
@@ -589,20 +703,17 @@
   gap: 6px;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  transition: all 0.2s ease;
   align-self: flex-start;
   min-height: 32px;
 }
 
 .addButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px var(--shadow-md);
+  background: var(--secondary-dark);
 }
 
 .addButton:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--glow-secondary);
+  box-shadow: 0 0 0 3px var(--secondary-dark);
 }
 
 .addButton:disabled {
@@ -613,60 +724,28 @@
 }
 
 .removeButton {
-  background: linear-gradient(135deg, var(--error) 0%, var(--error-dark) 100%);
-  color: #ffffff;
-  border: none;
+  background: var(--error-bg);
+  color: var(--error);
+  border: 1px solid var(--error-border);
   padding: 6px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: var(--font-size-sm);
-  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: 32px;
   height: 32px;
-  box-shadow: 0 2px 4px var(--shadow);
-  position: relative;
-  overflow: hidden;
-}
-
-.removeButton::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.25);
-  transform: translate(-50%, -50%);
-  transition: width 0.3s ease, height 0.3s ease;
 }
 
 .removeButton:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--error-dark) 0%, var(--error) 100%);
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 12px var(--shadow-md);
-}
-
-.removeButton:hover:not(:disabled)::before {
-  width: 100%;
-  height: 100%;
-}
-
-.removeButton:active {
-  transform: translateY(0) scale(0.95);
+  background: var(--error);
+  color: #ffffff;
 }
 
 .removeButton:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px var(--glow-error);
-}
-
-.removeButton i {
-  position: relative;
-  z-index: 1;
+  box-shadow: 0 0 0 3px var(--error-border);
 }
 
 /* ========================================
@@ -692,15 +771,14 @@
   left: 50%;
   margin-left: -100px;
   opacity: 0;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition: opacity 0.15s ease;
   font-size: var(--font-size-xs);
-  box-shadow: 0 2px 8px var(--shadow-md);
   white-space: normal;
   line-height: 1.3;
 }
 
 .tooltip::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 100%;
   left: 50%;
@@ -739,7 +817,7 @@
 .depositStatus {
   margin-left: auto;
   padding: 3px var(--spacing-sm);
-  border-radius: 12px;
+  border-radius: var(--radius-full);
   font-weight: var(--font-weight-bold);
   font-size: var(--font-size-xs);
   color: #ffffff;
@@ -750,65 +828,32 @@
    DARK MODE
    ======================================== */
 
-/* Section */
 :global(.dark) .section {
-  background: var(--surface);
-  border-color: var(--border-strong);
-  box-shadow: 0 2px 6px var(--shadow-lg);
-}
-
-/* Content grid */
-:global(.dark) .settingsContent {
-  background: var(--surface);
   border-color: var(--border-strong);
 }
 
-/* Field cards */
 :global(.dark) .field {
   background: var(--surface-raised);
   border-color: var(--border-strong);
 }
 
-:global(.dark) .field:hover {
-  border-color: var(--secondary);
-  box-shadow: 0 2px 6px var(--shadow-md);
-}
-
-:global(.dark) .field label {
-  color: var(--text-light);
-}
-
-:global(.dark) .field label i {
-  color: var(--secondary);
-}
-
 :global(.dark) .field input,
 :global(.dark) .field select {
-  background-color: var(--surface) !important;
-  border-color: var(--border-strong) !important;
-  color: var(--text) !important;
-}
-
-:global(.dark) .field input::placeholder {
-  color: var(--text-muted) !important;
-}
-
-:global(.dark) .field select option {
   background-color: var(--surface);
+  border-color: var(--border-strong);
   color: var(--text);
 }
 
 :global(.dark) .field input:focus,
 :global(.dark) .field select:focus {
-  border-color: var(--secondary) !important;
-  box-shadow: 0 0 0 2px var(--glow-secondary) !important;
-  background-color: var(--surface-raised) !important;
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 2px var(--glow-secondary);
 }
 
 :global(.dark) .field input:disabled,
 :global(.dark) .field select:disabled {
-  background-color: var(--muted-bg) !important;
-  color: var(--text-muted) !important;
+  background-color: var(--muted-bg);
+  color: var(--text-muted);
 }
 
 :global(.dark) .costDisplay {
@@ -817,102 +862,106 @@
   color: var(--success);
 }
 
-:global(.dark) .checkbox {
-  color: var(--text-light);
-}
-
-/* Waste section */
 :global(.dark) .wasteSection {
-  background: var(--surface);
-  border-color: var(--success-border);
-  box-shadow: 0 2px 6px var(--shadow-lg);
-}
-
-/* Waste header — darker success gradient */
-:global(.dark) .wasteHeader {
-  background: linear-gradient(135deg, #14532d 0%, #166534 100%);
-}
-
-/* Waste content */
-:global(.dark) .wasteContent {
-  background: var(--surface);
-}
-
-/* Waste entry rows — consistent with field cards */
-:global(.dark) .wasteEntryRow {
   background: var(--surface-raised);
   border-color: var(--border-strong);
+}
+
+:global(.dark) .wasteHeader {
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+:global(.dark) .wasteToggle,
+:global(.dark) .autoGenerateBtn,
+:global(.dark) .headerAddButton {
+  color: var(--success);
+}
+
+:global(.dark) .autoGenerateBtn,
+:global(.dark) .headerAddButton {
+  background: var(--surface-raised);
+  border-color: var(--success-border);
+}
+
+:global(.dark) .autoGenerateBtn:hover:not(:disabled),
+:global(.dark) .headerAddButton:hover:not(:disabled) {
+  background: var(--success-bg);
+  border-color: var(--success);
+}
+
+:global(.dark) .globalWasteField,
+:global(.dark) .wasteEntryRow {
+  background: var(--surface);
+  border-color: var(--border-strong);
+}
+
+:global(.dark) .wasteEntryRow {
   border-left-color: var(--success);
-  box-shadow: 0 1px 3px var(--shadow-lg);
 }
 
 :global(.dark) .wasteEntryRow:hover {
-  background: var(--surface-raised);
   border-color: var(--success-border);
   border-left-color: var(--success);
-  box-shadow: 0 4px 12px var(--shadow-lg);
 }
 
-:global(.dark) .wasteEntryRow .inputWrapper i {
-  color: var(--success);
+:global(.dark) .wasteEntryLocked {
+  border-left-color: var(--border-strong);
 }
 
-:global(.dark) .wasteEntryRow:hover .inputWrapper i {
-  color: var(--success);
-}
-
-/* Waste inputs */
-:global(.dark) .surfaceNameInput,
+:global(.dark) .surfaceSelect,
 :global(.dark) .costInput,
 :global(.dark) .wasteSelect {
-  background-color: var(--surface) !important;
-  border-color: var(--border-strong) !important;
-  color: var(--text) !important;
-}
-
-:global(.dark) .surfaceNameInput::placeholder,
-:global(.dark) .costInput::placeholder {
-  color: var(--text-muted) !important;
-  font-style: italic;
-}
-
-:global(.dark) .wasteSelect option {
-  background-color: var(--surface);
+  background-color: var(--surface-raised);
+  border-color: var(--border-strong);
   color: var(--text);
 }
 
-:global(.dark) .surfaceNameInput:focus,
+:global(.dark) .surfaceSelect:focus,
 :global(.dark) .costInput:focus,
 :global(.dark) .wasteSelect:focus {
-  border-color: var(--success) !important;
-  box-shadow: 0 0 0 2px var(--glow-success) !important;
-  background-color: var(--surface-raised) !important;
+  border-color: var(--success);
+  box-shadow: 0 0 0 2px var(--glow-success);
 }
 
-/* Waste cost display */
+:global(.dark) .wasteSelectLocked {
+  background-color: var(--muted-bg);
+  color: var(--text-muted);
+}
+
+:global(.dark) .typeBadgeActive {
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: var(--success-border);
+}
+
+:global(.dark) .typeBadgeLocked {
+  background: var(--muted-bg);
+  color: var(--text-muted);
+}
+
 :global(.dark) .wasteCostDisplay {
   background: var(--success-bg);
   border-color: var(--success-border);
   color: var(--success);
 }
 
-:global(.dark) .wasteEntryRow:hover .wasteCostDisplay {
-  border-color: var(--success);
+:global(.dark) .wasteCostNA {
+  background: var(--muted-bg);
+  border-color: var(--border-strong);
+  color: var(--text-muted);
 }
 
-/* Waste total row — darker gradient in dark mode */
 :global(.dark) .wasteTotalRow {
-  background: linear-gradient(135deg, #14532d 0%, #166534 100%);
-  box-shadow: 0 4px 12px var(--shadow-lg);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+  color: var(--success);
 }
 
 :global(.dark) .wasteTotalAmount {
-  color: #ffffff;
-}
-
-/* Misc fees */
-:global(.dark) .miscFees > label {
-  color: var(--text);
+  background: var(--surface);
+  color: var(--success);
+  border-color: var(--success-border);
 }
 
 :global(.dark) .miscFeeRow {
@@ -923,118 +972,92 @@
 
 :global(.dark) .miscFeeRow:hover {
   border-color: var(--secondary);
-  box-shadow: 0 2px 6px var(--shadow-md);
 }
 
-/* Input wrappers (misc fees) */
 :global(.dark) .inputWrapper input,
 :global(.dark) .inputWrapper select {
-  background-color: var(--surface) !important;
-  border-color: var(--border-strong) !important;
-  color: var(--text) !important;
-}
-
-:global(.dark) .inputWrapper input::placeholder {
-  color: var(--text-muted) !important;
-}
-
-:global(.dark) .inputWrapper select option {
   background-color: var(--surface);
+  border-color: var(--border-strong);
   color: var(--text);
 }
 
 :global(.dark) .inputWrapper input:focus,
 :global(.dark) .inputWrapper select:focus {
-  border-color: var(--secondary) !important;
-  box-shadow: 0 0 0 2px var(--glow-secondary) !important;
-  background-color: var(--surface-raised) !important;
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 2px var(--glow-secondary);
 }
 
 :global(.dark) .inputIcon {
-  color: var(--text-light);
+  color: var(--success);
 }
 
-/* Tooltip */
 :global(.dark) .tooltip {
   background: var(--surface-raised);
   color: var(--text);
   border: 1px solid var(--border-strong);
-  box-shadow: 0 2px 8px var(--shadow-lg);
 }
 
 :global(.dark) .tooltip::after {
   border-color: var(--surface-raised) transparent transparent transparent;
 }
 
-/* Deposit info */
 :global(.dark) .depositInfo {
   background: var(--success-bg);
   border-color: var(--success-border);
   color: var(--text);
 }
 
+:global(.dark) .removeButton {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+:global(.dark) .removeButton:hover:not(:disabled) {
+  background: var(--error);
+  color: #ffffff;
+}
+
 /* ========================================
    RESPONSIVE DESIGN
    ======================================== */
 
-@media (max-width: 968px) {
+@media (max-width: 768px) {
   .settingsContent {
     grid-template-columns: 1fr;
-  }
-
-  .wasteEntryRow {
-    grid-template-columns: 1fr;
+    padding: var(--spacing-sm);
     gap: var(--spacing-sm);
-    min-height: auto;
   }
 
-  .wasteCostDisplay {
-    text-align: left;
-    width: 100%;
+  /* On mobile collapse to: [surface select] [waste%] [waste$] [del]
+     hide the item-number badge and type badge (they're in tooltips anyway) */
+  .wasteEntryRow {
+    grid-template-columns: 1fr 64px 56px auto;
+  }
+
+  .wasteEntryRow .itemNumberBadge,
+  .wasteEntryRow .itemNumberBadgeEmpty,
+  .wasteEntryRow .typeBadge,
+  .wasteEntryRow .typeBadgeEmpty {
+    display: none;
   }
 
   .wasteHeader {
-    flex-wrap: wrap;
-    gap: var(--spacing-sm);
+    padding: var(--spacing-sm);
   }
 
-  .headerAddButton {
+  .wasteHeaderActions {
     width: 100%;
+  }
+
+  .autoGenerateBtn,
+  .headerAddButton {
+    flex: 1;
     justify-content: center;
   }
 
   .miscFeeRow {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .section {
-    margin: var(--spacing-sm) 0;
-  }
-
-  .settingsContent {
-    padding: var(--spacing-sm);
-    gap: var(--spacing-sm);
-  }
-
-  .statsContainer {
-    gap: 4px;
-  }
-
-  .statItem {
-    padding: 3px 8px;
-    font-size: var(--font-size-xs);
-  }
-
-  .field {
-    min-height: 65px;
-    padding: var(--spacing-xs) var(--spacing-sm);
-  }
-
-  .wasteSection,
-  .miscFees {
-    padding: var(--spacing-sm);
   }
 
   .tooltip {
@@ -1045,22 +1068,18 @@
 }
 
 @media (max-width: 480px) {
-  .statItem {
-    padding: 2px 6px;
-    gap: 3px;
+  .wasteEntryRow {
+    grid-template-columns: 1fr 60px auto;
   }
 
-  .field {
-    min-height: 60px;
-  }
-
-  .wasteSection {
-    padding: var(--spacing-xs);
+  /* On very small screens hide waste$ too — show only surface + % + delete */
+  .wasteEntryRow .wasteCostDisplay {
+    display: none;
   }
 
   .wasteTotalRow {
     flex-direction: column;
-    gap: 6px;
+    align-items: stretch;
     text-align: center;
   }
 }
@@ -1076,7 +1095,6 @@
   }
 
   .section {
-    box-shadow: none;
     border: 1px solid #000;
     break-inside: avoid;
   }
@@ -1095,9 +1113,8 @@
 
   .wasteHeader,
   .wasteTotalRow {
-    background: #333 !important;
-    color: #fff !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    background: transparent !important;
+    color: #000 !important;
+    border: 1px solid #000;
   }
 }

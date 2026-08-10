@@ -76,6 +76,7 @@ const getSurfaceName = (measurementType, index) => {
 const createCleanSurface = (measurementType, index, existingSurface = {}) => {
   const normalizedType = normalizeMeasurementType(measurementType);
   // FIX #2: Use monotonic generator instead of Date.now() + random
+  // FIX: Always preserve existing ID if available, otherwise generate a new one
   const surfaceId = existingSurface.id || generateSurfaceId();
 
   const safeName =
@@ -288,7 +289,11 @@ const SurfaceManager = forwardRef(function SurfaceManagerInner(
       if (disabled) return;
       const normalizedType = normalizeMeasurementType(newMeasurementType);
       const resetSurfaces = surfaces.map((s, i) =>
-        createCleanSurface(normalizedType, i + 1, { name: s.name, id: s.id }),
+        createCleanSurface(normalizedType, i + 1, { 
+          name: s.name, 
+          id: s.id,  // Preserve existing ID
+          subtype: s.subtype,
+        }),
       );
       const finalSurfaces =
         resetSurfaces.length > 0
@@ -543,45 +548,50 @@ const SurfaceManager = forwardRef(function SurfaceManagerInner(
             <p>{headerInfo.emptyText}</p>
           </div>
         ) : (
-          surfaces.map((surface, index) => (
-            <div key={surface.id || index} className={styles.surfaceItem}>
-              <div className={styles.surfaceHeader}>
-                <input
-                  type="text"
-                  value={
-                    surface.name ||
-                    getSurfaceName(workItem.measurementType, index + 1)
-                  }
-                  onChange={(e) => {
-                    const updatedSurfaces = surfaces.map((s, i) =>
-                      i === index ? { ...s, name: e.target.value } : s,
-                    );
-                    lastEmittedSurfacesRef.current =
-                      JSON.stringify(updatedSurfaces);
-                    onChange({ ...workItem, surfaces: updatedSurfaces });
-                  }}
-                  disabled={disabled}
-                  className={styles.surfaceName}
-                  placeholder={getSurfaceName(
-                    workItem.measurementType,
-                    index + 1,
-                  )}
-                />
+          surfaces.map((surface, index) => {
+            // FIX: Use surface.id as the key, fallback to index if missing
+            // But prefer the stable ID over index for React reconciliation
+            const key = surface.id || `surface-${index}`;
+            return (
+              <div key={key} className={styles.surfaceItem}>
+                <div className={styles.surfaceHeader}>
+                  <input
+                    type="text"
+                    value={
+                      surface.name ||
+                      getSurfaceName(workItem.measurementType, index + 1)
+                    }
+                    onChange={(e) => {
+                      const updatedSurfaces = surfaces.map((s, i) =>
+                        i === index ? { ...s, name: e.target.value } : s,
+                      );
+                      lastEmittedSurfacesRef.current =
+                        JSON.stringify(updatedSurfaces);
+                      onChange({ ...workItem, surfaces: updatedSurfaces });
+                    }}
+                    disabled={disabled}
+                    className={styles.surfaceName}
+                    placeholder={getSurfaceName(
+                      workItem.measurementType,
+                      index + 1,
+                    )}
+                  />
+                </div>
+                {!disabled && (
+                  <button
+                    onClick={() => removeSurface(index)}
+                    className={styles.removeButton}
+                    title="Remove"
+                  >
+                    <i className="fas fa-times" />
+                  </button>
+                )}
+                <div className={styles.surfaceContent}>
+                  {renderSurfaceInputs(surface, index)}
+                </div>
               </div>
-              {!disabled && (
-                <button
-                  onClick={() => removeSurface(index)}
-                  className={styles.removeButton}
-                  title="Remove"
-                >
-                  <i className="fas fa-times" />
-                </button>
-              )}
-              <div className={styles.surfaceContent}>
-                {renderSurfaceInputs(surface, index)}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

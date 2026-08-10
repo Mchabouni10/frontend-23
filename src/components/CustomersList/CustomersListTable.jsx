@@ -526,7 +526,7 @@ export default function CustomersListTable({
                                     display: "flex",
                                     justifyContent: "space-between",
                                     padding: "4px 0",
-                                    color: "#333",
+                                    color: "var(--text)",
                                   }}
                                 >
                                   <span style={{ fontWeight: "bold" }}>
@@ -543,7 +543,7 @@ export default function CustomersListTable({
                                     display: "flex",
                                     justifyContent: "space-between",
                                     padding: "4px 0",
-                                    color: "green",
+                                    color: "var(--success)",
                                     fontWeight: "bold",
                                   }}
                                 >
@@ -561,7 +561,7 @@ export default function CustomersListTable({
                                       borderTop: "1px solid var(--border)",
                                       marginTop: "4px",
                                       paddingTop: "4px",
-                                      color: "var(--text-color)",
+                                      color: "var(--text)",
                                       fontWeight: "bold",
                                     }}
                                   >
@@ -604,7 +604,9 @@ export default function CustomersListTable({
                                           }
                                         });
                                         return overdueCount > 0 ? (
-                                          <div style={{ color: "red" }}>
+                                          <div
+                                            style={{ color: "var(--error)" }}
+                                          >
                                             {overdueCount} overdue
                                           </div>
                                         ) : null;
@@ -619,10 +621,10 @@ export default function CustomersListTable({
                                     display: "flex",
                                     justifyContent: "space-between",
                                     padding: "4px 0",
-                                    borderTop: "1px solid #ddd",
+                                    borderTop: "1px solid var(--border)",
                                     marginTop: "4px",
                                     paddingTop: "4px",
-                                    color: "red",
+                                    color: "var(--error)",
                                     fontWeight: "bold",
                                   }}
                                 >
@@ -636,15 +638,15 @@ export default function CustomersListTable({
                                     display: "flex",
                                     justifyContent: "space-between",
                                     padding: "4px 0",
-                                    color: "#333",
+                                    color: "var(--text)",
                                   }}
                                 >
                                   <span>Deposit</span>
                                   <span
                                     style={{
                                       color: ttData.depositPaid
-                                        ? "green"
-                                        : "red",
+                                        ? "var(--success)"
+                                        : "var(--error)",
                                       fontWeight: "bold",
                                     }}
                                   >

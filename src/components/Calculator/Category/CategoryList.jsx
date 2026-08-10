@@ -7,10 +7,11 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { useWorkType } from "../../../context/WorkTypeContext";
 import { useCategories } from "../../../context/CategoriesContext";
 import { useError } from "../../../context/ErrorContext";
+import { useWorkTypeTaxonomy } from "../../../context/WorkTypeTaxonomyContext";
 import styles from "./CategoryList.module.css";
+import TaxonomyManager from "./TaxonomyManager";
 import SectionHeader from "./SectionHeader";
 import WorkItem from "../WorkItem/WorkItem";
 
@@ -28,7 +29,6 @@ const toMessage = (val) => {
   }
 };
 
-// FIX #2: Moved outside component so it is never recreated on re-render
 const sanitizeCostValue = (value) => {
   if (value === null || value === undefined || value === "") return 0;
   if (typeof value === "number") return isNaN(value) ? 0 : Math.max(0, value);
@@ -39,9 +39,6 @@ const sanitizeCostValue = (value) => {
   return 0;
 };
 
-// FIX #1: createBasicWorkItem NO LONGER creates legacy top-level measurement
-// fields (units, linearFt, sqft, width, height).  All measurement data lives
-// in the surfaces[] array managed by SurfaceManager.
 const createBasicWorkItem = (categoryName, categoryKey) => ({
   name: "New Work Item",
   customWorkTypeName: "",
@@ -52,7 +49,7 @@ const createBasicWorkItem = (categoryName, categoryKey) => ({
   measurementType: "",
   materialCost: 0,
   laborCost: 0,
-  surfaces: [], // ← single source of truth; SurfaceManager populates this
+  surfaces: [],
   notes: "",
   description: "",
 });
@@ -82,7 +79,7 @@ class SafeBoundary extends React.Component {
   }
 }
 
-// ─── component ────────────────────────────────────────────────────────────────
+// ─── main component ───────────────────────────────────────────────────────────
 
 export default function CategoryList({ disabled = false }) {
   const {
@@ -92,7 +89,26 @@ export default function CategoryList({ disabled = false }) {
     updateCategory,
   } = useCategories();
   const { addError } = useError();
-  const { workTypesData } = useWorkType();
+
+  // FIX: Single call to the shared context hook.
+  // Previously CategoryList called useWorkTypeTaxonomy() here AND
+  // TaxonomyManager called it again inside itself — two separate instances,
+  // two separate fetches, mutations in TaxonomyManager were invisible here.
+  const {
+    categories: taxonomy,
+    loading: taxonomyLoading,
+    // Mutations — passed down to TaxonomyManager as props
+    createCategory: taxonomyCreateCategory,
+    deleteCategory: taxonomyDeleteCategory,
+    createWorkType: taxonomyCreateWorkType,
+    deleteWorkType: taxonomyDeleteWorkType,
+    updateCategory: taxonomyUpdateCategory,
+    updateWorkType: taxonomyUpdateWorkType,
+    createSubtype: taxonomyCreateSubtype,
+    deleteSubtype: taxonomyDeleteSubtype,
+    updateSubtype: taxonomyUpdateSubtype,
+    setDefaultSubtype: taxonomySetDefaultSubtype,
+  } = useWorkTypeTaxonomy();
 
   const [expandedCategories, setExpandedCategories] = useState({});
   const [expandedSections, setExpandedSections] = useState({
@@ -101,9 +117,9 @@ export default function CategoryList({ disabled = false }) {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [customCategory, setCustomCategory] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [showTaxonomyMgr, setShowTaxonomyMgr] = useState(false);
   const inputTimeoutRef = useRef(null);
 
-  // Unified error handler
   const handleError = useCallback(
     (error, shouldAddToGlobal = false) => {
       const message = toMessage(error);
@@ -124,14 +140,12 @@ export default function CategoryList({ disabled = false }) {
 
   const clearError = useCallback(() => setErrorMessage(""), []);
 
-  // FIX #3: Cleanup only the timeout, not a stale ref value
   useEffect(() => {
     return () => {
       if (inputTimeoutRef.current) clearTimeout(inputTimeoutRef.current);
     };
   }, []);
 
-  // Category key helpers
   const createCategoryKey = useCallback((name, isCustom = false) => {
     if (!name || typeof name !== "string") return "";
     if (isCustom) {
@@ -148,17 +162,14 @@ export default function CategoryList({ disabled = false }) {
     [categories],
   );
 
-  // Generate dropdown options
+  // Build dropdown options from the live DB taxonomy
   const categoryOptions = useMemo(() => {
-    if (!workTypesData || typeof workTypesData !== "object") return [];
-    return Object.keys(workTypesData).map((key) => ({
-      value: key,
-      label: key
-        .replace(/([A-Z])/g, " $1")
-        .trim()
-        .replace(/^\w/, (c) => c.toUpperCase()),
+    if (!taxonomy || taxonomy.length === 0) return [];
+    return taxonomy.map((cat) => ({
+      value: cat.key,
+      label: cat.name,
     }));
-  }, [workTypesData]);
+  }, [taxonomy]);
 
   // ── Actions ─────────────────────────────────────────────────────────────────
 
@@ -190,12 +201,7 @@ export default function CategoryList({ disabled = false }) {
         return;
       }
 
-      addCategoryToContext({
-        key,
-        name,
-        workItems: [],
-      });
-
+      addCategoryToContext({ key, name, workItems: [] });
       setSelectedCategory("");
       setCustomCategory("");
       clearError();
@@ -217,9 +223,19 @@ export default function CategoryList({ disabled = false }) {
   const handleRemoveCategory = useCallback(
     (catIndex) => {
       if (disabled) return;
+      const cat = categories[catIndex];
+      const workItemCount = cat?.workItems?.length || 0;
+      if (workItemCount > 0) {
+        if (
+          !window.confirm(
+            `Remove "${cat.name}"?\n\nThis will also remove all ${workItemCount} work item(s) inside it.`,
+          )
+        )
+          return;
+      }
       removeCategory(catIndex);
     },
-    [disabled, removeCategory],
+    [disabled, removeCategory, categories],
   );
 
   const updateCategoryName = useCallback(
@@ -306,15 +322,11 @@ export default function CategoryList({ disabled = false }) {
       try {
         const category = categories[catIndex];
         if (!category) return;
-
-        // FIX #1: Only sanitize cost fields; do NOT re-add legacy measurement
-        // fields here. updatedItem already carries surfaces[] from SurfaceManager.
         const sanitizedItem = {
           ...updatedItem,
           materialCost: sanitizeCostValue(updatedItem.materialCost),
           laborCost: sanitizeCostValue(updatedItem.laborCost),
         };
-
         const updatedWorkItems = [...(category.workItems || [])];
         updatedWorkItems[workIndex] = sanitizedItem;
         updateCategory(catIndex, { workItems: updatedWorkItems });
@@ -325,7 +337,6 @@ export default function CategoryList({ disabled = false }) {
     [disabled, categories, updateCategory, handleError],
   );
 
-  // Toggle helpers
   const toggleSection = useCallback(
     (section) =>
       setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] })),
@@ -356,6 +367,17 @@ export default function CategoryList({ disabled = false }) {
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
+  if (taxonomyLoading) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loadingState}>
+          <i className="fas fa-spinner fa-spin" aria-hidden="true" />
+          <p>Loading work types...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       {errorMessage && (
@@ -363,6 +385,26 @@ export default function CategoryList({ disabled = false }) {
           <i className="fas fa-exclamation-triangle" aria-hidden="true" />{" "}
           {errorMessage}
         </div>
+      )}
+
+      {/* ── Taxonomy Manager Panel ── */}
+      {showTaxonomyMgr && (
+        <TaxonomyManager
+          taxonomy={taxonomy}
+          onClose={() => setShowTaxonomyMgr(false)}
+          // FIX: Pass mutations from the shared hook instance so that
+          // TaxonomyManager operates on the same state as the dropdown below.
+          createCategory={taxonomyCreateCategory}
+          deleteCategory={taxonomyDeleteCategory}
+          updateCategory={taxonomyUpdateCategory}
+          createWorkType={taxonomyCreateWorkType}
+          deleteWorkType={taxonomyDeleteWorkType}
+          updateWorkType={taxonomyUpdateWorkType}
+          createSubtype={taxonomyCreateSubtype}
+          deleteSubtype={taxonomyDeleteSubtype}
+          updateSubtype={taxonomyUpdateSubtype}
+          setDefaultSubtype={taxonomySetDefaultSubtype}
+        />
       )}
 
       <div className={styles.section}>
@@ -390,8 +432,13 @@ export default function CategoryList({ disabled = false }) {
                   onChange={(e) => setSelectedCategory(e.target.value)}
                   className={styles.categorySelect}
                   aria-label="Select a category"
+                  disabled={taxonomyLoading}
                 >
-                  <option value="">Select Category</option>
+                  <option value="">
+                    {taxonomyLoading
+                      ? "Loading categories…"
+                      : "Select Category"}
+                  </option>
                   {categoryOptions
                     .filter((option) => !categoryKeyExists(option.value))
                     .map((option) => (
@@ -399,7 +446,7 @@ export default function CategoryList({ disabled = false }) {
                         {option.label}
                       </option>
                     ))}
-                  <option value="custom">Custom Category</option>
+                  <option value="custom">＋ Custom Category</option>
                 </select>
 
                 {selectedCategory === "custom" && (
@@ -435,6 +482,17 @@ export default function CategoryList({ disabled = false }) {
                 >
                   <i className="fas fa-plus" aria-hidden="true" /> Add Category
                 </button>
+
+                {/* Manage taxonomy button */}
+                <button
+                  onClick={() => setShowTaxonomyMgr((v) => !v)}
+                  className={styles.manageTaxonomyBtn}
+                  title="Manage work type taxonomy"
+                  aria-label="Manage work type categories, work types, and subtypes"
+                >
+                  <i className="fas fa-sitemap" aria-hidden="true" />
+                  {showTaxonomyMgr ? " Hide Manager" : " Manage Types"}
+                </button>
               </div>
             )}
 
@@ -458,6 +516,7 @@ export default function CategoryList({ disabled = false }) {
                     <span className={styles.categoryNumber}>
                       {catIndex + 1}
                     </span>
+
                     <button
                       className={styles.toggleButton}
                       onClick={() => toggleCategory(catIndex)}

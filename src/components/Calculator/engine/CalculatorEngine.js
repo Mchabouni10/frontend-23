@@ -14,18 +14,53 @@ export const PRECISION_CONFIG = {
 export const CALCULATION_LIMITS = {
   MAX_UNITS: 50000,
   MAX_COST: 10000000,
+  MAX_UNIT_COST: 10000,   // per-unit rate cap enforced in the UI (CostInput)
   MIN_UNIT_VALUE: 0.01,
   MAX_SURFACES_PER_ITEM: 100,
   MAX_ITEMS_PER_CATEGORY: 200,
   MAX_CATEGORIES: 50,
   MAX_TAX_RATE: 0.25,
   MAX_MARKUP_RATE: 5.0,
-  // FIX #1: Raised waste cap to match what wasteEntries can realistically produce
   MAX_WASTE_FACTOR: 0.50,
 };
 
 // Re-export for backwards compatibility
 export { MEASUREMENT_TYPES };
+
+// ─── Shared utilities ────────────────────────────────────────────────────────
+// Exported so every component uses the exact same logic as the engine.
+// Never redefine parseNumber or formatCurrency locally in a component.
+
+/**
+ * Safely converts any value to a finite number.
+ * Handles strings, numbers, null, undefined, and currency-formatted strings.
+ * Returns 0 for anything that cannot be parsed.
+ */
+export function parseNumber(value) {
+  if (value === null || value === undefined || value === '') return 0;
+  if (typeof value === 'number') return isNaN(value) ? 0 : value;
+  const cleaned = String(value).replace(/[^0-9.-]/g, '');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+// Single Intl.NumberFormat instance — creating it is expensive; reusing is free.
+const _currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+/**
+ * Formats a number as a USD currency string, e.g. "$1,234.56".
+ * Always uses en-US locale for consistency across all browsers and regions.
+ * Safely handles string input via parseNumber.
+ */
+export function formatCurrency(value) {
+  return _currencyFormatter.format(parseNumber(value));
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 export class CalculatorEngine {
   constructor(categories = [], settings = {}, workTypeFunctions = {}, options = {}) {
@@ -40,7 +75,6 @@ export class CalculatorEngine {
 
     this.errors = new Map();
     this.warnings = new Map();
-    // FIX #7: calculationCache is now actually used — keyed by a stable hash of inputs
     this.calculationCache = new Map();
     this.cacheStats = { hits: 0, misses: 0 };
 
@@ -76,12 +110,12 @@ export class CalculatorEngine {
         taxRate: 0,
         laborDiscount: 0,
         wasteFactor: 0,
-        // FIX #1: wasteEntries is now part of the canonical settings structure
         wasteEntries: [],
         markup: 0,
         transportationFee: 0,
         miscFees: [],
-        payments: []
+        payments: [],
+        credits: []
       };
     }
     return {
@@ -93,6 +127,7 @@ export class CalculatorEngine {
       transportationFee: 0,
       miscFees: [],
       payments: [],
+      credits: [],
       ...settings
     };
   }
@@ -138,12 +173,11 @@ export class CalculatorEngine {
     this.warnings.clear();
   }
 
-  // FIX #7: Lightweight stable cache key from categories + settings
   _makeCacheKey(prefix) {
     try {
       return `${prefix}::${JSON.stringify(this.categories)}::${JSON.stringify(this.settings)}`;
     } catch {
-      return null; // Uncacheable if serialization fails (circular refs, etc.)
+      return null;
     }
   }
 
@@ -189,9 +223,6 @@ export class CalculatorEngine {
             surfaceUnits = parseFloat(surface.linearFt) || 0;
             break;
           case MEASUREMENT_TYPES.BY_UNIT:
-            // Use parseFloat so decimal units (e.g. 1.5) are never silently truncated.
-            // The UI currently only allows whole numbers (allowDecimals defaults to false),
-            // so existing integer values in the DB are unaffected.
             surfaceUnits = parseFloat(surface.units) || 0;
             break;
           default:
@@ -310,6 +341,7 @@ export class CalculatorEngine {
         materialCost: '0.00',
         laborCost: '0.00',
         totalCost: '0.00',
+        measurementType: normalizeMeasurementType(item.measurementType),
         errors: this.getErrors(),
         warnings: this.getWarnings(),
         metadata: {
@@ -330,6 +362,7 @@ export class CalculatorEngine {
       const totalMaterial = matDec.times(unitsDec);
       const totalLabor = labDec.times(unitsDec);
       const totalCost = totalMaterial.plus(totalLabor);
+      const measurementType = normalizeMeasurementType(item.measurementType);
 
       return {
         units,
@@ -337,13 +370,16 @@ export class CalculatorEngine {
         materialCost: totalMaterial.toFixed(PRECISION_CONFIG.CURRENCY),
         laborCost: totalLabor.toFixed(PRECISION_CONFIG.CURRENCY),
         totalCost: totalCost.toFixed(PRECISION_CONFIG.CURRENCY),
+        // INDUSTRY FIX: expose measurementType so calculateTotals() can
+        // separate wasteable (SF/LF) from non-wasteable (BY_UNIT) costs.
+        measurementType,
         errors: this.getErrors(),
         warnings: this.getWarnings(),
         metadata: {
           units,
           materialCostPerUnit: matDec.toFixed(PRECISION_CONFIG.RATES),
           laborCostPerUnit: labDec.toFixed(PRECISION_CONFIG.RATES),
-          measurementType: normalizeMeasurementType(item.measurementType),
+          measurementType,
           calculatedAt: new Date().toISOString()
         }
       };
@@ -391,6 +427,7 @@ export class CalculatorEngine {
       materialCost: '0.00',
       laborCost: '0.00',
       totalCost: '0.00',
+      measurementType: null,
       errors: this.getErrors(),
       warnings: this.getWarnings(),
       metadata: {
@@ -489,8 +526,6 @@ export class CalculatorEngine {
     };
   }
 
-  // FIX #7: calculateTotals caches its result so calculatePaymentDetails can
-  //         reuse it without re-traversing all items.
   calculateTotals() {
     // Try cache first
     if (this.options.enableCaching) {
@@ -504,7 +539,8 @@ export class CalculatorEngine {
 
     this.clearErrors();
 
-    let materialCost = new Decimal(0);
+    let totalMaterialCost = new Decimal(0);    // all material (SF + LF + EA)
+    let wasteableMaterialCost = new Decimal(0); // only SF + LF material
     let laborCost = new Decimal(0);
     let totalItems = 0;
     let validItems = 0;
@@ -519,9 +555,21 @@ export class CalculatorEngine {
           const costResult = this.calculateWorkCost(item);
           if (costResult.errors.length === 0) {
             validItems++;
-            materialCost = materialCost.plus(new Decimal(costResult.materialCost));
+            const itemMaterial = new Decimal(costResult.materialCost);
+            totalMaterialCost = totalMaterialCost.plus(itemMaterial);
             laborCost = laborCost.plus(new Decimal(costResult.laborCost));
             totalUnits += costResult.units || 0;
+
+            // INDUSTRY FIX #1: Only SF and LF items are wasteable.
+            // BY_UNIT items (faucets, fixtures, etc.) are never wasted —
+            // a contractor buys exactly what they need.
+            const mt = costResult.measurementType;
+            if (
+              mt === MEASUREMENT_TYPES.SQUARE_FOOT ||
+              mt === MEASUREMENT_TYPES.LINEAR_FOOT
+            ) {
+              wasteableMaterialCost = wasteableMaterialCost.plus(itemMaterial);
+            }
           } else {
             this.addWarning(`Item calculation failed: ${item.name || 'Unnamed'}`, 'ITEM_CALCULATION_FAILED', {
               categoryName: category.name,
@@ -539,18 +587,22 @@ export class CalculatorEngine {
       });
     });
 
-    const adjustments = this._calculateAdjustments(materialCost, laborCost);
+    const adjustments = this._calculateAdjustments(
+      totalMaterialCost,
+      wasteableMaterialCost,
+      laborCost
+    );
 
     const result = {
-      materialCost: materialCost.toFixed(PRECISION_CONFIG.CURRENCY),
+      materialCost: totalMaterialCost.toFixed(PRECISION_CONFIG.CURRENCY),
       laborCost: adjustments.adjustedLaborCost.toFixed(PRECISION_CONFIG.CURRENCY),
       laborCostBeforeDiscount: laborCost.toFixed(PRECISION_CONFIG.CURRENCY),
       laborDiscount: adjustments.laborDiscountAmount.toFixed(PRECISION_CONFIG.CURRENCY),
-      // FIX #1: wasteCost now reflects the single authoritative source (see _calculateAdjustments)
       wasteCost: adjustments.wasteCost.toFixed(PRECISION_CONFIG.CURRENCY),
       taxAmount: adjustments.taxAmount.toFixed(PRECISION_CONFIG.CURRENCY),
       markupAmount: adjustments.markupAmount.toFixed(PRECISION_CONFIG.CURRENCY),
       miscFeesTotal: adjustments.miscFeesTotal.toFixed(PRECISION_CONFIG.CURRENCY),
+      creditsTotal: adjustments.creditsTotal.toFixed(PRECISION_CONFIG.CURRENCY),
       transportationFee: adjustments.transportationFee.toFixed(PRECISION_CONFIG.CURRENCY),
       subtotal: adjustments.subtotal.toFixed(PRECISION_CONFIG.CURRENCY),
       total: adjustments.grandTotal.toFixed(PRECISION_CONFIG.CURRENCY),
@@ -571,7 +623,6 @@ export class CalculatorEngine {
       const key = this._makeCacheKey('totals');
       if (key) {
         if (this.calculationCache.size >= this.options.maxCacheSize) {
-          // Evict oldest entry
           const firstKey = this.calculationCache.keys().next().value;
           this.calculationCache.delete(firstKey);
         }
@@ -582,12 +633,11 @@ export class CalculatorEngine {
     return result;
   }
 
-  // FIX #1: Single authoritative waste calculation.
-  //
-  //   Strategy: use wasteEntries[] when they exist (per-surface precision),
-  //   fall back to the global wasteFactor multiplier when wasteEntries is empty.
-  //   This eliminates the double-count between the two systems.
-  _calculateWaste(materialCost) {
+  // INDUSTRY FIX #1: Waste is calculated only on the wasteable material cost
+  // (SF + LF items) passed in — BY_UNIT items are excluded upstream in
+  // calculateTotals(). This prevents inflating the price of faucets, toilets,
+  // fixtures, and any other item purchased as a whole unit.
+  _calculateWaste(wasteableMaterialCost) {
     const wasteEntries = Array.isArray(this.settings.wasteEntries)
       ? this.settings.wasteEntries
       : [];
@@ -596,36 +646,98 @@ export class CalculatorEngine {
       // Per-surface waste: sum each entry's (surfaceCost × wasteFactor)
       const wasteTotal = wasteEntries.reduce((sum, entry) => {
         const surfaceCost = Math.max(0, parseFloat(entry.surfaceCost) || 0);
-        const factor = Math.max(0, Math.min(CALCULATION_LIMITS.MAX_WASTE_FACTOR, parseFloat(entry.wasteFactor) || 0));
+        const factor = Math.max(
+          0,
+          Math.min(
+            CALCULATION_LIMITS.MAX_WASTE_FACTOR,
+            parseFloat(entry.wasteFactor) || 0
+          )
+        );
         return sum.plus(new Decimal(surfaceCost).times(new Decimal(factor)));
       }, new Decimal(0));
       return wasteTotal;
     }
 
-    // Global waste factor fallback
+    // Global waste factor fallback — still applied only to wasteable materials
     const wasteFactor = new Decimal(
-      Math.max(0, Math.min(CALCULATION_LIMITS.MAX_WASTE_FACTOR, parseFloat(this.settings.wasteFactor) || 0))
+      Math.max(
+        0,
+        Math.min(
+          CALCULATION_LIMITS.MAX_WASTE_FACTOR,
+          parseFloat(this.settings.wasteFactor) || 0
+        )
+      )
     );
-    return materialCost.times(wasteFactor);
+    return wasteableMaterialCost.times(wasteFactor);
   }
 
-  _calculateAdjustments(materialCost, laborCost) {
-    const laborDiscount = new Decimal(Math.max(0, Math.min(1, parseFloat(this.settings.laborDiscount) || 0)));
-    const taxRate = new Decimal(Math.max(0, Math.min(CALCULATION_LIMITS.MAX_TAX_RATE, parseFloat(this.settings.taxRate) || 0)));
-    const markup = new Decimal(Math.max(0, Math.min(CALCULATION_LIMITS.MAX_MARKUP_RATE, parseFloat(this.settings.markup) || 0)));
-    const transportationFee = new Decimal(Math.max(0, parseFloat(this.settings.transportationFee) || 0));
+  // ─────────────────────────────────────────────────────────────────────────
+  // Order of operations (industry-standard for US contractors):
+  //
+  //  1. Raw material cost (all types)
+  //  2. + Waste             → on SF/LF materials only (not BY_UNIT)
+  //  3. = Adjusted material cost
+  //  4. − Labor discount
+  //  5. = Job subtotal      (adjusted materials + discounted labor)
+  //
+  //  INDUSTRY FIX #2: Tax on materials ONLY (not labor).
+  //  In Illinois and most US states, contractors collect / remit Use Tax
+  //  on physical materials installed. Labor is a service and is NOT taxed.
+  //  6. + Tax               → on adjusted material cost only
+  //
+  //  INDUSTRY FIX #3: Cost-plus markup on the full job subtotal.
+  //  Formula: subtotal × (1 + markup%)
+  //  This is the standard small-contractor formula. The markup is applied
+  //  to the pre-tax subtotal so the contractor earns their margin on the
+  //  whole job, and tax is a separate pass-through.
+  //  7. + Markup            → on job subtotal (pre-tax)
+  //
+  //  8. + Misc fees + Transportation (flat pass-through, not taxed/marked-up)
+  //  9. = Grand total
+  // ─────────────────────────────────────────────────────────────────────────
+  _calculateAdjustments(totalMaterialCost, wasteableMaterialCost, laborCost) {
+    const laborDiscount = new Decimal(
+      Math.max(0, Math.min(1, parseFloat(this.settings.laborDiscount) || 0))
+    );
+    const taxRate = new Decimal(
+      Math.max(
+        0,
+        Math.min(CALCULATION_LIMITS.MAX_TAX_RATE, parseFloat(this.settings.taxRate) || 0)
+      )
+    );
+    const markup = new Decimal(
+      Math.max(
+        0,
+        Math.min(CALCULATION_LIMITS.MAX_MARKUP_RATE, parseFloat(this.settings.markup) || 0)
+      )
+    );
+    const transportationFee = new Decimal(
+      Math.max(0, parseFloat(this.settings.transportationFee) || 0)
+    );
 
+    // Step 1-2: Waste on SF/LF materials only
+    const wasteCost = this._calculateWaste(wasteableMaterialCost);
+    const adjustedMaterialCost = totalMaterialCost.plus(wasteCost);
+
+    // Step 3-4: Labor discount
     const laborDiscountAmount = laborCost.times(laborDiscount);
     const adjustedLaborCost = laborCost.minus(laborDiscountAmount);
 
-    // FIX #1: Use the unified waste calculator
-    const wasteCost = this._calculateWaste(materialCost);
-    const materialCostWithWaste = materialCost.plus(wasteCost);
+    // Step 5: Pre-tax job subtotal
+    const subtotal = adjustedMaterialCost.plus(adjustedLaborCost);
 
-    const subtotal = materialCostWithWaste.plus(adjustedLaborCost);
-    const taxAmount = subtotal.times(taxRate);
+    // Step 6 — INDUSTRY FIX #2: Tax on materials only, not labor.
+    // Applying tax to labor would cause the contractor to over-collect
+    // Illinois Use Tax, creating a compliance risk.
+    const taxAmount = adjustedMaterialCost.times(taxRate);
+
+    // Step 7 — INDUSTRY FIX #3: Cost-plus markup.
+    // Formula: subtotal × markup%  (the grand total becomes subtotal × (1 + markup%)).
+    // Markup is on the pre-tax subtotal so the contractor profits on the
+    // full job cost, and tax is a separate government pass-through.
     const markupAmount = subtotal.times(markup);
 
+    // Step 8: Misc fees (flat, no tax, no markup)
     const miscFeesTotal = Array.isArray(this.settings.miscFees)
       ? this.settings.miscFees.reduce((sum, fee) => {
           const amount = parseFloat(fee.amount) || 0;
@@ -633,44 +745,57 @@ export class CalculatorEngine {
         }, new Decimal(0))
       : new Decimal(0);
 
-    const grandTotal = subtotal
+    // Step 8b — Credits / price adjustments (e.g. damaged product, price
+    // change, customer dissatisfaction). Unlike a refund, a credit reduces
+    // the contract price itself, not just the amount collected. Each entry's
+    // magnitude is stored positive and always SUBTRACTED here — this is the
+    // one place in the app that lowers the grand total, so every other
+    // screen (cost breakdown, estimate/contract, payment tracking) stays in
+    // sync automatically once it reads `total` from this engine.
+    const creditsTotal = Array.isArray(this.settings.credits)
+      ? this.settings.credits.reduce((sum, credit) => {
+          const amount = parseFloat(credit.amount) || 0;
+          return sum.plus(new Decimal(Math.max(0, amount)));
+        }, new Decimal(0))
+      : new Decimal(0);
+
+    // Step 9: Grand total
+    const preCreditTotal = subtotal
       .plus(markupAmount)
       .plus(taxAmount)
       .plus(miscFeesTotal)
       .plus(transportationFee);
 
+    const grandTotal = Decimal.max(preCreditTotal.minus(creditsTotal), new Decimal(0));
+
     return {
       laborDiscountAmount,
       adjustedLaborCost,
       wasteCost,
-      materialCostWithWaste,
+      adjustedMaterialCost,
       markupAmount,
       taxAmount,
       miscFeesTotal,
+      creditsTotal,
       transportationFee,
       subtotal,
       grandTotal
     };
   }
 
-  // FIX #6: calculatePaymentDetails no longer calls calculateTotals() internally.
-  //         It accepts the grand total as a parameter, or callers can pass the
-  //         already-computed totals result directly.  When called standalone it
-  //         calls calculateTotals() once and reuses the cached result.
   calculatePaymentDetails(precomputedGrandTotal = null) {
     this.clearErrors();
 
     try {
-      // If caller already has totals (e.g. from calculateTotals() in the same
-      // render), they can pass grandTotal in directly to avoid double work.
       const grandTotalStr = precomputedGrandTotal !== null
         ? String(precomputedGrandTotal)
-        : this.calculateTotals().total; // uses cache if available
+        : this.calculateTotals().total;
 
       const grandTotal = new Decimal(grandTotalStr || '0');
 
       const payments = Array.isArray(this.settings.payments) ? this.settings.payments : [];
       let totalPaid = new Decimal(0);
+      let totalRefunded = new Decimal(0);
       let overduePayments = new Decimal(0);
       let depositTotal = new Decimal(0);
 
@@ -686,17 +811,21 @@ export class CalculatorEngine {
           const amount = parseFloat(payment.amount) || 0;
           const paymentDate = new Date(payment.date);
           const isPaid = Boolean(payment.isPaid);
+          const paymentType = (payment.type || payment.paymentType || '').toLowerCase();
+          const paymentMethod = (payment.method || '').toLowerCase();
+          const paymentNote = (payment.note || payment.description || '').toLowerCase();
+
+          if (paymentType === 'refund') {
+            totalRefunded = totalRefunded.plus(new Decimal(amount));
+            return;
+          }
 
           if (isPaid && amount > 0) {
             totalPaid = totalPaid.plus(new Decimal(amount));
-            // FIX #3: Identify deposit by type, method, or note/description for robustness
-            const paymentType = (payment.type || '').toLowerCase();
-            const paymentMethod = (payment.method || '').toLowerCase();
-            const paymentNote = (payment.note || payment.description || '').toLowerCase();
 
             if (
-              paymentType === 'deposit' || 
-              paymentMethod === 'deposit' || 
+              paymentType === 'deposit' ||
+              paymentMethod === 'deposit' ||
               paymentNote.includes('deposit')
             ) {
               depositTotal = depositTotal.plus(new Decimal(amount));
@@ -711,21 +840,53 @@ export class CalculatorEngine {
         }
       });
 
-      const totalDue = grandTotal.minus(totalPaid);
+      const netPaid = Decimal.max(totalPaid.minus(totalRefunded), new Decimal(0));
+      const totalDue = grandTotal.minus(netPaid);
       const finalTotalDue = Decimal.max(totalDue, new Decimal(0));
+      const collectiblePayments = payments.filter(p => {
+        const paymentType = (p?.type || p?.paymentType || '').toLowerCase();
+        return p && paymentType !== 'refund';
+      });
+
+      // Refund is intentionally locked behind "everything scheduled has
+      // actually been paid" — it exists only to hand back money the
+      // customer already fully paid in past the project total, never to
+      // change the project's price (that's what credits are for).
+      const isFullyPaid = collectiblePayments.length > 0 &&
+        collectiblePayments.every(p => Boolean(p?.isPaid));
+      const overpaidAmount = Decimal.max(netPaid.minus(grandTotal), new Decimal(0));
+      const isOverpaid = overpaidAmount.greaterThan(0);
+      const refundReady = isFullyPaid && isOverpaid;
+
+      const creditsTotal = Array.isArray(this.settings.credits)
+        ? this.settings.credits.reduce((sum, credit) => {
+            const amount = parseFloat(credit.amount) || 0;
+            return sum.plus(new Decimal(Math.max(0, amount)));
+          }, new Decimal(0))
+        : new Decimal(0);
 
       return {
-        totalPaid: totalPaid.toFixed(PRECISION_CONFIG.CURRENCY),
+        totalPaid: netPaid.toFixed(PRECISION_CONFIG.CURRENCY),
+        totalRefunded: totalRefunded.toFixed(PRECISION_CONFIG.CURRENCY),
+        totalCredits: creditsTotal.toFixed(PRECISION_CONFIG.CURRENCY),
         totalDue: finalTotalDue.toFixed(PRECISION_CONFIG.CURRENCY),
         overduePayments: overduePayments.toFixed(PRECISION_CONFIG.CURRENCY),
         grandTotal: grandTotal.toFixed(PRECISION_CONFIG.CURRENCY),
         deposit: depositTotal.toFixed(PRECISION_CONFIG.CURRENCY),
+        isFullyPaid,
+        isOverpaid,
+        overpaidAmount: overpaidAmount.toFixed(PRECISION_CONFIG.CURRENCY),
+        refundReady,
         errors: this.getErrors(),
         warnings: this.getWarnings(),
         summary: {
-          totalPayments: payments.length,
-          paidPayments: payments.filter(p => p && p.isPaid).length,
-          overduePayments: payments.filter(p => p && !p.isPaid && new Date(p.date) < currentDate).length,
+          totalPayments: collectiblePayments.length,
+          paidPayments: collectiblePayments.filter(p => p && p.isPaid).length,
+          refundedPayments: payments.filter(p => {
+            const paymentType = (p?.type || p?.paymentType || '').toLowerCase();
+            return paymentType === 'refund';
+          }).length,
+          overduePayments: collectiblePayments.filter(p => p && !p.isPaid && new Date(p.date) < currentDate).length,
           calculatedAt: new Date().toISOString()
         }
       };
@@ -733,10 +894,16 @@ export class CalculatorEngine {
       this.addError(`Payment calculation error: ${error.message}`, 'PAYMENT_CALCULATION_ERROR', { originalError: error.message });
       return {
         totalPaid: '0.00',
+        totalRefunded: '0.00',
+        totalCredits: '0.00',
         totalDue: '0.00',
         overduePayments: '0.00',
         grandTotal: '0.00',
         deposit: '0.00',
+        isFullyPaid: false,
+        isOverpaid: false,
+        overpaidAmount: '0.00',
+        refundReady: false,
         errors: this.getErrors(),
         warnings: this.getWarnings(),
         summary: {

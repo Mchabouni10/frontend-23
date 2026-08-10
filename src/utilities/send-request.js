@@ -1,68 +1,93 @@
 // src/utilities/send-request.js
-import { getToken } from './users-service';
+//
+// Auth model:
+//   - The backend sets the JWT as an HttpOnly cookie on signup/login.
+//   - The browser sends that cookie automatically with `credentials: 'include'`.
+//   - The frontend never sees the JWT, so an XSS cannot steal it.
+//   - We also send the Authorization header if a token is available (for
+//     Capacitor mobile where cookies may not survive the WebView).
+//
+// Logging:
+//   - All console output is gated on NODE_ENV !== 'production'.
+//   - The Authorization header is *never* logged under any condition.
 
-const API_URL = process.env.REACT_APP_API_URL;
+import { getApiUrl } from './api-url';
+
+const isDev = process.env.NODE_ENV !== 'production';
+const devLog = (...args) => { if (isDev) console.log(...args); };
+const devErr = (...args) => { if (isDev) console.error(...args); };
+
+// Optional in-memory token (for mobile WebView fallback). Not persisted.
+let inMemoryToken = null;
+
+export function setInMemoryToken(token) {
+  inMemoryToken = token || null;
+}
+
+export function clearInMemoryToken() {
+  inMemoryToken = null;
+}
 
 export default async function sendRequest(endpoint, method = 'GET', payload = null) {
-  const url = `${API_URL}${endpoint}`;
-  console.log(`Requesting: ${url}`);
-  console.log('Method:', method);
-  console.log('Payload:', payload);
-  
-  const options = { method };
-  
+  const url = getApiUrl(endpoint);
+  devLog(`Requesting: ${url}`);
+  devLog('Method:', method);
+
+  const options = {
+    method,
+    credentials: 'include', // send HttpOnly cookies
+    headers: {},
+  };
+
   if (payload) {
-    options.headers = { 'Content-Type': 'application/json' };
+    options.headers['Content-Type'] = 'application/json';
     options.body = JSON.stringify(payload);
-    console.log('Request body:', options.body);
+    devLog('Payload:', payload);
   }
-  
-  const token = getToken();
-  if (token) {
-    options.headers = options.headers || {};
-    options.headers.Authorization = `Bearer ${token}`;
+
+  if (inMemoryToken) {
+    options.headers.Authorization = `Bearer ${inMemoryToken}`;
   }
-  
-  console.log('Request options:', options);
-  
+  // Intentionally NOT logging `options` here — it can contain the
+  // Authorization header, which is sensitive.
+
+  let res;
   try {
-    const res = await fetch(url, options);
-    console.log('Response status:', res.status);
-    console.log('Response headers:', Object.fromEntries(res.headers.entries()));
-    
-    if (res.ok) {
-      // Handle 204 No Content responses (common for DELETE)
-      if (res.status === 204) {
-        console.log('No content response (204)');
-        return { success: true };
-      }
-      
-      // Check if response has content
-      const contentType = res.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        const data = await res.json();
-        console.log('Response data:', data);
-        return data;
-      }
-      
-      // Fallback for non-JSON responses
-      console.log('Non-JSON response');
+    res = await fetch(url, options);
+  } catch (networkErr) {
+    devErr('Fetch error:', networkErr);
+    throw new Error('Network error — please check your connection.');
+  }
+
+  devLog('Response status:', res.status);
+
+  if (res.ok) {
+    if (res.status === 204) {
       return { success: true };
     }
-    
-    // Better error handling
-    let errorText;
-    try {
-      const errorData = await res.json();
-      errorText = errorData.message || errorData.error || JSON.stringify(errorData);
-    } catch {
-      errorText = await res.text();
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const data = await res.json();
+      devLog('Response data:', data);
+      return data;
     }
-    
-    console.error(`Request failed: ${res.status} - ${errorText}`);
-    throw new Error(`Request failed: ${res.status} - ${errorText}`);
-  } catch (error) {
-    console.error('Fetch error:', error);
-    throw error;
+    return { success: true };
   }
+
+  // Error path — never include the request body in the error message.
+  let errorText;
+  try {
+    const errorData = await res.json();
+    errorText = errorData.error || errorData.message || JSON.stringify(errorData);
+  } catch {
+    try {
+      errorText = await res.text();
+    } catch {
+      errorText = `HTTP ${res.status}`;
+    }
+  }
+  devErr(`Request failed: ${res.status} - ${errorText}`);
+  const err = new Error(errorText || `Request failed: ${res.status}`);
+  err.status = res.status;
+  throw err;
 }

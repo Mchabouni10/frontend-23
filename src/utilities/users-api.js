@@ -1,5 +1,4 @@
-//user-api.js in utilities
-
+// user-api.js in utilities
 
 import sendRequest from './send-request';
 
@@ -11,4 +10,8 @@ export function signUp(userData) {
 
 export function login(credentials) {
   return sendRequest(`${BASE_URL}/login`, 'POST', credentials);
+}
+
+export function logout() {
+  return sendRequest(`${BASE_URL}/logout`, 'POST');
 }

@@ -1,6 +1,7 @@
 // src/services/projectService.js
 
 import sendRequest from '../utilities/send-request';
+import { saveLocalProject, getLocalProjects } from './offlineSyncService';
 
 const BASE_URL = '/api/projects/';
 
@@ -122,7 +123,14 @@ export function saveProject(projectData) {
     return Promise.reject({ error: 'Validation failed', details: errors });
   }
 
-  return sendRequest(BASE_URL, 'POST', projectData);
+  return sendRequest(BASE_URL, 'POST', projectData).catch((err) => {
+    // If it's a network error or fetch failed, save offline
+    if (err.message && err.message.includes('fetch') || err.message.includes('Network')) {
+      console.warn('Network offline or fetch failed, saving project locally.');
+      return saveLocalProject(projectData);
+    }
+    throw err;
+  });
 }
 
 export function updateProject(id, projectData) {
@@ -148,11 +156,29 @@ export function updateProject(id, projectData) {
     return Promise.reject({ error: 'Validation failed', details: errors });
   }
 
-  return sendRequest(`${BASE_URL}${id}`, 'PUT', projectData);
+  return sendRequest(`${BASE_URL}${id}`, 'PUT', projectData).catch((err) => {
+    if (err.message && err.message.includes('fetch') || err.message.includes('Network')) {
+      console.warn(`Network offline or fetch failed, saving update for project ${id} locally.`);
+      // Ensure we keep the original ID so when we sync it does a PUT
+      return saveLocalProject({ ...projectData, _id: id });
+    }
+    throw err;
+  });
 }
 
-export function getProjects() {
-  return sendRequest(BASE_URL, 'GET');
+export async function getProjects() {
+  try {
+    const onlineProjects = await sendRequest(BASE_URL, 'GET');
+    const localProjects = await getLocalProjects();
+    const pendingProjects = localProjects.filter(p => p._syncStatus === 'pending');
+    
+    // Combine online and offline projects
+    // In a real scenario we'd merge duplicates, but for simplicity we append them
+    return [...onlineProjects, ...pendingProjects];
+  } catch (err) {
+    console.warn('Failed to fetch projects from server. Loading offline projects.', err);
+    return await getLocalProjects();
+  }
 }
 
 export function getProject(id) {

@@ -5,25 +5,14 @@ import PropTypes from "prop-types";
 import styles from "./CostInput.module.css";
 import commonStyles from "../../../styles/common.module.css";
 import { MEASUREMENT_TYPES } from "../../../context/WorkTypeContext";
+import {
+  parseNumber,
+  formatCurrency,
+  CALCULATION_LIMITS,
+} from "../engine/CalculatorEngine";
 
-// FIX #1: Single canonical parser used everywhere in this component
-function parseNumber(value) {
-  if (value === null || value === undefined || value === "") return 0;
-  if (typeof value === "number") return isNaN(value) ? 0 : value;
-  // Strip everything that isn't a digit, a dot or a leading minus
-  const cleaned = String(value).replace(/[^0-9.-]/g, "");
-  const parsed = parseFloat(cleaned);
-  return isNaN(parsed) ? 0 : parsed;
-}
-
-function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-}
+// parseNumber, formatCurrency, and the cost limit all come from the engine.
+// Never redefine them locally — the engine is the single source of truth.
 
 export default function CostInput({
   label,
@@ -46,21 +35,13 @@ export default function CostInput({
     const type = measurementType.toLowerCase();
     if (type.includes("square") || type === "sqft") return "/sqft";
     if (type.includes("linear") || type.includes("foot")) return "/ft";
-    if (
-      type.includes("unit") ||
-      type.includes("piece") ||
-      type.includes("each")
-    )
+    if (type.includes("unit") || type.includes("piece") || type.includes("each"))
       return "/unit";
     switch (measurementType) {
-      case MEASUREMENT_TYPES.SQUARE_FOOT:
-        return "/sqft";
-      case MEASUREMENT_TYPES.LINEAR_FOOT:
-        return "/ft";
-      case MEASUREMENT_TYPES.BY_UNIT:
-        return "/unit";
-      default:
-        return "";
+      case MEASUREMENT_TYPES.SQUARE_FOOT: return "/sqft";
+      case MEASUREMENT_TYPES.LINEAR_FOOT: return "/ft";
+      case MEASUREMENT_TYPES.BY_UNIT:     return "/unit";
+      default:                            return "";
     }
   }, [measurementType]);
 
@@ -77,10 +58,12 @@ export default function CostInput({
 
     if (numValue < 0)
       return { isValid: false, error: "Cost cannot be negative", value: 0 };
-    if (numValue > 10000)
+
+    // CALCULATION_LIMITS.MAX_UNIT_COST comes from the engine — no magic number here.
+    if (numValue > CALCULATION_LIMITS.MAX_UNIT_COST)
       return {
         isValid: false,
-        error: "Cost must be less than $10,000",
+        error: `Cost must be less than ${formatCurrency(CALCULATION_LIMITS.MAX_UNIT_COST)}`,
         value: numValue,
       };
 
@@ -105,7 +88,6 @@ export default function CostInput({
     return match || "Custom";
   }, [isCustomMode, numericValue, options]);
 
-  // FIX #2: Single source of truth for what the number input displays
   const numberInputDisplayValue = useMemo(() => {
     if (isCustomMode) return customInput;
     return numericValue || "";
@@ -119,7 +101,6 @@ export default function CostInput({
         setCustomInput(numericValue > 0 ? numericValue.toString() : "");
         onError?.(null);
       } else {
-        // FIX #1: Use parseNumber (not parseFloat) for consistency
         const validation = validateCost(selected);
         if (validation.isValid) {
           setIsCustomMode(false);
@@ -146,7 +127,6 @@ export default function CostInput({
       }
 
       const validation = validateCost(inputValue);
-      // FIX #1: Always use parseNumber result (matches validateCost internally)
       onChange(validation.value);
       onError?.(validation.isValid ? null : validation.error);
     },
@@ -165,27 +145,15 @@ export default function CostInput({
         setCustomInput(validation.value > 0 ? validation.value.toString() : "");
       }
       onChange(validation.value);
-      onError?.(null); // FIX #3: unconditional clear on success
+      onError?.(null);
     } else {
       setCustomInput(numericValue > 0 ? numericValue.toString() : "");
       onError?.(validation.error);
     }
-  }, [
-    customInput,
-    numericValue,
-    validateCost,
-    matchesDropdownOption,
-    onChange,
-    onError,
-  ]);
+  }, [customInput, numericValue, validateCost, matchesDropdownOption, onChange, onError]);
 
-  // Sync external value changes into custom mode if needed
   useEffect(() => {
-    if (
-      !isCustomMode &&
-      numericValue > 0 &&
-      !matchesDropdownOption(numericValue)
-    ) {
+    if (!isCustomMode && numericValue > 0 && !matchesDropdownOption(numericValue)) {
       setIsCustomMode(true);
       setCustomInput(numericValue.toString());
     }
@@ -210,9 +178,7 @@ export default function CostInput({
         )}
       </div>
 
-      <div
-        className={`${styles.inputGroup} ${isFocused ? styles.focused : ""}`}
-      >
+      <div className={`${styles.inputGroup} ${isFocused ? styles.focused : ""}`}>
         <div className={styles.selectWrapper}>
           <select
             id={selectId}
@@ -233,15 +199,9 @@ export default function CostInput({
           </select>
         </div>
 
-        <div
-          className={`${styles.inputWrapper} ${
-            commonStyles.inputWrapper || ""
-          }`}
-        >
+        <div className={`${styles.inputWrapper} ${commonStyles.inputWrapper || ""}`}>
           <i
-            className={`fas fa-dollar-sign ${
-              commonStyles.inputIcon || styles.inputIcon
-            }`}
+            className={`fas fa-dollar-sign ${commonStyles.inputIcon || styles.inputIcon}`}
             aria-hidden="true"
           />
           <input
@@ -249,8 +209,7 @@ export default function CostInput({
             type="number"
             step="0.01"
             min="0"
-            max="10000"
-            // FIX #2: single derived variable — no more flicker on focus
+            max={CALCULATION_LIMITS.MAX_UNIT_COST}
             value={numberInputDisplayValue}
             onChange={handleCustomInputChange}
             onBlur={handleCustomInputBlur}
@@ -273,9 +232,7 @@ export default function CostInput({
         <div className={styles.costSummary}>
           <div className={styles.totalRow}>
             <span className={styles.totalLabel}>Total Cost</span>
-            <span className={styles.totalValue}>
-              {formatCurrency(totalCost)}
-            </span>
+            <span className={styles.totalValue}>{formatCurrency(totalCost)}</span>
           </div>
         </div>
       )}

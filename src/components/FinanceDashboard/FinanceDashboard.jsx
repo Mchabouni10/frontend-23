@@ -153,6 +153,37 @@ export default function FinanceDashboard() {
         ? (aggregated.totalNetProfit / aggregated.totalCollections) * 100
         : 0;
 
+    // Count unique customers — a customer may have multiple projects.
+    // We deduplicate by phone number first, then fall back to
+    // "firstName-lastName" so customers without a phone still count once.
+    const uniqueCustomers = new Set();
+    projects.forEach((project) => {
+      if (dateFilter && dateFilter.type && dateFilter.type !== "all") {
+        const projectDate = project.customerInfo?.startDate;
+        if (!projectDate) return;
+        // Reuse the same date-filter logic as calculateAggregatedFinancials
+        const d = new Date(projectDate);
+        if (isNaN(d.getTime())) return;
+        if (dateFilter.type === "year") {
+          if (d.getFullYear() !== (dateFilter.year || new Date().getFullYear())) return;
+        }
+        if (dateFilter.type === "custom" && dateFilter.startDate && dateFilter.endDate) {
+          const start = new Date(dateFilter.startDate);
+          const end = new Date(dateFilter.endDate);
+          start.setHours(0, 0, 0, 0);
+          end.setHours(23, 59, 59, 999);
+          if (d < start || d > end) return;
+        }
+      }
+      const info = project.customerInfo;
+      const key =
+        info?.phone
+          ? info.phone.replace(/\D/g, "") // normalise phone digits only
+          : `${(info?.firstName || "").toLowerCase().trim()}-${(info?.lastName || "").toLowerCase().trim()}`;
+      if (key && key !== "-") uniqueCustomers.add(key);
+    });
+    const totalCustomers = uniqueCustomers.size;
+
     return {
       ...aggregated,
       monthlyData,
@@ -163,6 +194,7 @@ export default function FinanceDashboard() {
       expensePercentage,
       grossMargin,
       netMargin,
+      totalCustomers,
     };
   }, [projects, companyExpenses, dateFilter]);
 
@@ -754,7 +786,7 @@ export default function FinanceDashboard() {
           </div>
           <div className={styles.filterBadge}>
             <FontAwesomeIcon icon={faUsers} />
-            {financialData.totalProjects} Customers
+            {financialData.totalCustomers} Customers
           </div>
         </div>
       </div>
@@ -1034,7 +1066,7 @@ export default function FinanceDashboard() {
             {financialData.fullyPaidProjects} / {financialData.totalProjects}
           </div>
           <div className={styles.metricSubtext}>
-            {financialData.totalProjects} customers —{" "}
+            {financialData.totalCustomers} customers —{" "}
             {financialData.collectionRate.toFixed(1)}% collection rate
           </div>
           <div className={styles.metricProgress}>
@@ -1154,7 +1186,7 @@ export default function FinanceDashboard() {
         {renderChart(
           "projectStatus",
           "Projects — Paid vs Outstanding",
-          `${financialData.totalProjects} customers total`,
+          `${financialData.totalCustomers} customers · ${financialData.totalProjects} projects total`,
           Doughnut,
           projectStatusData,
           premiumChartOptions,
@@ -1459,7 +1491,7 @@ export default function FinanceDashboard() {
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>Customers</span>
               <span className={styles.summaryValue}>
-                {financialData.totalProjects}
+                {financialData.totalCustomers}
               </span>
             </div>
             <div className={styles.summaryItem}>

@@ -30,12 +30,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(
-    90deg,
-    var(--primary),
-    var(--secondary),
-    var(--primary)
-  );
+  background: linear-gradient(90deg, var(--primary), var(--secondary), var(--primary));
   background-size: 200% 100%;
   animation: shimmer 4s ease-in-out infinite;
   opacity: 0.8;
@@ -43,7 +38,7 @@
 
 @keyframes shimmer {
   0%, 100% { background-position: 0% 0; }
-  50% { background-position: 100% 0; }
+  50%       { background-position: 100% 0; }
 }
 
 .workItem:hover {
@@ -76,11 +71,7 @@
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
-  background: linear-gradient(
-    135deg,
-    var(--primary) 0%,
-    var(--primary-dark) 100%
-  );
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
   color: #ffffff;
   position: relative;
   overflow: hidden;
@@ -94,12 +85,7 @@
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.08),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
   transition: left 0.6s ease;
 }
 
@@ -503,6 +489,33 @@
   border-color: var(--primary);
 }
 
+.costItemTotal {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: var(--font-weight-bold);
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+  padding: 6px 14px;
+  border-radius: 50px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px var(--shadow-md);
+  margin-left: auto;
+}
+
+.costItemTotal i {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.costItemTotal:hover {
+  transform: scale(1.05);
+  box-shadow: 0 3px 12px var(--shadow-md);
+}
+
 /* ===========================
    VALIDATION & ERRORS
    =========================== */
@@ -556,20 +569,19 @@
   margin-top: 4px;
 }
 
+.invalid {
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 3px var(--error-bg) !important;
+}
+
 @keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes pulse {
   0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.1); opacity: 0.8; }
+  50%       { transform: scale(1.1); opacity: 0.8; }
 }
 
 /* ===========================
@@ -609,6 +621,188 @@
   flex-shrink: 0;
   margin-top: 2px;
 }
+
+/* ===========================
+   SUBTYPE ROW (select + add button)
+   =========================== */
+
+.subtypeRow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.subtypeRow .select {
+  flex: 1;
+}
+
+/* Small "+" button next to subtype select */
+.addSubtypeBtn {
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px var(--shadow);
+}
+
+.addSubtypeBtn:hover {
+  background: var(--info-bg);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px var(--shadow-md);
+}
+
+.addSubtypeBtn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--glow-primary);
+}
+
+/* "Add First Subtype" empty-state button */
+.addSubtypeEmptyBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 7px 14px;
+  background: none;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addSubtypeEmptyBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--info-bg);
+}
+
+/* ===========================
+   INLINE SUBTYPE ADD FORM
+   =========================== */
+
+.inlineSubtypeForm {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  animation: fadeSlideIn 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.inlineSubtypeInput {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--secondary);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-family: var(--font-family);
+  background: var(--surface);
+  color: var(--text);
+  min-width: 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 0 0 3px var(--glow-secondary);
+}
+
+.inlineSubtypeInput:focus {
+  outline: none;
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 3px var(--glow-secondary);
+}
+
+.inlineSubtypeInput::placeholder {
+  color: var(--text-muted);
+}
+
+.inlineSubtypeInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.saveSubtypeBtn {
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--secondary) 0%, var(--secondary-dark) 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  color: #ffffff;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 6px var(--shadow-md);
+}
+
+.saveSubtypeBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px var(--shadow-lg);
+}
+
+.saveSubtypeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cancelSubtypeBtn {
+  padding: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.cancelSubtypeBtn:hover:not(:disabled) {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+.cancelSubtypeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Feedback message below the subtype field */
+.subtypeFeedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  animation: fadeSlideIn 0.15s ease;
+}
+
+.feedback_success { color: var(--success); }
+.feedback_error   { color: var(--error); }
 
 /* ===========================
    MISC
@@ -681,6 +875,14 @@
   .costItem {
     justify-content: space-between;
   }
+
+  .inlineSubtypeForm {
+    flex-wrap: wrap;
+  }
+
+  .inlineSubtypeInput {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -719,6 +921,13 @@
     padding: 10px;
     gap: 12px;
   }
+
+  .addSubtypeBtn,
+  .saveSubtypeBtn,
+  .cancelSubtypeBtn {
+    width: 30px;
+    height: 30px;
+  }
 }
 
 /* ===========================
@@ -747,13 +956,9 @@
     0 20px 60px var(--shadow-lg);
 }
 
-/* Header gradient — slightly shifted for dark */
+/* Header gradient */
 :global(.dark) .header {
-  background: linear-gradient(
-    135deg,
-    var(--primary-dark) 0%,
-    var(--primary) 100%
-  );
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
 }
 
 /* Content area */
@@ -835,14 +1040,14 @@
   color: var(--secondary);
 }
 
-/* Cost display — fully dark, no white/green gradient */
+/* Cost display */
 :global(.dark) .costDisplay {
   background: var(--success-bg);
   border-color: var(--success-border);
   box-shadow: 0 1px 3px var(--shadow);
 }
 
-/* Cost item pills — no hardcoded white background */
+/* Cost item pills */
 :global(.dark) .costItem {
   background: var(--surface-raised);
   border-color: var(--border-strong);
@@ -858,6 +1063,12 @@
 :global(.dark) .costItem:hover {
   border-color: var(--primary);
   box-shadow: 0 4px 12px var(--shadow-md);
+}
+
+:global(.dark) .costItemTotal {
+  background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
 }
 
 /* Validation errors */
@@ -881,6 +1092,52 @@
 :global(.dark) .warningSection h4,
 :global(.dark) .warningMessage {
   color: var(--warning);
+}
+
+/* Subtype add button */
+:global(.dark) .addSubtypeBtn {
+  background: var(--surface-raised);
+  border-color: var(--border-strong);
+  color: var(--primary);
+}
+
+:global(.dark) .addSubtypeBtn:hover {
+  background: var(--info-bg);
+  border-color: var(--primary);
+}
+
+/* Inline subtype input */
+:global(.dark) .inlineSubtypeInput {
+  background: var(--surface-raised) !important;
+  border-color: var(--secondary) !important;
+  color: var(--text) !important;
+  box-shadow: 0 0 0 3px var(--glow-secondary) !important;
+}
+
+:global(.dark) .inlineSubtypeInput::placeholder {
+  color: var(--text-muted) !important;
+}
+
+:global(.dark) .cancelSubtypeBtn {
+  border-color: var(--border-strong);
+  color: var(--text-light);
+}
+
+:global(.dark) .cancelSubtypeBtn:hover:not(:disabled) {
+  background: var(--error-bg);
+  border-color: var(--error-border);
+  color: var(--error);
+}
+
+:global(.dark) .addSubtypeEmptyBtn {
+  border-color: var(--border-strong);
+  color: var(--text-muted);
+}
+
+:global(.dark) .addSubtypeEmptyBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--info-bg);
 }
 
 /* ===========================
@@ -933,7 +1190,10 @@
 
   .removeButton,
   .toggleButton,
-  .headerTotalCost {
+  .headerTotalCost,
+  .addSubtypeBtn,
+  .addSubtypeEmptyBtn,
+  .inlineSubtypeForm {
     display: none !important;
   }
 

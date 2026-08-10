@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { useWorkType } from "../../../context/WorkTypeContext";
 import { useSettings } from "../../../context/SettingsContext";
+import { useWorkTypeTaxonomy } from "../../../context/WorkTypeTaxonomyContext";
 import { CalculatorEngine } from "../engine/CalculatorEngine";
 import SurfaceManager from "./SurfaceManager";
 import CostInput from "./CostInput";
@@ -16,46 +17,68 @@ import styles from "./WorkItem.module.css";
 import ErrorBoundary from "../../ErrorBoundary";
 import { normalizeMeasurementType } from "../../../constants/measurementTypes";
 
-const DEFAULT_COST_OPTIONS = [
-  "1",
-  "2",
-  "3",
-  "4",
-  "5",
-  "6",
-  "7",
-  "8",
-  "9",
-  "10",
-  "15",
-  "20",
-  "25",
-  "30",
-  "35",
-  "40",
-  "45",
-  "50",
-  "60",
-  "70",
-  "80",
-  "90",
-  "100",
-  "150",
-  "200",
-  "250",
-  "300",
-  "400",
-  "500",
-  "750",
-  "1000",
-  "1500",
-  "2000",
-  "2500",
-  "3000",
-  "4000",
-  "5000",
+// ─── Material cost options ─────────────────────────────────────────────────────
+// Wide range because materials vary enormously: $1/sqft paint to $50/sqft stone.
+const DEFAULT_MATERIAL_OPTIONS = [
+  "1", "2", "3", "4", "5", "6", "7", "8", "9", "10",
+  "12", "15", "18", "20", "25", "30", "35", "40", "45", "50",
+  "60", "70", "80", "90", "100",
+  "125", "150", "175", "200", "250", "300", "400", "500",
+  "750", "1000", "1500", "2000", "2500", "3000", "4000", "5000",
   "Custom",
 ];
+
+// ─── Labor cost options by measurement type ────────────────────────────────────
+// Rates reflect real US contractor pricing ranges per measurement unit.
+// SF: skilled trade labor runs $1–$25/sqft for most interior work.
+// LF: trim/pipe/conduit labor runs $2–$50/lf.
+// BY_UNIT: fixture/appliance installs typically run $25–$500/unit.
+// Each list is intentionally tighter and more relevant than the material list —
+// a contractor shouldn't need to scroll past $5000 when setting labor/sqft.
+const LABOR_COST_OPTIONS = {
+  SQUARE_FOOT: [
+    "1", "1.50", "2", "2.50", "3", "3.50", "4", "4.50",
+    "5", "6", "7", "8", "9", "10",
+    "12", "15", "18", "20", "25",
+    "30", "35", "40", "50",
+    "Custom",
+  ],
+  LINEAR_FOOT: [
+    "1", "1.50", "2", "2.50", "3", "4", "5",
+    "6", "7", "8", "10", "12", "15",
+    "18", "20", "25", "30", "35", "40", "50",
+    "Custom",
+  ],
+  BY_UNIT: [
+    "25", "35", "50", "60", "75",
+    "100", "125", "150", "175", "200",
+    "250", "300", "350", "400", "500",
+    "600", "750", "1000",
+    "Custom",
+  ],
+};
+
+// Fallback for unknown / unmapped measurement types
+const DEFAULT_LABOR_OPTIONS = [
+  "1", "2", "3", "5", "7", "10", "15", "20", "25",
+  "30", "40", "50", "75", "100", "150", "200", "300", "500",
+  "Custom",
+];
+
+// ─── Helper: pick the right labor option list from a measurement type string ──
+// Accepts the raw measurementType value from workItem (e.g. "square_foot",
+// "SQUARE_FOOT", "sqft") and returns the matching preset list.
+function getLaborOptions(measurementType) {
+  if (!measurementType) return DEFAULT_LABOR_OPTIONS;
+  const upper = String(measurementType).toUpperCase().replace(/[^A-Z_]/g, "_");
+  if (upper.includes("SQUARE") || upper === "SQFT" || upper === "SF")
+    return LABOR_COST_OPTIONS.SQUARE_FOOT;
+  if (upper.includes("LINEAR") || upper.includes("LINEAR_FOOT") || upper === "LF")
+    return LABOR_COST_OPTIONS.LINEAR_FOOT;
+  if (upper.includes("UNIT") || upper.includes("BY_UNIT") || upper === "EA")
+    return LABOR_COST_OPTIONS.BY_UNIT;
+  return DEFAULT_LABOR_OPTIONS;
+}
 
 const ensureNumber = (value, defaultValue = 0) => {
   if (value === null || value === undefined || value === "")
@@ -71,7 +94,7 @@ export default function WorkItem({
   disabled = false,
   categoryKey = "",
   showCostBreakdown = true,
-  costOptions = DEFAULT_COST_OPTIONS,
+  materialCostOptions = DEFAULT_MATERIAL_OPTIONS,
   onItemChange,
   onItemRemove,
 }) {
@@ -92,7 +115,7 @@ export default function WorkItem({
         disabled={disabled}
         categoryKey={categoryKey}
         showCostBreakdown={showCostBreakdown}
-        costOptions={costOptions}
+        materialCostOptions={materialCostOptions}
         onItemChange={onItemChange}
         onItemRemove={onItemRemove}
       />
@@ -107,44 +130,54 @@ function WorkItemContent({
   disabled = false,
   categoryKey = "",
   showCostBreakdown = true,
-  costOptions = DEFAULT_COST_OPTIONS,
+  materialCostOptions = DEFAULT_MATERIAL_OPTIONS,
   onItemChange,
   onItemRemove,
 }) {
   const {
-    getCategoryWorkTypes,
-    getSubtypeOptions,
     getAllMeasurementTypes,
     getMeasurementTypeLabel,
     getMeasurementTypeUnit,
     getMeasurementTypeIcon,
-    isCategoryValid,
     getMeasurementType,
     isValidSubtype,
     getWorkTypeDetails,
+    isCategoryValid,
   } = useWorkType();
+
+  // FIX: Use the shared context instead of calling useWorkTypeTaxonomy() directly.
+  // Previously every WorkItem instance triggered its own API fetch on mount,
+  // meaning 10 work items = 10 fetches, and subtypes saved in one WorkItem
+  // were invisible to all others until a full page reload.
+  const {
+    getCategoryWorkTypes: getDBWorkTypes,
+    getSubtypes: getDBSubtypes,
+    createSubtype,
+  } = useWorkTypeTaxonomy();
 
   const { settings } = useSettings();
   const [isExpanded, setIsExpanded] = useState(true);
   const [validationErrors, setValidationErrors] = useState({});
   const [customWorkTypeHistory, setCustomWorkTypeHistory] = useState({});
 
+  // Inline "add new subtype" state
+  const [addingSubtype, setAddingSubtype] = useState(false);
+  const [newSubtypeVal, setNewSubtypeVal] = useState("");
+  const [subtypeSaving, setSubtypeSaving] = useState(false);
+  const [subtypeFeedback, setSubtypeFeedback] = useState(null);
+
   const settingsRef = useRef(settings);
   settingsRef.current = settings;
-
   const surfaceManagerRef = useRef(null);
 
   // ── Validation effect ──────────────────────────────────────────────────────
 
   useEffect(() => {
     const errors = {};
-
     if (workItem.type === "custom-work-type") {
-      if (!workItem.customWorkTypeName?.trim()) {
+      if (!workItem.customWorkTypeName?.trim())
         errors.customWorkTypeName = "Custom work type name is required";
-      }
     }
-
     if (
       workItem.type &&
       workItem.type !== "custom-work-type" &&
@@ -154,19 +187,13 @@ function WorkItemContent({
 
     setValidationErrors((prev) => {
       const next = { ...prev };
-
-      // Clear field errors when they become valid again
       if (
         workItem.type !== "custom-work-type" ||
         workItem.customWorkTypeName?.trim()
-      ) {
+      )
         delete next.customWorkTypeName;
-      }
       if (workItem.measurementType) delete next.measurementType;
-
-      // Clear stale-work-type warning once a new type is selected
       if (workItem.type) delete next.staleWorkType;
-
       return { ...next, ...errors };
     });
   }, [workItem.type, workItem.customWorkTypeName, workItem.measurementType]);
@@ -194,7 +221,7 @@ function WorkItemContent({
     });
   }, [workItem, catIndex, workIndex]);
 
-  // ── Category + work type resolution ───────────────────────────────────────
+  // ── Category key normalization ─────────────────────────────────────────────
 
   const normalizedCategoryKey = useMemo(() => {
     if (!categoryKey) return "";
@@ -205,35 +232,45 @@ function WorkItemContent({
       .replace(/[^a-z0-9-]+/g, "");
   }, [categoryKey]);
 
+  // ── Available work types — from shared DB taxonomy ────────────────────────
+
   const availableWorkTypes = useMemo(() => {
     try {
+      // DB taxonomy returns WorkType objects with .key and .name
+      const dbTypes = getDBWorkTypes(normalizedCategoryKey);
+      if (dbTypes && dbTypes.length > 0) return dbTypes;
+      // Fallback: if category is valid in static context
       if (!normalizedCategoryKey || !isCategoryValid(normalizedCategoryKey))
         return [];
-      return getCategoryWorkTypes(normalizedCategoryKey);
+      return [];
     } catch (err) {
       console.warn(`⚠️ Failed to get work types: ${err.message}`);
       return [];
     }
-  }, [normalizedCategoryKey, getCategoryWorkTypes, isCategoryValid]);
+  }, [normalizedCategoryKey, getDBWorkTypes, isCategoryValid]);
 
   useEffect(() => {
     if (
       workItem.type &&
       workItem.type !== "custom-work-type" &&
-      availableWorkTypes.length > 0 &&
-      !availableWorkTypes.includes(workItem.type)
+      availableWorkTypes.length > 0
     ) {
-      console.warn(
-        `⚠️ WorkItem type "${workItem.type}" not in available types for "${categoryKey}"`,
+      const keys = availableWorkTypes.map((wt) =>
+        typeof wt === "string" ? wt : wt.key,
       );
-      setValidationErrors((prev) => ({
-        ...prev,
-        staleWorkType: `Work type "${workItem.type}" no longer exists. Please re-select.`,
-      }));
+      if (!keys.includes(workItem.type)) {
+        console.warn(
+          `⚠️ WorkItem type "${workItem.type}" not in available types for "${categoryKey}"`,
+        );
+        setValidationErrors((prev) => ({
+          ...prev,
+          staleWorkType: `Work type "${workItem.type}" no longer exists. Please re-select.`,
+        }));
+      }
     }
   }, [workItem.type, availableWorkTypes, categoryKey]);
 
-  // ── FIX #2: Calculator engine – stable, does not depend on settings object ─
+  // ── Calculator engine ──────────────────────────────────────────────────────
 
   const calculatorEngine = useMemo(() => {
     try {
@@ -241,7 +278,6 @@ function WorkItemContent({
         console.warn("⚠️ Calculator engine dependencies not ready");
         return null;
       }
-      // settingsRef.current is always current without being a dep
       return new CalculatorEngine([], settingsRef.current || {}, {
         getMeasurementType,
         isValidSubtype,
@@ -251,34 +287,48 @@ function WorkItemContent({
       console.warn("⚠️ Calculator engine init error:", err.message);
       return null;
     }
-    // FIX #2: Do NOT include `settings` — use settingsRef.current instead
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [getMeasurementType, isValidSubtype, getWorkTypeDetails]);
 
   // ── Derived UI data ────────────────────────────────────────────────────────
 
+  // Work type dropdown options — DB objects have .key/.name
   const workTypeOptions = useMemo(
     () =>
-      availableWorkTypes.map((type) => ({
-        value: type,
-        label: type
-          .split("-")
-          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-          .join(" "),
-      })),
+      availableWorkTypes.map((wt) => {
+        if (typeof wt === "string") {
+          return {
+            value: wt,
+            label: wt
+              .split("-")
+              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+              .join(" "),
+          };
+        }
+        return { value: wt.key, label: wt.name };
+      }),
     [availableWorkTypes],
   );
 
+  // Subtype options — from shared DB taxonomy (includes custom subtypes)
   const subtypeOptions = useMemo(() => {
-    if (!workItem.type) return [];
+    if (!workItem.type || workItem.type === "custom-work-type") return [];
     try {
-      const opts = getSubtypeOptions(workItem.type);
-      return (opts || []).map((opt) => ({ value: opt, label: opt }));
+      const dbSubs = getDBSubtypes(workItem.type);
+      if (dbSubs && dbSubs.length > 0) {
+        return dbSubs.map((s) => ({
+          value: s.value,
+          label: s.value,
+          isDefault: s.isDefault,
+          isCustom: s.isCustom,
+        }));
+      }
+      return [];
     } catch (err) {
       console.warn(`⚠️ Failed subtype options: ${err.message}`);
       return [];
     }
-  }, [workItem.type, getSubtypeOptions]);
+  }, [workItem.type, getDBSubtypes]);
 
   const derivedName = useMemo(() => {
     if (workItem.name && workItem.name !== "New Work Item")
@@ -289,10 +339,14 @@ function WorkItemContent({
     )
       return workItem.customWorkTypeName;
     if (workItem.type) {
-      const typeName = workItem.type
-        .split("-")
-        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(" ");
+      const dbType = workTypeOptions.find((opt) => opt.value === workItem.type);
+      let typeName = dbType ? dbType.label : "";
+      if (!typeName) {
+        typeName = workItem.type
+          .split("-")
+          .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(" ");
+      }
       return workItem.subtype ? `${typeName} - ${workItem.subtype}` : typeName;
     }
     return "New Work Item";
@@ -301,17 +355,24 @@ function WorkItemContent({
     workItem.type,
     workItem.subtype,
     workItem.customWorkTypeName,
+    workTypeOptions,
   ]);
 
-  // ── FIX #1: sanitizedWorkItem does NOT recreate legacy measurement fields ──
   const sanitizedWorkItem = useMemo(() => {
     const item = { ...workItem };
     item.materialCost = ensureNumber(item.materialCost);
     item.laborCost = ensureNumber(item.laborCost);
-    // surfaces[] is the only measurement source — do NOT add units/linearFt/sqft/width/height
     item.surfaces = Array.isArray(item.surfaces) ? item.surfaces : [];
     return item;
   }, [workItem]);
+
+  // Labor options are derived from the selected measurement type so they always
+  // show the relevant rate range (e.g. $/sqft vs $/unit vs $/lf).
+  // Re-computed whenever measurementType changes — zero extra overhead.
+  const laborCostOptions = useMemo(
+    () => getLaborOptions(sanitizedWorkItem.measurementType),
+    [sanitizedWorkItem.measurementType],
+  );
 
   const availableMeasurementTypes = useMemo(() => {
     try {
@@ -343,7 +404,6 @@ function WorkItemContent({
       warnings: [],
       canCalculate: false,
     };
-
     try {
       if (!sanitizedWorkItem.type || !sanitizedWorkItem.measurementType)
         return res;
@@ -373,7 +433,6 @@ function WorkItemContent({
       console.warn(`⚠️ Calculation error: ${err.message}`);
       res.warnings.push(`Calculation error: ${err.message}`);
     }
-
     return res;
   }, [sanitizedWorkItem, calculatorEngine]);
 
@@ -386,14 +445,13 @@ function WorkItemContent({
     [validationErrors],
   );
 
-  // ── FIX #3: updateWorkItem normalises measurementType before forwarding ────
+  // ── updateWorkItem ─────────────────────────────────────────────────────────
 
   const updateWorkItem = useCallback(
     (field, value) => {
       if (disabled) return;
 
       if (field === "measurementType") {
-        // FIX #3: Normalize so "sqft" → MEASUREMENT_TYPES.SQUARE_FOOT etc.
         const normalizedType = normalizeMeasurementType(value);
         if (surfaceManagerRef.current?.handleMeasurementTypeChange) {
           surfaceManagerRef.current.handleMeasurementTypeChange(normalizedType);
@@ -425,11 +483,10 @@ function WorkItemContent({
         !isValidSubtype(sanitizedWorkItem.type, value)
       ) {
         console.warn("⚠️ Invalid subtype selected");
-        return;
+        if (!value) return;
       }
 
       const updatedItem = { ...sanitizedWorkItem, ...updates };
-
       try {
         onItemChange?.(catIndex, workIndex, updatedItem);
       } catch (err) {
@@ -469,6 +526,42 @@ function WorkItemContent({
       }
     }
   }, [disabled, derivedName, onItemRemove, catIndex, workIndex]);
+
+  // ── Inline add subtype ─────────────────────────────────────────────────────
+
+  const handleSaveNewSubtype = useCallback(async () => {
+    if (
+      !newSubtypeVal.trim() ||
+      !workItem.type ||
+      workItem.type === "custom-work-type"
+    )
+      return;
+    setSubtypeSaving(true);
+    try {
+      // createSubtype comes from the shared context — the new subtype is
+      // immediately visible in every other WorkItem and in TaxonomyManager
+      await createSubtype({
+        workTypeKey: workItem.type,
+        value: newSubtypeVal.trim(),
+      });
+      updateWorkItem("subtype", newSubtypeVal.trim());
+      setSubtypeFeedback({
+        type: "success",
+        msg: `"${newSubtypeVal.trim()}" added!`,
+      });
+      setNewSubtypeVal("");
+      setAddingSubtype(false);
+      setTimeout(() => setSubtypeFeedback(null), 3000);
+    } catch (err) {
+      setSubtypeFeedback({
+        type: "error",
+        msg: err.message || "Could not save subtype.",
+      });
+      setTimeout(() => setSubtypeFeedback(null), 4000);
+    } finally {
+      setSubtypeSaving(false);
+    }
+  }, [newSubtypeVal, workItem.type, createSubtype, updateWorkItem]);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -551,7 +644,7 @@ function WorkItemContent({
                     {opt.label}
                   </option>
                 ))}
-                <option value="custom-work-type">Custom Work Type</option>
+                <option value="custom-work-type">＋ Custom Work Type</option>
               </select>
               {!sanitizedWorkItem.type && (
                 <small className={styles.errorText}>
@@ -590,28 +683,179 @@ function WorkItemContent({
               </div>
             )}
 
-            {/* Subtype */}
-            {subtypeOptions.length > 0 && (
-              <div className={styles.field}>
-                <label htmlFor={`subtype-${catIndex}-${workIndex}`}>
-                  <i className="fas fa-tags" /> Subtype
-                </label>
-                <select
-                  id={`subtype-${catIndex}-${workIndex}`}
-                  value={sanitizedWorkItem.subtype}
-                  onChange={(e) => updateWorkItem("subtype", e.target.value)}
-                  disabled={disabled}
-                  className={styles.select}
-                >
-                  <option value="">Select Subtype</option>
-                  {subtypeOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            {/* Subtype — with inline "add new" capability */}
+            {subtypeOptions.length > 0 &&
+              sanitizedWorkItem.type !== "custom-work-type" && (
+                <div className={styles.field}>
+                  <label htmlFor={`subtype-${catIndex}-${workIndex}`}>
+                    <i className="fas fa-tags" /> Subtype
+                  </label>
+
+                  {!addingSubtype ? (
+                    <>
+                      <div className={styles.subtypeRow}>
+                        <select
+                          id={`subtype-${catIndex}-${workIndex}`}
+                          value={sanitizedWorkItem.subtype}
+                          onChange={(e) =>
+                            updateWorkItem("subtype", e.target.value)
+                          }
+                          disabled={disabled}
+                          className={styles.select}
+                        >
+                          <option value="">Select Subtype</option>
+                          {subtypeOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                              {opt.isDefault ? " ★" : ""}
+                              {opt.isCustom ? " (custom)" : ""}
+                            </option>
+                          ))}
+                        </select>
+                        {!disabled && (
+                          <button
+                            type="button"
+                            className={styles.addSubtypeBtn}
+                            onClick={() => {
+                              setAddingSubtype(true);
+                              setNewSubtypeVal("");
+                            }}
+                            title="Add a new custom subtype"
+                          >
+                            <i className="fas fa-plus" />
+                          </button>
+                        )}
+                      </div>
+
+                      {subtypeFeedback && (
+                        <small
+                          className={`${styles.subtypeFeedback} ${
+                            styles[`feedback_${subtypeFeedback.type}`]
+                          }`}
+                        >
+                          <i
+                            className={`fas fa-${
+                              subtypeFeedback.type === "success"
+                                ? "check"
+                                : "exclamation-circle"
+                            }`}
+                          />{" "}
+                          {subtypeFeedback.msg}
+                        </small>
+                      )}
+                    </>
+                  ) : (
+                    /* Inline add subtype form */
+                    <div className={styles.inlineSubtypeForm}>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={newSubtypeVal}
+                        onChange={(e) => setNewSubtypeVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveNewSubtype();
+                          if (e.key === "Escape") {
+                            setAddingSubtype(false);
+                            setNewSubtypeVal("");
+                          }
+                        }}
+                        placeholder="New subtype name…"
+                        className={styles.inlineSubtypeInput}
+                        disabled={subtypeSaving}
+                      />
+                      <button
+                        type="button"
+                        className={styles.saveSubtypeBtn}
+                        onClick={handleSaveNewSubtype}
+                        disabled={subtypeSaving || !newSubtypeVal.trim()}
+                      >
+                        {subtypeSaving ? (
+                          <i className="fas fa-spinner fa-spin" />
+                        ) : (
+                          <i className="fas fa-check" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.cancelSubtypeBtn}
+                        onClick={() => {
+                          setAddingSubtype(false);
+                          setNewSubtypeVal("");
+                        }}
+                        disabled={subtypeSaving}
+                      >
+                        <i className="fas fa-times" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            {/* No subtypes yet — still offer to add one */}
+            {subtypeOptions.length === 0 &&
+              sanitizedWorkItem.type &&
+              sanitizedWorkItem.type !== "custom-work-type" &&
+              !disabled && (
+                <div className={styles.field}>
+                  <label>
+                    <i className="fas fa-tags" /> Subtype
+                  </label>
+                  {!addingSubtype ? (
+                    <button
+                      type="button"
+                      className={styles.addSubtypeEmptyBtn}
+                      onClick={() => {
+                        setAddingSubtype(true);
+                        setNewSubtypeVal("");
+                      }}
+                    >
+                      <i className="fas fa-plus" /> Add First Subtype
+                    </button>
+                  ) : (
+                    <div className={styles.inlineSubtypeForm}>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={newSubtypeVal}
+                        onChange={(e) => setNewSubtypeVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") handleSaveNewSubtype();
+                          if (e.key === "Escape") {
+                            setAddingSubtype(false);
+                            setNewSubtypeVal("");
+                          }
+                        }}
+                        placeholder="New subtype name…"
+                        className={styles.inlineSubtypeInput}
+                        disabled={subtypeSaving}
+                      />
+                      <button
+                        type="button"
+                        className={styles.saveSubtypeBtn}
+                        onClick={handleSaveNewSubtype}
+                        disabled={subtypeSaving || !newSubtypeVal.trim()}
+                      >
+                        {subtypeSaving ? (
+                          <i className="fas fa-spinner fa-spin" />
+                        ) : (
+                          <i className="fas fa-check" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.cancelSubtypeBtn}
+                        onClick={() => {
+                          setAddingSubtype(false);
+                          setNewSubtypeVal("");
+                        }}
+                        disabled={subtypeSaving}
+                      >
+                        <i className="fas fa-times" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
           </div>
 
           {/* Measurement Type */}
@@ -700,7 +944,7 @@ function WorkItemContent({
                       value={workItem.materialCost}
                       onChange={(v) => updateWorkItem("materialCost", v)}
                       disabled={disabled}
-                      options={costOptions}
+                      options={materialCostOptions}
                       field="materialCost"
                       measurementType={sanitizedWorkItem.measurementType}
                       quantity={calculationResults.totalUnits}
@@ -710,7 +954,7 @@ function WorkItemContent({
                       value={workItem.laborCost}
                       onChange={(v) => updateWorkItem("laborCost", v)}
                       disabled={disabled}
-                      options={costOptions}
+                      options={laborCostOptions}
                       field="laborCost"
                       measurementType={sanitizedWorkItem.measurementType}
                       quantity={calculationResults.totalUnits}
@@ -736,6 +980,13 @@ function WorkItemContent({
                 <span className={styles.costItem} title="Labor Cost">
                   <i className="fas fa-hammer" />$
                   {calculationResults.totalLaborCost.toFixed(2)}
+                </span>
+                <span className={styles.costItemTotal} title="Total Cost">
+                  <i className="fas fa-receipt" />$
+                  {(
+                    calculationResults.totalMaterialCost +
+                    calculationResults.totalLaborCost
+                  ).toFixed(2)}
                 </span>
               </div>
             </div>

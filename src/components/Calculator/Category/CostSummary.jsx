@@ -1,103 +1,92 @@
 // src/components/Calculator/Category/CostSummary.jsx
 
-import React, { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useCalculation } from "../../../context/CalculationContext";
-import { useSettings } from "../../../context/SettingsContext";
 import { useCategories } from "../../../context/CategoriesContext";
+import { parseNumber, formatCurrency } from "../engine/CalculatorEngine";
 import SectionHeader from "./SectionHeader";
 import styles from "./CostSummary.module.css";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// useSettings is intentionally removed — the engine's calculatePaymentDetails()
+// already exposes deposit, refunded, and all payment counts via paymentDetails.
+// Never re-loop over settings.payments in a component.
 
-function fmt(value) {
-  const num = parseFloat(value) || 0;
-  return num.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+function MetricCard({ icon, label, value, tone = "neutral" }) {
+  return (
+    <div className={`${styles.metricCard} ${styles[tone] || ""}`}>
+      <span className={styles.metricIcon}>
+        <i className={icon} />
+      </span>
+      <span className={styles.metricBody}>
+        <strong>{value}</strong>
+        <small>{label}</small>
+      </span>
+    </div>
+  );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+function SummaryRow({ icon, label, value, valueClass = "", note }) {
+  return (
+    <div className={styles.summaryRow}>
+      <span className={styles.summaryLabel}>
+        <i className={icon} />
+        {label}
+        {note && <small>{note}</small>}
+      </span>
+      <span className={`${styles.summaryValue} ${valueClass}`}>{value}</span>
+    </div>
+  );
+}
 
 function PaymentProgress({ paid, total, overdue }) {
   const pct = total > 0 ? Math.min(100, (paid / total) * 100) : 0;
   return (
     <div className={styles.paymentProgress}>
-      <div className={styles.progressBar}>
+      <div className={styles.progressBar} aria-hidden="true">
         <div className={styles.progressBarFill} style={{ width: `${pct}%` }} />
       </div>
       <div className={styles.progressLabels}>
-        <span className={styles.progressLabel}>
-          {paid} / {total} paid
-        </span>
-        {overdue > 0 && (
-          <span className={styles.overdueLabel}>{overdue} overdue</span>
-        )}
+        <span>{total > 0 ? `${paid}/${total} paid` : "No scheduled payments"}</span>
+        {overdue > 0 && <strong>{overdue} overdue</strong>}
       </div>
     </div>
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
-
 export default function CostSummary() {
   const { paymentDetails, derived, hasErrors, isReady } = useCalculation();
-  const { settings } = useSettings();
   const { categories } = useCategories();
-
   const [isExpanded, setIsExpanded] = useState(true);
-  const [expandedSections, setExpandedSections] = useState({
-    labor: false,
-    adjustments: false,
-  });
 
-  const toggleSection = (key) =>
-    setExpandedSections((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  // Category stats for the header
   const categoryStats = useMemo(() => {
     if (!Array.isArray(categories)) return { total: 0, items: 0 };
     return {
       total: categories.length,
-      items: categories.reduce((s, c) => s + (c.workItems?.length || 0), 0),
+      items: categories.reduce(
+        (sum, category) => sum + (category.workItems?.length || 0),
+        0,
+      ),
     };
   }, [categories]);
 
+  // All values come directly from the engine. No local recalculation.
+  // ?? instead of || so a genuine 0 from the engine is respected, not overridden.
+  const paymentStats = useMemo(() => ({
+    refunded:     parseNumber(paymentDetails.totalRefunded),
+    deposit:      parseNumber(paymentDetails.deposit),
+    paidCount:    paymentDetails.summary?.paidPayments    ?? 0,
+    totalCount:   paymentDetails.summary?.totalPayments   ?? 0,
+    overdueCount: paymentDetails.summary?.overduePayments ?? 0,
+    refundCount:  paymentDetails.summary?.refundedPayments ?? 0,
+  }), [paymentDetails]);
+
+  const hasCategories = Array.isArray(categories) && categories.length > 0;
+  const hasWorkItems = categoryStats.items > 0;
   const hasLaborDiscount = derived.discountAmount > 0;
   const hasAdjustments = derived.totalAdjustments > 0;
-  const depositPayment = settings.payments?.find(
-    (p) => p.type === "Deposit" || p.method === "Deposit",
-  );
-
-  // ── Empty state ─────────────────────────────────────────────────────────────
-
-  if (!categories || !Array.isArray(categories) || categories.length === 0) {
-    return (
-      <div className={styles.section}>
-        <SectionHeader
-          title="Cost Summary"
-          icon="fas fa-chart-bar"
-          isExpanded={isExpanded}
-          onToggle={() => setIsExpanded(!isExpanded)}
-          stats={[
-            { icon: "fas fa-folder", value: 0, label: "Categories" },
-            { icon: "fas fa-check-circle", value: 0, label: "Items" },
-          ]}
-        />
-        <div className={styles.summaryContent}>
-          <div className={styles.emptyState}>
-            <div className={styles.helpMessage}>
-              <i className="fas fa-chart-line" />
-              <h4>No Categories Yet</h4>
-              <p>Add categories and work items to see your cost summary.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── Render ──────────────────────────────────────────────────────────────────
+  const balanceLabel = derived.hasOverpayment ? "Overpayment" : "Amount Due";
+  const balanceValue = derived.hasOverpayment ? derived.overpayment : derived.totalDue;
+  const balanceTone = derived.hasOverpayment ? "success" : derived.totalDue > 0 ? "danger" : "success";
 
   return (
     <div className={styles.section}>
@@ -107,19 +96,11 @@ export default function CostSummary() {
         isExpanded={isExpanded}
         onToggle={() => setIsExpanded(!isExpanded)}
         stats={[
-          {
-            icon: "fas fa-layer-group",
-            value: categoryStats.total,
-            label: "Categories",
-          },
-          {
-            icon: "fas fa-cube",
-            value: categoryStats.items,
-            label: "Total Items",
-          },
+          { icon: "fas fa-layer-group", value: categoryStats.total, label: "Categories" },
+          { icon: "fas fa-cube", value: categoryStats.items, label: "Items" },
           {
             icon: "fas fa-coins",
-            value: `$${fmt(derived.grandTotal)}`,
+            value: formatCurrency(derived.grandTotal),
             label: "Grand Total",
             highlight: true,
           },
@@ -128,300 +109,159 @@ export default function CostSummary() {
 
       {isExpanded && (
         <div className={styles.summaryContent}>
-          {/* Engine error notice */}
-          {!isReady && (
-            <div className={styles.errorSection}>
-              <i className="fas fa-exclamation-triangle" /> Calculator engine
-              unavailable — check context setup.
-            </div>
-          )}
-          {isReady && hasErrors && (
-            <div className={styles.errorSection}>
-              <i className="fas fa-exclamation-triangle" /> Some items have
-              calculation issues. Review work item data.
-            </div>
-          )}
-
-          {/* Key metrics row */}
-          <div className={styles.metricsRow}>
-            <div className={`${styles.metricItem} ${styles.materialMetric}`}>
-              <i className="fas fa-cubes" />
-              <div className={styles.metricContent}>
-                <span className={styles.metricValue}>
-                  ${fmt(derived.material)}
-                </span>
-                <small>Materials</small>
+          {!hasCategories || !hasWorkItems ? (
+            <div className={styles.emptyState}>
+              <i className="fas fa-chart-line" />
+              <div>
+                <h4>No Cost Data Yet</h4>
+                <p>Add work items to see the project summary.</p>
               </div>
             </div>
-            <div className={`${styles.metricItem} ${styles.laborMetric}`}>
-              <i className="fas fa-tools" />
-              <div className={styles.metricContent}>
-                <span className={styles.metricValue}>
-                  ${fmt(derived.labor)}
-                </span>
-                <small>Labor</small>
-              </div>
-            </div>
-            <div className={`${styles.metricItem} ${styles.totalMetric}`}>
-              <i className="fas fa-receipt" />
-              <div className={styles.metricContent}>
-                <span className={styles.metricValue}>
-                  ${fmt(derived.grandTotal)}
-                </span>
-                <small>Total</small>
-              </div>
-            </div>
-          </div>
-
-          {/* Summary table */}
-          <div className={styles.summaryGrid}>
-            <div className={styles.stickyHeader}>
-              <span className={styles.summaryLabel}>Description</span>
-              <span className={styles.summaryValue}>Amount</span>
-            </div>
-
-            {/* Materials */}
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>
-                <i className="fas fa-cubes" /> Materials Cost
-              </span>
-              <span className={styles.summaryValue}>
-                ${fmt(derived.material)}
-              </span>
-            </div>
-
-            {/* Labor — collapsible */}
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>
-                <button
-                  className={styles.detailToggle}
-                  onClick={() => toggleSection("labor")}
-                >
-                  <i className="fas fa-tools" /> Labor Cost
-                  <i
-                    className={`fas ${
-                      expandedSections.labor
-                        ? "fa-chevron-up"
-                        : "fa-chevron-down"
-                    } ${styles.toggleIcon}`}
-                  />
-                </button>
-              </span>
-              <span className={styles.summaryValue}>
-                ${fmt(derived.labor)}
-                {hasLaborDiscount && (
-                  <small className={styles.discountBadge}>
-                    −${fmt(derived.discountAmount)}
-                  </small>
-                )}
-              </span>
-            </div>
-
-            {expandedSections.labor && (
-              <div className={styles.detailsSection}>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Before Discount:</span>
-                  <span className={styles.detailValue}>
-                    ${fmt(derived.laborBeforeDiscount)}
-                  </span>
+          ) : (
+            <>
+              {!isReady && (
+                <div className={styles.errorSection}>
+                  <i className="fas fa-exclamation-triangle" />
+                  Calculator engine unavailable.
                 </div>
-                {hasLaborDiscount && (
-                  <div className={styles.detailRow}>
-                    <span className={styles.detailLabel}>
-                      Discount ({(derived.discountPct * 100).toFixed(1)}%):
-                    </span>
-                    <span
-                      className={`${styles.detailValue} ${styles.discount}`}
-                    >
-                      −${fmt(derived.discountAmount)}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
+              )}
 
-            {/* Subtotal */}
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>
-                <i className="fas fa-subscript" /> Subtotal
-              </span>
-              <span className={styles.summaryValue}>
-                ${fmt(derived.material + derived.labor)}
-              </span>
-            </div>
-
-            {/* Adjustments — collapsible */}
-            {hasAdjustments && (
-              <>
-                <div className={styles.summaryItem}>
-                  <span className={styles.summaryLabel}>
-                    <button
-                      className={styles.detailToggle}
-                      onClick={() => toggleSection("adjustments")}
-                    >
-                      <i className="fas fa-chart-line" /> Adjustments
-                      <i
-                        className={`fas ${
-                          expandedSections.adjustments
-                            ? "fa-chevron-up"
-                            : "fa-chevron-down"
-                        } ${styles.toggleIcon}`}
-                      />
-                    </button>
-                  </span>
-                  <span className={styles.summaryValue}>
-                    ${fmt(derived.totalAdjustments)}
-                  </span>
+              {isReady && hasErrors && (
+                <div className={styles.errorSection}>
+                  <i className="fas fa-exclamation-triangle" />
+                  Some items have calculation issues.
                 </div>
+              )}
 
-                {expandedSections.adjustments && (
-                  <div className={styles.detailsSection}>
-                    {derived.waste > 0 && (
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>
-                          <i className="fas fa-recycle" /> Waste Factor
-                        </span>
-                        <span className={styles.detailValue}>
-                          ${fmt(derived.waste)}
-                        </span>
-                      </div>
-                    )}
-                    {derived.transportation > 0 && (
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>
-                          <i className="fas fa-truck" /> Transportation
-                        </span>
-                        <span className={styles.detailValue}>
-                          ${fmt(derived.transportation)}
-                        </span>
-                      </div>
-                    )}
-                    {derived.markup > 0 && (
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>
-                          <i className="fas fa-chart-line" /> Markup
-                        </span>
-                        <span className={styles.detailValue}>
-                          ${fmt(derived.markup)}
-                        </span>
-                      </div>
-                    )}
-                    {derived.tax > 0 && (
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>
-                          <i className="fas fa-percentage" /> Tax
-                        </span>
-                        <span className={styles.detailValue}>
-                          ${fmt(derived.tax)}
-                        </span>
-                      </div>
-                    )}
-                    {derived.misc > 0 && (
-                      <div className={styles.detailRow}>
-                        <span className={styles.detailLabel}>
-                          <i className="fas fa-money-bill-wave" /> Misc Fees
-                        </span>
-                        <span className={styles.detailValue}>
-                          ${fmt(derived.misc)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Grand Total */}
-            <div className={`${styles.summaryItem} ${styles.total}`}>
-              <span className={styles.summaryLabel}>
-                <i className="fas fa-receipt" /> Grand Total
-              </span>
-              <span className={styles.summaryValue}>
-                ${fmt(derived.grandTotal)}
-              </span>
-            </div>
-
-            {/* Payment info */}
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>
-                <i className="fas fa-credit-card" /> Total Paid
-              </span>
-              <span className={styles.summaryValue}>
-                ${fmt(derived.totalPaid)}
-              </span>
-            </div>
-
-            {depositPayment && (
-              <div className={styles.summaryItem}>
-                <span className={styles.summaryLabel}>
-                  <i className="fas fa-hand-holding-usd" /> Deposit
-                </span>
-                <span className={`${styles.summaryValue} ${styles.paid}`}>
-                  −${fmt(derived.deposit)}
-                </span>
-              </div>
-            )}
-
-            <div className={styles.summaryItem}>
-              <span className={styles.summaryLabel}>
-                <i className="fas fa-file-invoice" /> Payment Status
-              </span>
-              <span className={styles.summaryValue}>
-                <PaymentProgress
-                  paid={paymentDetails.summary.paidPayments}
-                  total={paymentDetails.summary.totalPayments}
-                  overdue={paymentDetails.summary.overduePayments}
+              <div className={styles.metricsGrid}>
+                <MetricCard
+                  icon="fas fa-receipt"
+                  label="Grand Total"
+                  value={formatCurrency(derived.grandTotal)}
+                  tone="primary"
                 />
-              </span>
-            </div>
-
-            {/* Balance */}
-            <div
-              className={`${styles.summaryItem} ${
-                derived.hasOverpayment ? styles.overpayment : styles.amountDue
-              }`}
-            >
-              <span className={styles.summaryLabel}>
-                {derived.hasOverpayment ? (
-                  <>
-                    <i className="fas fa-gift" /> Overpayment
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-money-bill" /> Amount Due
-                  </>
-                )}
-              </span>
-              <span className={styles.summaryValue}>
-                $
-                {fmt(
-                  derived.hasOverpayment
-                    ? derived.overpayment
-                    : derived.totalDue,
-                )}
-              </span>
-            </div>
-          </div>
-
-          {/* Notices */}
-          {derived.hasOverpayment && (
-            <div className={styles.overpaymentNotice}>
-              <i className="fas fa-gift" />
-              <div className={styles.noticeContent}>
-                <strong>Overpayment: ${fmt(derived.overpayment)}</strong>
-                <p>Consider a refund or credit toward future work.</p>
+                <MetricCard
+                  icon={derived.hasOverpayment ? "fas fa-gift" : "fas fa-money-bill"}
+                  label={balanceLabel}
+                  value={formatCurrency(balanceValue)}
+                  tone={balanceTone}
+                />
+                <MetricCard
+                  icon="fas fa-check-circle"
+                  label="Net Paid"
+                  value={formatCurrency(derived.totalPaid)}
+                  tone="success"
+                />
+                <MetricCard
+                  icon="fas fa-clipboard-list"
+                  label="Scope"
+                  value={`${categoryStats.items} items`}
+                  tone="neutral"
+                />
               </div>
-            </div>
-          )}
 
-          {!derived.hasOverpayment && derived.totalDue > 0 && (
-            <div className={styles.dueAmountNotice}>
-              <i className="fas fa-exclamation-circle" />
-              <div className={styles.noticeContent}>
-                <strong>Due: ${fmt(derived.totalDue)}</strong>
-                <p>Follow up with customer for payment.</p>
+              <div className={styles.snapshotGrid}>
+                <section className={styles.snapshotPanel}>
+                  <div className={styles.panelHeader}>
+                    <i className="fas fa-calculator" />
+                    <h4>Cost Snapshot</h4>
+                  </div>
+
+                  <SummaryRow
+                    icon="fas fa-cubes"
+                    label="Materials"
+                    value={formatCurrency(derived.material)}
+                  />
+                  <SummaryRow
+                    icon="fas fa-tools"
+                    label="Labor"
+                    note={hasLaborDiscount ? `${(derived.discountPct * 100).toFixed(1)}% discount` : null}
+                    value={formatCurrency(derived.labor)}
+                    valueClass={hasLaborDiscount ? styles.discounted : ""}
+                  />
+                  {hasLaborDiscount && (
+                    <SummaryRow
+                      icon="fas fa-tag"
+                      label="Labor Savings"
+                      value={`-${formatCurrency(derived.discountAmount)}`}
+                      valueClass={styles.positiveValue}
+                    />
+                  )}
+                  {hasAdjustments && (
+                    <SummaryRow
+                      icon="fas fa-sliders-h"
+                      label="Adjustments"
+                      note={[
+                        derived.waste > 0 ? "waste" : null,
+                        derived.markup > 0 ? "markup" : null,
+                        derived.tax > 0 ? "tax" : null,
+                        derived.misc > 0 ? "fees" : null,
+                        derived.transportation > 0 ? "transport" : null,
+                      ].filter(Boolean).join(", ")}
+                      value={formatCurrency(derived.totalAdjustments)}
+                    />
+                  )}
+                </section>
+
+                <section className={styles.snapshotPanel}>
+                  <div className={styles.panelHeader}>
+                    <i className="fas fa-credit-card" />
+                    <h4>Payment Snapshot</h4>
+                  </div>
+
+                  <SummaryRow
+                    icon="fas fa-check-circle"
+                    label="Total Paid"
+                    value={formatCurrency(derived.totalPaid)}
+                    valueClass={styles.positiveValue}
+                  />
+                  {paymentStats.deposit > 0 && (
+                    <SummaryRow
+                      icon="fas fa-hand-holding-usd"
+                      label="Deposit Included"
+                      value={formatCurrency(paymentStats.deposit)}
+                    />
+                  )}
+                  {paymentStats.refunded > 0 && (
+                    <SummaryRow
+                      icon="fas fa-undo"
+                      label="Refunded"
+                      note={`${paymentStats.refundCount || 1} refund${(paymentStats.refundCount || 1) > 1 ? "s" : ""}`}
+                      value={`-${formatCurrency(paymentStats.refunded)}`}
+                      valueClass={styles.warningValue}
+                    />
+                  )}
+                  <SummaryRow
+                    icon={derived.hasOverpayment ? "fas fa-gift" : "fas fa-file-invoice"}
+                    label={balanceLabel}
+                    value={formatCurrency(balanceValue)}
+                    valueClass={derived.hasOverpayment ? styles.positiveValue : styles.dangerValue}
+                  />
+
+                  <PaymentProgress
+                    paid={paymentStats.paidCount}
+                    total={paymentStats.totalCount}
+                    overdue={paymentStats.overdueCount}
+                  />
+                </section>
               </div>
-            </div>
+
+              {derived.hasOverpayment && (
+                <div className={styles.overpaymentNotice}>
+                  <i className="fas fa-gift" />
+                  <strong>Overpayment: {formatCurrency(derived.overpayment)}</strong>
+                  <span>Consider a refund or customer credit.</span>
+                </div>
+              )}
+
+              {!derived.hasOverpayment && derived.totalDue > 0 && (
+                <div className={styles.dueAmountNotice}>
+                  <i className="fas fa-exclamation-circle" />
+                  <strong>Due: {formatCurrency(derived.totalDue)}</strong>
+                  <span>Follow up on the remaining balance.</span>
+                </div>
+              )}
+            </>
           )}
         </div>
       )}

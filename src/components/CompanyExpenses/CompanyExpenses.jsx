@@ -30,7 +30,7 @@ import {
   faTimes,
   faSearch,
   faWallet,
-  faEye,
+  faInfoCircle, // FIX #8: replaced faEye with faInfoCircle for the "no expenses" state
   faArrowUp,
   faArrowDown,
 } from "@fortawesome/free-solid-svg-icons";
@@ -103,11 +103,21 @@ const CATEGORIES = [
   { id: "other", name: "Other", icon: faReceipt, color: "#95a5a6" },
 ];
 
+// FIX #2: Safe date formatter — avoids UTC timezone shift on YYYY-MM-DD strings
+const formatDate = (dateStr) => {
+  if (!dateStr) return "-";
+  const [y, m, d] = dateStr.split("-");
+  if (!y || !m || !d) return dateStr;
+  return `${m}/${d}/${y}`;
+};
+
 export default function CompanyExpenses() {
   const [expenses, setExpenses] = useState([]);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  // FIX #4: validation error separate from network error
+  const [formError, setFormError] = useState(null);
 
   // Helper to get local date string YYYY-MM-DD
   const getLocalDate = () => {
@@ -131,6 +141,10 @@ export default function CompanyExpenses() {
     getLocalDate().slice(0, 7),
   ); // YYYY-MM
   const [selectedYear, setSelectedYear] = useState(
+    new Date().getFullYear().toString(),
+  );
+  // FIX #6: separate state for the coverage analysis year selector
+  const [coverageYear, setCoverageYear] = useState(
     new Date().getFullYear().toString(),
   );
   const [customDateRange, setCustomDateRange] = useState({
@@ -169,15 +183,27 @@ export default function CompanyExpenses() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear validation error when user starts typing
+    if (formError) setFormError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.amount || !formData.date) return;
+
+    // FIX #4: show validation feedback instead of silently returning
+    if (!formData.date) {
+      setFormError("Please select a date.");
+      return;
+    }
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      setFormError("Please enter a valid amount greater than $0.");
+      return;
+    }
 
     try {
       setSubmitting(true);
       setError(null);
+      setFormError(null);
 
       const expenseData = {
         date: formData.date,
@@ -186,8 +212,9 @@ export default function CompanyExpenses() {
         description: formData.description,
       };
 
-      await expensesAPI.createExpense(expenseData);
-      await loadData();
+      // FIX #1: optimistically update local state instead of refetching everything
+      const createdExpense = await expensesAPI.createExpense(expenseData);
+      setExpenses((prev) => [...prev, createdExpense]);
 
       setFormData({
         date: getLocalDate(),
@@ -210,7 +237,8 @@ export default function CompanyExpenses() {
     try {
       setError(null);
       await expensesAPI.deleteExpense(id);
-      await loadData();
+      // FIX #1: remove from local state instead of refetching everything
+      setExpenses((prev) => prev.filter((exp) => exp._id !== id));
     } catch (err) {
       console.error("Error deleting expense:", err);
       setError("Failed to delete expense. Please try again.");
@@ -310,31 +338,54 @@ export default function CompanyExpenses() {
 
   // ============================================================
   // YEAR-SPECIFIC OVERHEAD COVERAGE ANALYSIS
+  // FIX #6: uses coverageYear instead of selectedYear so it's
+  //         independent from the filter section year selector
   // ============================================================
 
-  // Get additional revenue for SELECTED year only (from fully paid projects completed in that year)
+  // Get additional revenue for COVERAGE year only (from fully paid projects completed in that year)
   const yearSpecificRevenue = useMemo(() => {
     return calculateAdditionalRevenue(projects, {
-      year: parseInt(selectedYear),
+      year: parseInt(coverageYear),
     });
-  }, [projects, selectedYear]);
+  }, [projects, coverageYear]);
 
-  // Get expenses for SELECTED year only
+  // Get expenses for COVERAGE year only
   const yearSpecificExpenses = useMemo(() => {
     return expenses
-      .filter((exp) => exp.date.startsWith(selectedYear))
+      .filter((exp) => exp.date.startsWith(coverageYear))
       .reduce((sum, exp) => sum + exp.amount, 0);
-  }, [expenses, selectedYear]);
+  }, [expenses, coverageYear]);
 
-  // Get projects completed in selected year (for detailed breakdown)
+  // FIX #3: year-specific category breakdown — computed from raw expenses
+  //         for the coverage year, not from filteredStats (which reflects
+  //         whatever the user has active in the filter section)
+  const yearSpecificCategoryBreakdown = useMemo(() => {
+    const breakdown = {};
+    expenses
+      .filter((exp) => exp.date.startsWith(coverageYear))
+      .forEach((exp) => {
+        if (!breakdown[exp.category]) breakdown[exp.category] = 0;
+        breakdown[exp.category] += exp.amount;
+      });
+    return breakdown;
+  }, [expenses, coverageYear]);
+
+  // Get projects completed in coverage year (for detailed breakdown)
+  // FIX #5: uses lastPaymentDate (or equivalent final-payment field) when
+  //         available so a project started in one year but paid in another
+  //         is attributed to the correct year. Falls back to startDate.
   const projectsCompletedInYear = useMemo(() => {
     return projects.filter((p) => {
-      const startDate = p.customerInfo?.startDate;
-      if (!startDate) return false;
-      const projectYear = new Date(startDate).getFullYear();
-      return projectYear === parseInt(selectedYear) && isProjectFullyPaid(p);
+      if (!isProjectFullyPaid(p)) return false;
+      // Prefer the date the project was fully paid if your data has it;
+      // fall back to startDate otherwise.
+      const relevantDate =
+        p.customerInfo?.lastPaymentDate || p.customerInfo?.startDate;
+      if (!relevantDate) return false;
+      const projectYear = new Date(relevantDate).getFullYear();
+      return projectYear === parseInt(coverageYear);
     });
-  }, [projects, selectedYear]);
+  }, [projects, coverageYear]);
 
   // Calculate year-over-year trend data
   const yearOverYearData = useMemo(() => {
@@ -394,6 +445,8 @@ export default function CompanyExpenses() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    // FIX #7: release the blob URL to avoid memory leak
+    URL.revokeObjectURL(url);
   };
 
   const clearFilters = () => {
@@ -452,6 +505,15 @@ export default function CompanyExpenses() {
           <FontAwesomeIcon icon={faPlus} />
           Add New Expense
         </h2>
+
+        {/* FIX #4: show validation error inline above the form */}
+        {formError && (
+          <div className={styles.errorMessage}>
+            <p>{formError}</p>
+            <button onClick={() => setFormError(null)}>×</button>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className={styles.formGrid}>
           <div className={styles.formGroup}>
             <label className={styles.label}>Date</label>
@@ -609,6 +671,7 @@ export default function CompanyExpenses() {
           {filterType === "year" && (
             <div className={styles.filterGroup}>
               <label className={styles.label}>Select Year</label>
+              {/* FIX #6: this selector only controls the filter, not the coverage section */}
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
@@ -754,7 +817,8 @@ export default function CompanyExpenses() {
               ) : (
                 filteredExpenses.map((exp) => (
                   <tr key={exp._id}>
-                    <td>{new Date(exp.date).toLocaleDateString()}</td>
+                    {/* FIX #2: use formatDate() to avoid UTC timezone date shift */}
+                    <td>{formatDate(exp.date)}</td>
                     <td>
                       <span
                         className={styles.categoryTag}
@@ -794,7 +858,8 @@ export default function CompanyExpenses() {
       </section>
 
       {/* ============================================================ */}
-      {/* YEAR-SPECIFIC OVERHEAD COVERAGE ANALYSIS */}
+      {/* YEAR-SPECIFIC OVERHEAD COVERAGE ANALYSIS                     */}
+      {/* FIX #6: uses coverageYear — independent from the filter year */}
       {/* ============================================================ */}
       <section className={styles.coverageSection}>
         <div className={styles.coverageHeader}>
@@ -803,13 +868,13 @@ export default function CompanyExpenses() {
             Overhead Coverage Analysis
           </h2>
 
-          {/* Year Selector for Coverage Analysis */}
+          {/* FIX #6: Year Selector controls coverageYear only */}
           <div className={styles.coverageYearSelector}>
             <label htmlFor="coverage-year">Select Year:</label>
             <select
               id="coverage-year"
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
+              value={coverageYear}
+              onChange={(e) => setCoverageYear(e.target.value)}
               className={styles.yearSelect}
             >
               {availableYears.map((year) => (
@@ -829,7 +894,7 @@ export default function CompanyExpenses() {
         </div>
 
         <div className={styles.coverageGrid}>
-          {/* Additional Revenue Card - Year Specific */}
+          {/* Additional Revenue Card - Coverage Year Specific */}
           <div className={styles.coverageCard}>
             <div
               className={styles.coverageHeader}
@@ -838,7 +903,7 @@ export default function CompanyExpenses() {
               }}
             >
               <FontAwesomeIcon icon={faWallet} />
-              <span>Additional Revenue ({selectedYear})</span>
+              <span>Additional Revenue ({coverageYear})</span>
             </div>
             <div className={styles.coverageBody}>
               <div className={styles.coverageAmount}>
@@ -865,7 +930,7 @@ export default function CompanyExpenses() {
             </div>
           </div>
 
-          {/* Company Expenses Card - Year Specific */}
+          {/* Company Expenses Card - Coverage Year Specific */}
           <div className={styles.coverageCard}>
             <div
               className={styles.coverageHeader}
@@ -874,19 +939,21 @@ export default function CompanyExpenses() {
               }}
             >
               <FontAwesomeIcon icon={faFileInvoiceDollar} />
-              <span>Company Expenses ({selectedYear})</span>
+              <span>Company Expenses ({coverageYear})</span>
             </div>
             <div className={styles.coverageBody}>
               <div className={styles.coverageAmount}>
                 ${yearSpecificExpenses.toFixed(2)}
               </div>
               <div className={styles.coverageLabel}>
-                {expenses.filter((e) => e.date.startsWith(selectedYear)).length}{" "}
+                {expenses.filter((e) => e.date.startsWith(coverageYear)).length}{" "}
                 expense entries
               </div>
+              {/* FIX #3: use yearSpecificCategoryBreakdown, not filteredStats.categoryBreakdown */}
               {yearSpecificExpenses > 0 && (
                 <div className={styles.coverageBreakdown}>
-                  {Object.entries(filteredStats.categoryBreakdown)
+                  {Object.entries(yearSpecificCategoryBreakdown)
+                    .sort((a, b) => b[1] - a[1])
                     .slice(0, 3)
                     .map(([cat, amount]) => (
                       <div key={cat} className={styles.coverageBreakdownItem}>
@@ -899,7 +966,7 @@ export default function CompanyExpenses() {
             </div>
           </div>
 
-          {/* Net Position Card - Year Specific */}
+          {/* Net Position Card - Coverage Year Specific */}
           <div className={styles.coverageCard}>
             <div
               className={styles.coverageHeader}
@@ -911,16 +978,17 @@ export default function CompanyExpenses() {
                   : "linear-gradient(135deg, #e67e22, #d35400)",
               }}
             >
+              {/* FIX #8: replaced faEye with faInfoCircle for the "no data" state */}
               <FontAwesomeIcon
                 icon={
                   isCovered
                     ? faChartLine
                     : yearSpecificExpenses === 0
-                    ? faEye
+                    ? faInfoCircle
                     : faMoneyBillWave
                 }
               />
-              <span>Net Position ({selectedYear})</span>
+              <span>Net Position ({coverageYear})</span>
             </div>
             <div className={styles.coverageBody}>
               <div
@@ -985,7 +1053,8 @@ export default function CompanyExpenses() {
                   className={`${styles.yoyCard} ${
                     data.isCovered ? styles.yoyPositive : styles.yoyNegative
                   }`}
-                  onClick={() => setSelectedYear(data.year)}
+                  // FIX #6: clicking a YoY card updates coverageYear, not selectedYear
+                  onClick={() => setCoverageYear(data.year)}
                   style={{ cursor: "pointer" }}
                 >
                   <div className={styles.yoyYear}>{data.year}</div>
@@ -1016,12 +1085,12 @@ export default function CompanyExpenses() {
           </div>
         )}
 
-        {/* Projects List for Selected Year */}
+        {/* Projects List for Coverage Year */}
         {projectsCompletedInYear.length > 0 && (
           <div className={styles.projectsList}>
             <h4 className={styles.projectsListTitle}>
               <FontAwesomeIcon icon={faWallet} />
-              Fully Paid Projects in {selectedYear} (
+              Fully Paid Projects in {coverageYear} (
               {projectsCompletedInYear.length})
             </h4>
             <div className={styles.projectsGrid}>
@@ -1049,12 +1118,12 @@ export default function CompanyExpenses() {
           </div>
         )}
 
-        {/* Pricing Guidance - Year Specific */}
+        {/* Pricing Guidance - Coverage Year Specific */}
         {yearSpecificExpenses > 0 && yearSpecificRevenue.projectCount > 0 && (
           <div className={styles.pricingGuidance}>
             <h3 className={styles.pricingTitle}>
               <FontAwesomeIcon icon={faChartLine} />
-              Pricing Guidance for {selectedYear}
+              Pricing Guidance for {coverageYear}
             </h3>
             <div className={styles.pricingContent}>
               <div className={styles.pricingMetric}>
@@ -1127,11 +1196,9 @@ export default function CompanyExpenses() {
                       const halfShortfallPerProject = shortfallPerProject / 2;
 
                       // Average markup already earned per fully-paid project
-                      // calculateAdditionalRevenue returns { totalMarkup, totalTransportation, total, projectCount }
                       const avgMarkupPerProject =
                         n > 0 ? yearSpecificRevenue.totalMarkup / n : 0;
 
-                      // "Increase markup by X%" = how much MORE relative to current avg markup per project
                       // Guard: if no markup has been charged yet, show a friendly message instead of NaN
                       const markupIncreasePercent =
                         avgMarkupPerProject > 0
@@ -1159,7 +1226,7 @@ export default function CompanyExpenses() {
                                 style={{ fontSize: "0.85em", color: "#e67e22" }}
                               >
                                 {" "}
-                                — no markup data yet for {selectedYear}
+                                — no markup data yet for {coverageYear}
                               </span>
                             )}
                           </li>

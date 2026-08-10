@@ -1,587 +1,349 @@
-/* CostSummary.module.css - Cleaned up without header styles */
+/* CostSummary.module.css
+   Compact project snapshot using the global design tokens from index.css.
+   The full audit lives in CostBreakdown; this panel stays focused on the
+   numbers a user needs to understand the current job position.
+   ========================================================================== */
 
 /* ==========================================================================
-   Section Container
+   Foundation
    ========================================================================== */
 .section {
   margin: var(--spacing-md) 0;
   background: var(--surface);
-  border-radius: var(--radius-md);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 6px 20px var(--shadow);
   overflow: hidden;
-  transition: all 0.3s ease;
 }
 
-/* ==========================================================================
-   Summary Content
-   ========================================================================== */
 .summaryContent {
-  padding: var(--spacing-md);
-  background: var(--background);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--background);
+}
+
+.emptyState,
+.errorSection,
+.overpaymentNotice,
+.dueAmountNotice {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.emptyState {
+  color: var(--text-light);
+  background: var(--surface);
+  border: 1px dashed var(--border-strong);
+}
+
+.emptyState i {
+  color: var(--primary);
+  font-size: var(--font-size-xl);
+}
+
+.emptyState h4 {
+  margin: 0 0 2px;
+  color: var(--text);
+  font-size: var(--font-size-md);
+}
+
+.emptyState p {
+  margin: 0;
+}
+
+.errorSection {
+  color: var(--error);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-left: 4px solid var(--error);
+  font-weight: var(--font-weight-medium);
 }
 
 /* ==========================================================================
-   Metrics Row
+   Top Metrics
    ========================================================================== */
-.metricsRow {
+.metricsGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--spacing-sm);
+}
+
+.metricCard {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
   padding: var(--spacing-sm);
   background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(209, 213, 219, 0.3);
-  margin-bottom: var(--spacing-sm);
 }
 
-.metricItem {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-sm);
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.metricItem::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 1px;
-  height: 60%;
-  background: rgba(209, 213, 219, 0.3);
-}
-
-.metricItem:last-child::after {
-  display: none;
-}
-
-.metricItem:hover {
-  background: rgba(44, 62, 80, 0.05);
-  transform: translateY(-1px);
-}
-
-.metricItem i {
-  font-size: 1.5rem;
+.metricIcon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
   color: var(--primary);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(44, 62, 80, 0.1);
-  border-radius: 50%;
-  flex-shrink: 0;
+  background: var(--muted-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
-.metricContent {
+.metricBody {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  flex: 1;
 }
 
-.metricValue {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
+.metricBody strong {
   color: var(--text);
-  line-height: 1.2;
-}
-
-.metricItem small {
-  font-size: 0.75rem;
-  color: var(--text-light);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: var(--font-weight-medium);
-}
-
-/* Specific metric types */
-.materialMetric i {
-  background: rgba(33, 150, 243, 0.1);
-  color: var(--primary);
-}
-
-.laborMetric i {
-  background: rgba(76, 175, 80, 0.1);
-  color: var(--success);
-}
-
-.totalMetric i {
-  background: rgba(156, 39, 176, 0.1);
-  color: var(--secondary);
-}
-
-/* ==========================================================================
-   Summary Grid
-   ========================================================================== */
-/* ==========================================================================
-   Summary Grid
-   ========================================================================== */
-.summaryGrid {
-  display: flex;
-  flex-direction: column;
-  min-width: 100%; /* Widen to full container width */
-  margin: 0 auto;
-  font-size: var(--font-size-sm);
-  background: var(--surface);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  overflow: hidden;
-  border: 1px solid rgba(209, 213, 219, 0.3);
-}
-
-/* Sticky Header */
-.stickyHeader {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--spacing-lg);
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-bold);
-  color: var(--surface);
-  background: var(--primary-dark);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.stickyHeader .summaryLabel,
-.stickyHeader .summaryValue {
-  color: var(--surface) !important;
+.metricBody small {
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+}
+
+.primary .metricIcon {
+  color: var(--primary);
+  background: var(--muted-bg);
+  border-color: var(--border-strong);
+}
+
+.success .metricIcon {
+  color: var(--success);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.danger .metricIcon {
+  color: var(--error);
+  background: var(--error-bg);
+  border-color: var(--error-border);
+}
+
+.neutral .metricIcon {
+  color: var(--secondary);
+  background: var(--info-bg);
+  border-color: var(--info-border);
 }
 
 /* ==========================================================================
-   Summary Items
+   Snapshot Panels
    ========================================================================== */
-.summaryItem {
+.snapshotGrid {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--spacing-lg);
-  align-items: center;
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-bottom: 1px solid rgba(209, 213, 219, 0.2);
-  transition: background-color 0.2s ease;
-  min-height: 44px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-md);
 }
 
-.summaryItem:hover {
-  background: rgba(44, 62, 80, 0.03);
+.snapshotPanel {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
-
-.summaryLabel {
-  font-weight: var(--font-weight-medium);
-  color: var(--text);
+.panelHeader {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--surface-raised);
+  border-bottom: 1px solid var(--border);
+}
+
+.panelHeader i {
+  color: var(--primary);
+}
+
+.panelHeader h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--spacing-md);
+  align-items: center;
+  min-height: 44px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+}
+
+.summaryRow:last-child {
+  border-bottom: 0;
+}
+
+.summaryLabel {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--text);
   font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
 }
 
 .summaryLabel i {
+  width: 18px;
   color: var(--primary);
-  font-size: var(--font-size-sm);
-  width: 20px;
   text-align: center;
 }
 
+.summaryLabel small {
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+}
+
 .summaryValue {
-  font-weight: var(--font-weight-bold);
   color: var(--primary);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
   text-align: right;
   white-space: nowrap;
-  font-size: var(--font-size-md);
+  font-variant-numeric: tabular-nums;
 }
 
-/* ==========================================================================
-   Detail Toggle
-   ========================================================================== */
-.detailToggle {
-  background: none;
-  border: none;
-  color: inherit;
-  font: inherit;
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  cursor: pointer;
-  padding: 0;
-  text-align: left;
-  width: 100%;
-}
-
-.toggleIcon {
-  font-size: 0.75rem;
-  margin-left: auto;
-  color: var(--text-light);
-}
-
-.discountBadge {
-  display: inline-block;
-  background: rgba(56, 161, 105, 0.1);
+.positiveValue {
   color: var(--success);
-  font-size: 0.75rem;
-  padding: 1px 6px;
-  border-radius: 4px;
-  margin-left: 6px;
-  font-weight: var(--font-weight-bold);
 }
 
-/* ==========================================================================
-   Details Section
-   ========================================================================== */
-.detailsSection {
-  background: rgba(44, 62, 80, 0.03);
-  border-left: 3px solid var(--primary);
-  margin: 6px 0;
-  padding: var(--spacing-sm);
-  animation: slideDown 0.2s ease-out;
+.dangerValue {
+  color: var(--error);
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 200px;
-  }
+.warningValue {
+  color: var(--warning);
 }
 
-.detailRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px var(--spacing-sm);
-  font-size: 0.75rem;
-}
-
-.detailLabel {
-  color: var(--text-light);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.detailLabel i {
-  font-size: 0.75rem;
-  color: var(--primary);
-}
-
-.detailValue {
-  font-weight: var(--font-weight-medium);
-  color: var(--text);
-}
-
-.detailValue.discount {
+.discounted {
   color: var(--success);
-  font-weight: var(--font-weight-bold);
-}
-
-/* ==========================================================================
-   Highlighted Rows
-   ========================================================================== */
-/* Highlighted Rows - Total & Balance Types */
-.total {
-  background: linear-gradient(135deg, rgba(44, 62, 80, 0.1), rgba(52, 152, 219, 0.05));
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-left: 4px solid var(--primary);
-  margin: 6px 0;
-  border-radius: var(--radius-sm);
-}
-
-.amountDue {
-  background: linear-gradient(135deg, rgba(229, 62, 62, 0.1), rgba(229, 62, 62, 0.05));
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-left: 4px solid var(--error);
-  margin: 6px 0;
-  border-radius: var(--radius-sm);
-}
-
-.overpayment {
-  background: linear-gradient(135deg, rgba(56, 161, 105, 0.1), rgba(56, 161, 105, 0.05));
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-left: 4px solid var(--success);
-  margin: 6px 0;
-  border-radius: var(--radius-sm);
-}
-
-.total .summaryLabel {
-  color: var(--primary);
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-md);
-}
-
-.total .summaryValue {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--primary);
-}
-
-.amountDue .summaryLabel,
-.amountDue .summaryValue {
-  color: var(--error); /* RED for Amount Due */
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-md);
-}
-
-.amountDue .summaryValue {
-  font-size: var(--font-size-lg);
-}
-
-.overpayment .summaryLabel,
-.overpayment .summaryValue {
-  color: var(--success); /* GREEN for Overpayment */
-  font-weight: var(--font-weight-bold);
-  font-size: var(--font-size-md);
-}
-
-.overpayment .summaryValue {
-  font-size: var(--font-size-lg);
-}
-
-.paid {
-  color: var(--success) !important;
 }
 
 /* ==========================================================================
    Payment Progress
    ========================================================================== */
 .paymentProgress {
-  width: 200px;
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border);
 }
 
 .progressBar {
-  width: 100%;
-  height: 6px;
-  background: rgba(209, 213, 219, 0.3);
-  border-radius: var(--radius-sm);
+  height: 8px;
+  background: var(--muted-bg);
+  border-radius: var(--radius-full);
   overflow: hidden;
 }
 
 .progressBarFill {
   height: 100%;
-  background: linear-gradient(90deg, var(--success), var(--primary));
-  border-radius: var(--radius-sm);
+  background: var(--success);
+  border-radius: inherit;
+  transition: width 0.25s ease;
 }
 
 .progressLabels {
   display: flex;
   justify-content: space-between;
-  margin-top: 2px;
-  font-size: 0.75rem;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
 }
 
-.progressLabel {
-  color: var(--text);
-}
-
-.overdueLabel {
+.progressLabels strong {
   color: var(--error);
-  font-weight: var(--font-weight-bold);
 }
 
 /* ==========================================================================
-   Notices - Single Line
+   Notices
    ========================================================================== */
 .overpaymentNotice,
 .dueAmountNotice {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-lg); /* Reduced vertical padding */
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-md);
-  margin-top: 6px;
+  flex-wrap: wrap;
 }
 
 .overpaymentNotice {
-  background: rgba(56, 161, 105, 0.1);
-  border: 1px solid var(--success);
   color: var(--success);
+  background: var(--success-bg);
+  border: 1px solid var(--success-border);
+  border-left: 4px solid var(--success);
 }
 
 .dueAmountNotice {
-  background: rgba(229, 62, 62, 0.1);
-  border: 1px solid var(--error);
   color: var(--error);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
+  border-left: 4px solid var(--error);
 }
 
-.overpaymentNotice i,
-.dueAmountNotice i {
-  font-size: var(--font-size-md);
-  margin-right: 4px;
-}
-
-.noticeContent {
-  flex: 1;
-  display: flex; /* Flex layout for single line */
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap; /* Allow wrap on very small screens */
-}
-
-.noticeContent strong {
-  display: inline; /* Inline */
-  font-weight: var(--font-weight-bold);
-  margin-bottom: 0;
-}
-
-.noticeContent strong::after {
-  content: " - "; /* Separator */
-  margin-left: 2px;
-}
-
-.noticeContent p {
-  margin: 0;
-  opacity: 0.9;
-  display: inline; /* Inline */
-}
-
-/* ==========================================================================
-   Empty State
-   ========================================================================== */
-.emptyState {
-  padding: var(--spacing-lg);
-  text-align: center;
-}
-
-.helpMessage {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-sm);
-}
-
-.helpMessage i {
-  font-size: 2rem;
-  color: var(--primary);
-}
-
-.helpMessage h4 {
-  font-size: var(--font-size-md);
-  margin: 0;
-}
-
-.helpMessage p {
-  font-size: var(--font-size-sm);
+.overpaymentNotice span,
+.dueAmountNotice span {
   color: var(--text-light);
-  margin: 0;
 }
 
 /* ==========================================================================
-   Error Section
+   Responsive
    ========================================================================== */
-.errorSection {
-  background: rgba(229, 62, 62, 0.1);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-sm);
-  margin-bottom: var(--spacing-sm);
-  border: 1px solid var(--error);
-  font-size: 0.75rem;
+@media (max-width: 1100px) {
+  .metricsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
-.errorSection h4 {
-  margin: 0 0 6px;
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+@media (max-width: 760px) {
+  .summaryContent {
+    padding: var(--spacing-sm);
+  }
 
-.errorSection ul {
-  margin: 0;
-  padding-left: var(--spacing-md);
-}
-
-.errorSection li {
-  margin-bottom: 2px;
-}
-
-/* ==========================================================================
-   Responsive Design
-   ========================================================================== */
-@media (max-width: 768px) {
-  .metricsRow {
+  .metricsGrid,
+  .snapshotGrid {
     grid-template-columns: 1fr;
-    gap: 6px;
   }
-  
-  .metricItem::after {
-    display: none;
+
+  .summaryRow {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-xs);
   }
-  
-  .summaryGrid {
-    min-width: 100%;
-    font-size: 0.75rem;
-  }
-  
-  .summaryItem {
-    padding: 6px var(--spacing-sm);
-  }
-  
-  .summaryLabel,
+
   .summaryValue {
-    font-size: var(--font-size-sm);
+    text-align: left;
   }
-  
-  .total .summaryValue,
-  .balance .summaryValue {
-    font-size: var(--font-size-md);
-  }
-  
-  .paymentProgress {
-    width: 150px;
+
+  .progressLabels {
+    flex-direction: column;
   }
 }
 
-/* ==========================================================================
-   Dark Mode
-   ========================================================================== */
-.dark .section {
-  background: var(--surface);
-  box-shadow: 0 2px 8px var(--shadow);
-}
-
-.dark .summaryContent {
-  background: var(--background);
-}
-
-.dark .metricsRow,
-.dark .summaryGrid {
-  background: var(--surface);
-  border-color: rgba(209, 213, 219, 0.2);
-}
-
-.dark .summaryItem:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.dark .summaryItem:nth-child(even) {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-/* ==========================================================================
-   Print Styles
-   ========================================================================== */
 @media print {
   .section {
     box-shadow: none;
-    border: 1px solid #000;
+    border-color: #000;
     break-inside: avoid;
-  }
-
-  .summaryGrid {
-    box-shadow: none;
   }
 }

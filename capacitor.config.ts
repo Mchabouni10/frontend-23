@@ -1,17 +1,28 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.remodelproapp.mobile',
-  appName: 'Remodel Pro',
+  appId: 'com.rawdahremodeling.app',
+  appName: 'Rawdah Remodeling',
   webDir: 'build',
   android: {
-    allowMixedContent: true,
+    // Only allow mixed content (http:// from an https:// origin) when we
+    // are explicitly developing against a local backend. Production MUST
+    // use HTTPS and have this set to false.
+    allowMixedContent: false,
     captureInput: true,
-    webContentsDebuggingEnabled: true,
+    webContentsDebuggingEnabled: false,
   },
   server: {
     androidScheme: 'https',
-    cleartext: true,
+    // Allow plain http requests ONLY to localhost (dev backend). Production
+    // API must be served over HTTPS.
+    cleartext: false,
+    // Capacitor 5+ uses allowNavigation to limit which URLs the WebView can
+    // navigate to. Keep this strict.
+    allowNavigation: [
+      'https://rawdahremodeling.com',
+      'https://*.rawdahremodeling.com',
+    ],
   },
   plugins: {
     SplashScreen: {
