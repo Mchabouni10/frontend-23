@@ -17,6 +17,6 @@ root.render(
 );
 
 // ✅ Register service worker to enable installability + offline use
-serviceWorkerRegistration.register();
+serviceWorkerRegistration.unregister();
 
 
