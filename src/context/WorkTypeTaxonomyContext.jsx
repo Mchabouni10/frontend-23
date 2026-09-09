@@ -18,6 +18,7 @@ import React, {
 } from "react";
 import PropTypes from "prop-types";
 import { getApiUrl } from "../utilities/api-url";
+import { getAuthHeaders } from "../utilities/send-request";
 
 const BASE = "/api/work-types";
 
@@ -30,7 +31,7 @@ async function apiFetch(path, options = {}) {
   // Credentials: 'include' sends the HttpOnly auth cookie automatically.
   const res = await fetch(url, {
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
     ...options,
   });
   const json = await res.json();

@@ -166,7 +166,14 @@ export function updateProject(id, projectData) {
   });
 }
 
+let projectsRequest = null;
+
 export async function getProjects() {
+  // Multiple dashboard widgets mount together. Share one request instead of
+  // making each widget hit the API and IndexedDB independently.
+  if (projectsRequest) return projectsRequest;
+
+  projectsRequest = (async () => {
   try {
     const onlineProjects = await sendRequest(BASE_URL, 'GET');
     const localProjects = await getLocalProjects();
@@ -176,8 +183,19 @@ export async function getProjects() {
     // In a real scenario we'd merge duplicates, but for simplicity we append them
     return [...onlineProjects, ...pendingProjects];
   } catch (err) {
-    console.warn('Failed to fetch projects from server. Loading offline projects.', err);
+    // A 401 is expected when a session has expired; offline data is still a
+    // valid fallback and logging the full stack on every widget is noisy.
+    if (err.status !== 401) {
+      console.warn('Failed to fetch projects from server. Loading offline projects.', err);
+    }
     return await getLocalProjects();
+  }
+  })();
+
+  try {
+    return await projectsRequest;
+  } finally {
+    projectsRequest = null;
   }
 }
 

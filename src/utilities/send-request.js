@@ -20,6 +20,14 @@ const devErr = (...args) => { if (isDev) console.error(...args); };
 // Optional in-memory token (for mobile WebView fallback). Not persisted.
 let inMemoryToken = null;
 
+// Shared by every API client so authentication does not diverge between
+// requests made through sendRequest and the taxonomy context.
+export function getAuthHeaders() {
+  return inMemoryToken
+    ? { Authorization: `Bearer ${inMemoryToken}` }
+    : {};
+}
+
 export function setInMemoryToken(token) {
   inMemoryToken = token || null;
 }
@@ -45,9 +53,7 @@ export default async function sendRequest(endpoint, method = 'GET', payload = nu
     devLog('Payload:', payload);
   }
 
-  if (inMemoryToken) {
-    options.headers.Authorization = `Bearer ${inMemoryToken}`;
-  }
+  Object.assign(options.headers, getAuthHeaders());
   // Intentionally NOT logging `options` here — it can contain the
   // Authorization header, which is sensitive.
 

@@ -24,19 +24,23 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { getAuthHeaders } from '../utilities/send-request';
 
 const BASE = '/api/work-types';
 
 function authHeaders() {
-  const token = localStorage.getItem('token');
   return {
     'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...getAuthHeaders(),
   };
 }
 
 async function apiFetch(url, options = {}) {
-  const res = await fetch(url, { headers: authHeaders(), ...options });
+  const res = await fetch(url, {
+    credentials: 'include',
+    headers: { ...authHeaders(), ...(options.headers || {}) },
+    ...options,
+  });
   const json = await res.json();
   if (!res.ok || !json.success) {
     throw new Error(json.error || `Request failed: ${res.status}`);
