@@ -522,6 +522,7 @@
 
 .tableContainer {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
 }

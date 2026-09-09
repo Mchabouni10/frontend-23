@@ -82,8 +82,8 @@
 .toggleArrow {
   position: absolute;
   top: var(--spacing-md);
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border: none;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
@@ -104,7 +104,7 @@
 }
 
 .toggleArrowRight {
-  left: calc(35% - 18px);
+  left: calc(35% - 22px);
   animation: pulseRight 2s infinite;
 }
 
@@ -463,7 +463,7 @@
   }
 
   .toggleArrowRight {
-    left: calc(100% - 18px);
+    left: calc(100% - 22px);
   }
 }
 
@@ -506,8 +506,8 @@
   }
 
   .toggleArrow {
-    width: 32px;
-    height: 32px;
+    width: 44px;
+    height: 44px;
     top: var(--spacing-sm);
   }
 
@@ -547,13 +547,13 @@
   }
 
   .toggleArrow {
-    width: 28px;
-    height: 28px;
+    width: 44px;
+    height: 44px;
     top: 6px;
   }
 
   .toggleArrowRight {
-    left: calc(100% - 14px);
+    left: calc(100% - 22px);
   }
 
   .toggleArrowLeft {

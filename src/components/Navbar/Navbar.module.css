@@ -231,11 +231,30 @@
 @media (max-width: 600px) {
   .navbar {
     padding: var(--spacing-sm) var(--spacing-md);
-    height: 52px;
+    height: auto;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .logoContainer {
+    margin-right: 0;
+    align-items: center;
   }
 
   .logo {
     font-size: var(--font-size-lg);
+  }
+
+  .navLinks {
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 4px;
+    justify-content: flex-start;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .navLinks::-webkit-scrollbar {
+    display: none;
   }
 }
 

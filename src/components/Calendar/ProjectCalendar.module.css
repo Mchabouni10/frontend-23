@@ -786,6 +786,25 @@
   }
 
   .toggleGroup  { flex-wrap: wrap; }
+  
+  .calendarPane :global(.rbc-toolbar) {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .calendarPane :global(.rbc-toolbar .rbc-btn-group) {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .calendarPane :global(.rbc-toolbar button) {
+    flex: 1;
+    white-space: nowrap;
+  }
+
   .calendarPane { height: 55vh; }
   .summaryStat  { flex: 1 1 calc(50% - 1px); }
 
