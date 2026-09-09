@@ -685,12 +685,13 @@ export class CalculatorEngine {
   //  on physical materials installed. Labor is a service and is NOT taxed.
   //  6. + Tax               → on adjusted material cost only
   //
-  //  INDUSTRY FIX #3: Cost-plus markup on the full job subtotal.
-  //  Formula: subtotal × (1 + markup%)
-  //  This is the standard small-contractor formula. The markup is applied
-  //  to the pre-tax subtotal so the contractor earns their margin on the
-  //  whole job, and tax is a separate pass-through.
-  //  7. + Markup            → on job subtotal (pre-tax)
+  //  INDUSTRY FIX #3: Markup on labor only, based on the ORIGINAL
+  //  (pre-discount) labor cost — never on material, and never on the
+  //  discounted labor figure. Marking up material is not legal, and basing
+  //  markup on discounted labor would silently shrink the contractor's
+  //  margin every time a labor discount is applied.
+  //  Formula: markup% × laborCost (original, before laborDiscount)
+  //  7. + Markup            → laborCost (pre-discount) × markup%
   //
   //  8. + Misc fees + Transportation (flat pass-through, not taxed/marked-up)
   //  9. = Grand total
@@ -731,11 +732,12 @@ export class CalculatorEngine {
     // Illinois Use Tax, creating a compliance risk.
     const taxAmount = adjustedMaterialCost.times(taxRate);
 
-    // Step 7 — INDUSTRY FIX #3: Cost-plus markup.
-    // Formula: subtotal × markup%  (the grand total becomes subtotal × (1 + markup%)).
-    // Markup is on the pre-tax subtotal so the contractor profits on the
-    // full job cost, and tax is a separate government pass-through.
-    const markupAmount = subtotal.times(markup);
+    // Step 7 — INDUSTRY FIX #3: Markup on labor only, based on the
+    // ORIGINAL (pre-discount) labor cost. Material is never marked up
+    // (illegal in most jurisdictions), and the base used here is
+    // `laborCost` — NOT `adjustedLaborCost` — so applying or increasing a
+    // labor discount never shrinks the markup dollar amount.
+    const markupAmount = laborCost.times(markup);
 
     // Step 8: Misc fees (flat, no tax, no markup)
     const miscFeesTotal = Array.isArray(this.settings.miscFees)
