@@ -183,11 +183,8 @@ export async function getProjects() {
     // In a real scenario we'd merge duplicates, but for simplicity we append them
     return [...onlineProjects, ...pendingProjects];
   } catch (err) {
-    // A 401 is expected when a session has expired; offline data is still a
-    // valid fallback and logging the full stack on every widget is noisy.
-    if (err.status !== 401) {
-      console.warn('Failed to fetch projects from server. Loading offline projects.', err);
-    }
+    if (err.status === 401) throw err;
+    console.warn('Failed to fetch projects from server. Loading offline projects.', err);
     return await getLocalProjects();
   }
   })();

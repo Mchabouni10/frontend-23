@@ -1,15 +1,16 @@
 // src/utilities/send-request.js
 //
 // Auth model:
-//   - The backend sets the JWT as an HttpOnly cookie on signup/login.
+//   - The backend sets the JWT as an HttpOnly cookie on signup/login/refresh.
 //   - The browser sends that cookie automatically with `credentials: 'include'`.
 //   - The frontend never sees the JWT, so an XSS cannot steal it.
 //   - We also send the Authorization header if a token is available (for
 //     Capacitor mobile where cookies may not survive the WebView).
 //
-// Logging:
-//   - All console output is gated on NODE_ENV !== 'production'.
-//   - The Authorization header is *never* logged under any condition.
+// Session:
+//   - 401s on protected routes invalidate the local session (see users-service).
+//   - Login/signup/logout skip that handling so a bad password is not a logout.
+//   - Requests time out so a sleeping API/DB cannot hang the UI indefinitely.
 
 import { getApiUrl } from './api-url';
 
@@ -17,11 +18,12 @@ const isDev = process.env.NODE_ENV !== 'production';
 const devLog = (...args) => { if (isDev) console.log(...args); };
 const devErr = (...args) => { if (isDev) console.error(...args); };
 
-// Optional in-memory token (for mobile WebView fallback). Not persisted.
-let inMemoryToken = null;
+export const REQUEST_TIMEOUT_MS = 20000;
 
-// Shared by every API client so authentication does not diverge between
-// requests made through sendRequest and the taxonomy context.
+let inMemoryToken = null;
+let unauthorizedHandler = null;
+let beforeRequestHandler = null;
+
 export function getAuthHeaders() {
   return inMemoryToken
     ? { Authorization: `Bearer ${inMemoryToken}` }
@@ -36,14 +38,35 @@ export function clearInMemoryToken() {
   inMemoryToken = null;
 }
 
-export default async function sendRequest(endpoint, method = 'GET', payload = null) {
+export function setUnauthorizedHandler(handler) {
+  unauthorizedHandler = handler;
+}
+
+export function setBeforeRequestHandler(handler) {
+  beforeRequestHandler = handler;
+}
+
+export default async function sendRequest(
+  endpoint,
+  method = 'GET',
+  payload = null,
+  {
+    timeoutMs = REQUEST_TIMEOUT_MS,
+    skipAuthHandling = false,
+    skipSessionRefresh = false,
+  } = {},
+) {
+  if (!skipSessionRefresh && beforeRequestHandler) {
+    await beforeRequestHandler();
+  }
+
   const url = getApiUrl(endpoint);
   devLog(`Requesting: ${url}`);
   devLog('Method:', method);
 
   const options = {
     method,
-    credentials: 'include', // send HttpOnly cookies
+    credentials: 'include',
     headers: {},
   };
 
@@ -54,15 +77,24 @@ export default async function sendRequest(endpoint, method = 'GET', payload = nu
   }
 
   Object.assign(options.headers, getAuthHeaders());
-  // Intentionally NOT logging `options` here — it can contain the
-  // Authorization header, which is sensitive.
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  options.signal = controller.signal;
 
   let res;
   try {
     res = await fetch(url, options);
   } catch (networkErr) {
+    if (networkErr?.name === 'AbortError') {
+      const err = new Error('Request timed out. Please try again.');
+      err.status = 408;
+      throw err;
+    }
     devErr('Fetch error:', networkErr);
     throw new Error('Network error — please check your connection.');
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   devLog('Response status:', res.status);
@@ -80,7 +112,6 @@ export default async function sendRequest(endpoint, method = 'GET', payload = nu
     return { success: true };
   }
 
-  // Error path — never include the request body in the error message.
   let errorText;
   try {
     const errorData = await res.json();
@@ -93,6 +124,11 @@ export default async function sendRequest(endpoint, method = 'GET', payload = nu
     }
   }
   devErr(`Request failed: ${res.status} - ${errorText}`);
+
+  if (res.status === 401 && !skipAuthHandling && unauthorizedHandler) {
+    unauthorizedHandler();
+  }
+
   const err = new Error(errorText || `Request failed: ${res.status}`);
   err.status = res.status;
   throw err;

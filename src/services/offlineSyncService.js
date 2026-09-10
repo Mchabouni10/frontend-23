@@ -1,5 +1,6 @@
 import localforage from 'localforage';
 import sendRequest from '../utilities/send-request';
+import { getUser } from '../utilities/users-service';
 
 // Initialize stores
 const projectsStore = localforage.createInstance({
@@ -62,6 +63,10 @@ export async function removeLocalProject(id) {
 export async function syncOfflineProjects() {
   if (!navigator.onLine) {
     console.log('Cannot sync: device is still offline.');
+    return;
+  }
+
+  if (!getUser()) {
     return;
   }
 

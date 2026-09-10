@@ -2,9 +2,9 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getUser } from './utilities/users-service';
+import { getUser, bootstrapSession, subscribeAuth } from './utilities/users-service';
 import { ErrorProvider } from './context/ErrorContext';
 import { WorkTypeProvider } from './context/WorkTypeContext';
 import { WorkTypeTaxonomyProvider } from './context/WorkTypeTaxonomyContext';
@@ -24,6 +24,7 @@ import ProjectCalendar from './components/Calendar/ProjectCalendar';
 
 export default function App() {
   const [user, setUser] = useState(getUser());
+  const [sessionReady, setSessionReady] = useState(() => !getUser());
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedMode = localStorage.getItem('darkMode');
     return savedMode === 'true' || (!savedMode && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -41,6 +42,30 @@ export default function App() {
   }, [isDarkMode]);
 
   useEffect(() => {
+    return subscribeAuth((nextUser, meta) => {
+      setUser(nextUser);
+      if (!nextUser && meta?.reason === 'expired') {
+        toast.info('Your session expired. Please sign in again.');
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const nextUser = await bootstrapSession();
+      if (cancelled) return;
+      setUser(nextUser);
+      setSessionReady(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return undefined;
+
     const handleOnline = () => {
       console.log('App is online. Attempting to sync offline projects...');
       syncOfflineProjects();
@@ -48,7 +73,6 @@ export default function App() {
 
     window.addEventListener('online', handleOnline);
 
-    // Initial check on load
     if (navigator.onLine) {
       syncOfflineProjects();
     }
@@ -56,7 +80,7 @@ export default function App() {
     return () => {
       window.removeEventListener('online', handleOnline);
     };
-  }, []);
+  }, [user]);
 
   const toggleDarkMode = () => {
     setIsDarkMode((prevMode) => !prevMode);
@@ -79,7 +103,11 @@ export default function App() {
           <div className="backgroundEffects"></div>
 
           <ErrorBoundaryWrapper boundaryName="AppRoot">
-            {user ? (
+            {!sessionReady ? (
+              <div className="mainContent" style={{ display: 'flex', justifyContent: 'center', paddingTop: '20vh' }}>
+                <p>Checking session…</p>
+              </div>
+            ) : user ? (
               // FIX: WorkTypeTaxonomyProvider is now INSIDE the auth check.
               // Previously it wrapped the entire app, so it mounted before login
               // and fired the fetch with no token — got a 401, hasFetched was

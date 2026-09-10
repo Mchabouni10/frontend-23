@@ -17,8 +17,7 @@ import React, {
   useRef,
 } from "react";
 import PropTypes from "prop-types";
-import { getApiUrl } from "../utilities/api-url";
-import { getAuthHeaders } from "../utilities/send-request";
+import sendRequest from "../utilities/send-request";
 
 const BASE = "/api/work-types";
 
@@ -26,19 +25,12 @@ const BASE = "/api/work-types";
 // Internal helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-async function apiFetch(path, options = {}) {
-  const url = getApiUrl(path);
-  // Credentials: 'include' sends the HttpOnly auth cookie automatically.
-  const res = await fetch(url, {
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-    ...options,
-  });
-  const json = await res.json();
-  if (!res.ok || !json.success) {
-    throw new Error(json.error || `Request failed: ${res.status}`);
+async function apiFetch(path, method = "GET", payload = null) {
+  const json = await sendRequest(path, method, payload);
+  if (json && json.success === false) {
+    throw new Error(json.error || "Request failed");
   }
-  return json.data;
+  return json?.data !== undefined ? json.data : json;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -115,20 +107,14 @@ export function WorkTypeTaxonomyProvider({ children }) {
 
   /** Create a new custom category */
   const createCategory = useCallback(async ({ name, key }) => {
-    const newCat = await apiFetch(`${BASE}/categories`, {
-      method: "POST",
-      body: JSON.stringify({ name, key }),
-    });
+    const newCat = await apiFetch(`${BASE}/categories`, "POST", { name, key });
     setCategories((prev) => [...prev, { ...newCat, workTypes: [] }]);
     return newCat;
   }, []);
 
   /** Rename a category */
   const updateCategory = useCallback(async (categoryKey, { name }) => {
-    const updated = await apiFetch(`${BASE}/categories/${categoryKey}`, {
-      method: "PATCH",
-      body: JSON.stringify({ name }),
-    });
+    const updated = await apiFetch(`${BASE}/categories/${categoryKey}`, "PATCH", { name });
     setCategories((prev) =>
       prev.map((cat) =>
         cat.key === categoryKey ? { ...cat, name: updated.name } : cat,
@@ -139,7 +125,7 @@ export function WorkTypeTaxonomyProvider({ children }) {
 
   /** Delete a custom category (cascades work types + subtypes) */
   const deleteCategory = useCallback(async (categoryKey) => {
-    await apiFetch(`${BASE}/categories/${categoryKey}`, { method: "DELETE" });
+    await apiFetch(`${BASE}/categories/${categoryKey}`, "DELETE");
     setCategories((prev) => prev.filter((c) => c.key !== categoryKey));
   }, []);
 
@@ -148,10 +134,8 @@ export function WorkTypeTaxonomyProvider({ children }) {
     async ({ categoryKey, name, measurementType }) => {
       const newWT = await apiFetch(
         `${BASE}/categories/${categoryKey}/work-types`,
-        {
-          method: "POST",
-          body: JSON.stringify({ name, measurementType }),
-        },
+        "POST",
+        { name, measurementType },
       );
       setCategories((prev) =>
         prev.map((cat) => {
@@ -170,9 +154,9 @@ export function WorkTypeTaxonomyProvider({ children }) {
   /** Edit a work type's name and/or measurementType */
   const updateWorkType = useCallback(
     async (workTypeKey, { name, measurementType }) => {
-      const updated = await apiFetch(`${BASE}/work-types/${workTypeKey}`, {
-        method: "PATCH",
-        body: JSON.stringify({ name, measurementType }),
+      const updated = await apiFetch(`${BASE}/work-types/${workTypeKey}`, "PATCH", {
+        name,
+        measurementType,
       });
       setCategories((prev) =>
         prev.map((cat) => ({
@@ -195,7 +179,7 @@ export function WorkTypeTaxonomyProvider({ children }) {
 
   /** Delete a custom work type (cascades subtypes) */
   const deleteWorkType = useCallback(async (workTypeKey) => {
-    await apiFetch(`${BASE}/work-types/${workTypeKey}`, { method: "DELETE" });
+    await apiFetch(`${BASE}/work-types/${workTypeKey}`, "DELETE");
     setCategories((prev) =>
       prev.map((cat) => ({
         ...cat,
@@ -209,10 +193,8 @@ export function WorkTypeTaxonomyProvider({ children }) {
     async ({ workTypeKey, value, isDefault }) => {
       const newST = await apiFetch(
         `${BASE}/work-types/${workTypeKey}/subtypes`,
-        {
-          method: "POST",
-          body: JSON.stringify({ value, isDefault }),
-        },
+        "POST",
+        { value, isDefault },
       );
       setCategories((prev) =>
         prev.map((cat) => ({
@@ -236,10 +218,8 @@ export function WorkTypeTaxonomyProvider({ children }) {
     async ({ workTypeKey, subtypeId, value }) => {
       const updated = await apiFetch(
         `${BASE}/work-types/${workTypeKey}/subtypes/${subtypeId}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({ value }),
-        },
+        "PATCH",
+        { value },
       );
       setCategories((prev) =>
         prev.map((cat) => ({
@@ -262,9 +242,7 @@ export function WorkTypeTaxonomyProvider({ children }) {
 
   /** Delete a custom subtype */
   const deleteSubtype = useCallback(async ({ workTypeKey, subtypeId }) => {
-    await apiFetch(`${BASE}/work-types/${workTypeKey}/subtypes/${subtypeId}`, {
-      method: "DELETE",
-    });
+    await apiFetch(`${BASE}/work-types/${workTypeKey}/subtypes/${subtypeId}`, "DELETE");
     setCategories((prev) =>
       prev.map((cat) => ({
         ...cat,
@@ -283,7 +261,7 @@ export function WorkTypeTaxonomyProvider({ children }) {
   const setDefaultSubtype = useCallback(async ({ workTypeKey, subtypeId }) => {
     const updated = await apiFetch(
       `${BASE}/work-types/${workTypeKey}/subtypes/${subtypeId}/set-default`,
-      { method: "PATCH" },
+      "PATCH",
     );
     setCategories((prev) =>
       prev.map((cat) => ({

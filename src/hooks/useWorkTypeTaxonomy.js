@@ -24,28 +24,16 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { getAuthHeaders } from '../utilities/send-request';
+import sendRequest from '../utilities/send-request';
 
 const BASE = '/api/work-types';
 
-function authHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    ...getAuthHeaders(),
-  };
-}
-
-async function apiFetch(url, options = {}) {
-  const res = await fetch(url, {
-    credentials: 'include',
-    headers: { ...authHeaders(), ...(options.headers || {}) },
-    ...options,
-  });
-  const json = await res.json();
-  if (!res.ok || !json.success) {
-    throw new Error(json.error || `Request failed: ${res.status}`);
+async function apiFetch(path, method = 'GET', payload = null) {
+  const json = await sendRequest(path, method, payload);
+  if (json && json.success === false) {
+    throw new Error(json.error || 'Request failed');
   }
-  return json.data;
+  return json?.data !== undefined ? json.data : json;
 }
 
 export function useWorkTypeTaxonomy() {
@@ -115,25 +103,22 @@ export function useWorkTypeTaxonomy() {
 
   /** Create a new custom category */
   const createCategory = useCallback(async ({ name, key }) => {
-    const newCat = await apiFetch(`${BASE}/categories`, {
-      method: 'POST',
-      body: JSON.stringify({ name, key }),
-    });
+    const newCat = await apiFetch(`${BASE}/categories`, 'POST', { name, key });
     setCategories((prev) => [...prev, { ...newCat, workTypes: [] }]);
     return newCat;
   }, []);
 
   /** Delete a custom category */
   const deleteCategory = useCallback(async (categoryKey) => {
-    await apiFetch(`${BASE}/categories/${categoryKey}`, { method: 'DELETE' });
+    await apiFetch(`${BASE}/categories/${categoryKey}`, 'DELETE');
     setCategories((prev) => prev.filter((c) => c.key !== categoryKey));
   }, []);
 
   /** Create a custom work type inside any category */
   const createWorkType = useCallback(async ({ categoryKey, name, measurementType }) => {
-    const newWT = await apiFetch(`${BASE}/categories/${categoryKey}/work-types`, {
-      method: 'POST',
-      body: JSON.stringify({ name, measurementType }),
+    const newWT = await apiFetch(`${BASE}/categories/${categoryKey}/work-types`, 'POST', {
+      name,
+      measurementType,
     });
     setCategories((prev) =>
       prev.map((cat) => {
@@ -149,7 +134,7 @@ export function useWorkTypeTaxonomy() {
 
   /** Delete a custom work type */
   const deleteWorkType = useCallback(async (workTypeKey) => {
-    await apiFetch(`${BASE}/work-types/${workTypeKey}`, { method: 'DELETE' });
+    await apiFetch(`${BASE}/work-types/${workTypeKey}`, 'DELETE');
     setCategories((prev) =>
       prev.map((cat) => ({
         ...cat,
@@ -160,16 +145,15 @@ export function useWorkTypeTaxonomy() {
 
   /** Add a custom subtype to any work type */
   const createSubtype = useCallback(async ({ workTypeKey, value, isDefault }) => {
-    const newST = await apiFetch(`${BASE}/work-types/${workTypeKey}/subtypes`, {
-      method: 'POST',
-      body: JSON.stringify({ value, isDefault }),
+    const newST = await apiFetch(`${BASE}/work-types/${workTypeKey}/subtypes`, 'POST', {
+      value,
+      isDefault,
     });
     setCategories((prev) =>
       prev.map((cat) => ({
         ...cat,
         workTypes: (cat.workTypes || []).map((wt) => {
           if (wt.key !== workTypeKey) return wt;
-          // If new subtype is default, clear existing defaults
           const updatedSubtypes = isDefault
             ? (wt.subtypes || []).map((s) => ({ ...s, isDefault: false }))
             : [...(wt.subtypes || [])];
@@ -182,9 +166,7 @@ export function useWorkTypeTaxonomy() {
 
   /** Delete a custom subtype */
   const deleteSubtype = useCallback(async ({ workTypeKey, subtypeId }) => {
-    await apiFetch(`${BASE}/work-types/${workTypeKey}/subtypes/${subtypeId}`, {
-      method: 'DELETE',
-    });
+    await apiFetch(`${BASE}/work-types/${workTypeKey}/subtypes/${subtypeId}`, 'DELETE');
     setCategories((prev) =>
       prev.map((cat) => ({
         ...cat,
@@ -203,7 +185,7 @@ export function useWorkTypeTaxonomy() {
   const setDefaultSubtype = useCallback(async ({ workTypeKey, subtypeId }) => {
     const updated = await apiFetch(
       `${BASE}/work-types/${workTypeKey}/subtypes/${subtypeId}/set-default`,
-      { method: 'PATCH' }
+      'PATCH'
     );
     setCategories((prev) =>
       prev.map((cat) => ({

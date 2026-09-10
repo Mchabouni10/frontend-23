@@ -3,8 +3,8 @@ import { logOut } from '../../utilities/users-service';
 import styles from './UserLogOut.module.css';
 
 export default function UserLogOut({ user, setUser }) {
-  function handleLogOut() {
-    logOut();
+  async function handleLogOut() {
+    await logOut();
     setUser(null);
   }
 
