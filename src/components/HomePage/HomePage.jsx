@@ -1,5 +1,5 @@
 // src/components/HomePage/HomePage.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -26,6 +26,8 @@ import {
   updateProject,
   getProject,
 } from "../../services/projectService";
+import { createCustomer, updateCustomer } from "../../services/customerService";
+import { saveDraftLocally, getDraftLocally, clearDraftLocally } from "../../services/draftStorage";
 import ErrorBoundary from "../ErrorBoundary";
 
 // Validate project before saving
@@ -134,8 +136,13 @@ function HomePageContent() {
   });
 
   const [projectId, setProjectId] = useState(null);
+  const [customerId, setCustomerId] = useState(location.state?.customerId || null);
   const [loading, setLoading] = useState(false);
+  const [draftSaving, setDraftSaving] = useState(false);
+  const [draftSaveError, setDraftSaveError] = useState("");
   const [isCustomerInfoVisible, setIsCustomerInfoVisible] = useState(true);
+  const draftTimerRef = useRef(null);
+  const restoredLocalDraftRef = useRef(false);
 
   const isDetailsMode = location.pathname.startsWith("/home/customer/") && id;
   const isEditMode = location.pathname.startsWith("/home/edit/") && id;
@@ -187,6 +194,27 @@ function HomePageContent() {
 
   const isCustomerDataValid = validateCustomerFields();
 
+  // Keep a local recovery point while the user is working. This runs even
+  // before a server-side customer/project exists, so a refresh cannot erase
+  // half an hour of data.
+  useEffect(() => {
+    if (!isNewMode || isDetailsMode || restoredLocalDraftRef.current) return;
+    restoredLocalDraftRef.current = true;
+    const localDraft = getDraftLocally();
+    if (!localDraft) return;
+    if (localDraft.customer) setCustomer((prev) => ({ ...prev, ...localDraft.customer }));
+    if (Array.isArray(localDraft.categories) && localDraft.categories.length) setCategories(localDraft.categories);
+    if (localDraft.settings) setSettings((prev) => ({ ...prev, ...localDraft.settings }));
+    if (localDraft.projectId) setProjectId(localDraft.projectId);
+    if (localDraft.customerId) setCustomerId(localDraft.customerId);
+  }, [isNewMode, isDetailsMode, setCategories, setSettings]);
+
+  useEffect(() => {
+    if (isDetailsMode) return;
+    if (isNewMode && !restoredLocalDraftRef.current) return;
+    saveDraftLocally({ customer, categories, settings, projectId, customerId });
+  }, [customer, categories, settings, projectId, customerId, isDetailsMode, isNewMode]);
+
   // ── FIX: Load project only after taxonomy is ready (data fetched from DB).
   // Previously this gated on workTypeFunctionsReady which checked whether
   // getMeasurementType/isValidSubtype/getWorkTypeDetails *exist* — they always
@@ -201,6 +229,7 @@ function HomePageContent() {
         try {
           const project = await getProject(id);
           setProjectId(project._id);
+          setCustomerId(project.customerId || null);
 
           const normalizedCustomer = {
             firstName: project.customerInfo?.firstName || "",
@@ -267,7 +296,84 @@ function HomePageContent() {
     setSettings,
   ]);
 
-  // Save or update project
+  const buildProjectData = useCallback((status = "active", customerIdOverride = customerId) => {
+    const sanitizedCategories = sanitizeCategoriesWithEngine(categories);
+    const engine = new CalculatorEngine(sanitizedCategories, settings, workTypeContext);
+    const totals = engine.calculateTotals();
+    const breakdowns = engine.calculateBreakdowns();
+    const paymentDetails = engine.calculatePaymentDetails();
+    return {
+      customerId: customerIdOverride || undefined,
+      workflowStatus: status,
+      customerInfo: {
+        ...customer,
+        startDate: customer.startDate instanceof Date && !isNaN(customer.startDate.getTime())
+          ? customer.startDate.toISOString().split("T")[0] : customer.startDate,
+        finishDate: customer.finishDate instanceof Date && !isNaN(customer.finishDate.getTime())
+          ? customer.finishDate.toISOString().split("T")[0] : customer.finishDate,
+      },
+      categories: sanitizedCategories,
+      settings: {
+        ...settings,
+        payments: (settings.payments || []).map((payment) => ({
+          ...payment,
+          date: payment.date instanceof Date ? payment.date.toISOString().split("T")[0] : payment.date,
+          amount: Number(payment.amount), method: payment.method || "Cash",
+          note: payment.note || "", isPaid: Boolean(payment.isPaid),
+        })),
+        deposit: Number(settings.deposit) || 0,
+        depositDate: settings.depositDate ? new Date(settings.depositDate).toISOString().split("T")[0] : null,
+      },
+      totals, breakdowns, paymentDetails,
+    };
+  }, [categories, settings, workTypeContext, customer, customerId]);
+
+  // Create the customer and an empty server-side project draft before the
+  // calculator work begins. From this point every change can be recovered.
+  const startProjectDraft = async () => {
+    if (!isCustomerDataValid) {
+      alert("Please complete the required customer information first.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const savedCustomer = customerId
+        ? await updateCustomer(customerId, customer)
+        : await createCustomer(customer);
+      setCustomerId(savedCustomer._id);
+      const draft = await saveProject(buildProjectData("draft", savedCustomer._id));
+      setProjectId(draft._id);
+      clearDraftLocally();
+      navigate(`/home/edit/${draft._id}`);
+    } catch (err) {
+      setDraftSaveError(err.message || "Could not save the customer draft.");
+      alert("Could not start the project draft: " + (err.message || "Unknown error"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounced incremental server save after the first draft exists.
+  useEffect(() => {
+    if (!projectId || isDetailsMode || !isEditMode || loading) return undefined;
+    clearTimeout(draftTimerRef.current);
+    draftTimerRef.current = setTimeout(async () => {
+      setDraftSaving(true);
+      try {
+        if (customerId) await updateCustomer(customerId, customer);
+        await updateProject(projectId, buildProjectData("draft"));
+        setDraftSaveError("");
+      } catch (err) {
+        setDraftSaveError(err.message || "Draft saved locally; server sync is pending.");
+        saveDraftLocally({ customer, categories, settings, projectId, customerId });
+      } finally {
+        setDraftSaving(false);
+      }
+    }, 900);
+    return () => clearTimeout(draftTimerRef.current);
+  }, [projectId, customerId, customer, categories, settings, isDetailsMode, isEditMode, loading, buildProjectData]);
+
+  // Save or complete project
   const saveOrUpdateProject = async () => {
     console.log("Save button clicked, taxonomyReady:", taxonomyReady);
 
@@ -282,68 +388,19 @@ function HomePageContent() {
       return;
     }
 
-    const sanitizedCategories = sanitizeCategoriesWithEngine(categories);
-
     try {
-      const engine = new CalculatorEngine(
-        sanitizedCategories,
-        settings,
-        workTypeContext,
-      );
-
-      const totals = engine.calculateTotals();
-      const breakdowns = engine.calculateBreakdowns();
-      const paymentDetails = engine.calculatePaymentDetails();
-
-      const projectData = {
-        customerInfo: {
-          ...customer,
-          startDate:
-            customer.startDate instanceof Date &&
-            !isNaN(customer.startDate.getTime())
-              ? customer.startDate.toISOString().split("T")[0]
-              : customer.startDate,
-          finishDate:
-            customer.finishDate instanceof Date &&
-            !isNaN(customer.finishDate.getTime())
-              ? customer.finishDate.toISOString().split("T")[0]
-              : customer.finishDate,
-        },
-        categories: sanitizedCategories,
-        settings: {
-          ...settings,
-          payments: (settings.payments || []).map((payment) => ({
-            ...payment,
-            date:
-              payment.date instanceof Date
-                ? payment.date.toISOString().split("T")[0]
-                : payment.date,
-            amount: Number(payment.amount),
-            method: payment.method || "Cash",
-            note: payment.note || "",
-            isPaid: Boolean(payment.isPaid),
-          })),
-          deposit: Number(settings.deposit) || 0,
-          depositDate: settings.depositDate
-            ? new Date(settings.depositDate).toISOString().split("T")[0]
-            : null,
-        },
-        totals,
-        breakdowns,
-        paymentDetails,
-      };
+      const projectData = buildProjectData("active");
 
       setLoading(true);
 
-      if (isEditMode && projectId) {
+      if ((isEditMode || projectId) && projectId) {
         await updateProject(projectId, projectData);
+        if (customerId) await updateCustomer(customerId, customer);
+        clearDraftLocally();
         alert("Project updated successfully!");
         navigate("/home/customers");
       } else if (isNewMode) {
-        const newProject = await saveProject(projectData);
-        setProjectId(newProject._id);
-        alert("Project saved successfully!");
-        navigate("/home/customers");
+        await startProjectDraft();
       }
     } catch (err) {
       console.error("Error saving project:", err);
@@ -381,6 +438,8 @@ function HomePageContent() {
       setCategories([]);
       resetSettings();
       setProjectId(null);
+      setCustomerId(null);
+      clearDraftLocally();
       alert("All data reset.");
     }
   };
@@ -446,6 +505,11 @@ function HomePageContent() {
                 ? "Edit Project"
                 : "New Project"}
             </h1>
+            {!isDetailsMode && (draftSaving || draftSaveError) && (
+              <span style={{ fontSize: "0.8rem", color: draftSaveError ? "#b91c1c" : "#64748b" }}>
+                {draftSaveError ? "Draft saved locally; sync pending" : "Draft saved"}
+              </span>
+            )}
             {(isEditMode || isDetailsMode) && customer.status && (
               <span
                 className={styles.statusBadge}
@@ -556,7 +620,7 @@ function HomePageContent() {
           ) : (
             <>
               <button
-                onClick={saveOrUpdateProject}
+                onClick={isNewMode && !projectId ? startProjectDraft : saveOrUpdateProject}
                 className={styles.saveButton}
                 disabled={loading || !taxonomyReady || !isCustomerDataValid}
                 title={
@@ -570,7 +634,9 @@ function HomePageContent() {
                 <FontAwesomeIcon icon={faSave} className={styles.buttonIcon} />
                 {loading
                   ? "Saving..."
-                  : isEditMode && projectId
+                  : isNewMode && !projectId
+                  ? "Save Customer & Start Draft"
+                  : projectId
                   ? "Update Project"
                   : "Save Project"}
               </button>

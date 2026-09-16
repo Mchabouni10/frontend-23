@@ -115,7 +115,12 @@ export default async function sendRequest(
   let errorText;
   try {
     const errorData = await res.json();
-    errorText = errorData.error || errorData.message || JSON.stringify(errorData);
+    const details = Array.isArray(errorData.details)
+      ? `: ${errorData.details.join(' ')}`
+      : errorData.details
+        ? `: ${errorData.details}`
+        : '';
+    errorText = `${errorData.error || errorData.message || JSON.stringify(errorData)}${details}`;
   } catch {
     try {
       errorText = await res.text();
