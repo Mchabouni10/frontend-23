@@ -17,7 +17,8 @@ export async function saveLocalProject(projectData) {
     const projectToSave = {
       ...projectData,
       _id: id,
-      _syncStatus: 'pending' // Flag for later syncing
+      _syncStatus: 'pending', // Flag for later syncing
+      _localUpdatedAt: new Date().toISOString(),
     };
     
     await projectsStore.setItem(id, projectToSave);
@@ -82,12 +83,26 @@ export async function syncOfflineProjects() {
   for (const project of pendingProjects) {
     try {
       // Remove local-only fields before sending to server
-      const { _id, _syncStatus, ...dataToSync } = project;
+      const { _id, _syncStatus, _localUpdatedAt, _syncConflict, ...dataToSync } = project;
       
       // If it has an offline ID, it's a completely new project
       if (_id.startsWith('offline_')) {
         await sendRequest('/api/projects/', 'POST', dataToSync);
       } else {
+        // Never silently overwrite a newer server version. Keep the local
+        // copy for explicit user resolution instead.
+        const remote = await sendRequest(`/api/projects/${_id}`, 'GET');
+        const localTime = Date.parse(_localUpdatedAt || project.updatedAt || 0);
+        const remoteTime = Date.parse(remote?.updatedAt || 0);
+        if (remoteTime && localTime && remoteTime > localTime) {
+          await projectsStore.setItem(_id, {
+            ...project,
+            _syncStatus: 'conflict',
+            _syncConflict: { detectedAt: new Date().toISOString(), remoteUpdatedAt: remote.updatedAt },
+          });
+          console.warn(`Sync conflict detected for project ${_id}; local copy was preserved.`);
+          continue;
+        }
         await sendRequest(`/api/projects/${_id}`, 'PUT', dataToSync);
       }
       

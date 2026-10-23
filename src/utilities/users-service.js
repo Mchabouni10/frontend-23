@@ -204,7 +204,11 @@ export async function bootstrapSession() {
     const res = await usersAPI.getMe();
     return applyAuthResponse(res, { reason: 'bootstrap', notify: false });
   } catch (err) {
-    if (err.status === 401) return null;
+    if (err.status === 401) {
+      clearLocalSession();
+      notifyAuth(null, { reason: 'expired' });
+      return null;
+    }
     scheduleRefresh();
     return profile;
   }

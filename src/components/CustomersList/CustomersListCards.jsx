@@ -83,7 +83,7 @@ export default function CustomersListCards({
           }
           break;
         case "new":
-          handleNewProject?.(customer.customerInfo ?? {});
+          handleNewProject?.(customer);
           break;
         default:
           break;
@@ -384,7 +384,7 @@ export default function CustomersListCards({
           <p>
             No customers found.{" "}
             <button
-              onClick={() => navigate?.("/home/customer")}
+              onClick={() => navigate?.("/home/customer", { state: { freshProject: true } })}
               className={styles.inlineButton}
               aria-label="Add a new customer"
               type="button"

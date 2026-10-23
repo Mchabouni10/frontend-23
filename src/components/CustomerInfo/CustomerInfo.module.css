@@ -89,6 +89,38 @@
   gap: 8px;
 }
 
+/* Section warning badge */
+.sectionWarningBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #ef4444;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  margin-left: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.2s ease-in;
+}
+
+.sectionWithWarning {
+  border-color: rgba(239, 68, 68, 0.5) !important;
+}
+
+/* Field warning / helper message */
+.fieldWarning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ef4444;
+  font-size: 0.76rem;
+  font-weight: 500;
+  margin-top: 5px;
+  animation: fadeIn 0.2s ease-in;
+}
+
 .sectionIcon {
   font-size: 0.95rem;
   transition: transform 0.3s ease;
@@ -965,4 +997,369 @@ textarea.input {
   margin-top: 6px !important;
   width: 100% !important;
   max-width: 340px !important;
+}
+/* ══════════════════════════════════════════════════════════════════════
+   Header row: title, linked-contact badge, Import / Save-to-Contacts
+   ══════════════════════════════════════════════════════════════════════ */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.headerRow .title {
+  margin-bottom: 0;
+  text-align: left;
+}
+.headerRow .title::after {
+  left: 0;
+  transform: none;
+}
+
+.headerTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.linkedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 10px;
+  border-radius: var(--radius-lg, 999px);
+  background: var(--success-bg, rgba(46, 160, 91, 0.12));
+  color: var(--success, #2ea05b);
+  font-size: 0.75rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.unlinkButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.65rem;
+  opacity: 0.75;
+  transition: all 0.2s ease;
+}
+.unlinkButton:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.importButton,
+.saveContactButton {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.importButton {
+  background: var(--surface-raised, var(--surface));
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+}
+.importButton:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.saveContactButton {
+  background: var(--primary);
+  color: #fff;
+}
+.saveContactButton:hover:not(:disabled) {
+  background: var(--primary-dark);
+}
+.saveContactButton:disabled {
+  background: var(--muted, #9aa0a6);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.contactSaveError {
+  background: var(--error-bg, rgba(229, 62, 62, 0.1));
+  color: var(--error);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 0.8rem;
+  font-weight: var(--font-weight-medium);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Import Contact modal
+   ══════════════════════════════════════════════════════════════════════ */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.modalContent {
+  background: var(--surface);
+  padding: 20px;
+  border-radius: var(--radius-md);
+  width: 100%;
+  max-width: 520px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 32px var(--shadow-md, var(--shadow));
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.modalContent h3 {
+  margin: 0 0 4px;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.modalSubtitle {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 0.8rem;
+  line-height: 1.4;
+  max-width: 400px;
+}
+
+.modalCloseButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.modalCloseButton:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--text);
+}
+
+.searchBar {
+  position: relative;
+  margin-bottom: 12px;
+}
+.searchBarIcon {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  color: var(--text-light);
+  font-size: 0.85rem;
+  pointer-events: none;
+}
+.searchBar input {
+  width: 100%;
+  padding: 10px 10px 10px 32px;
+  border: 1px solid var(--border-strong, var(--border));
+  border-radius: var(--radius-sm);
+  background-color: var(--surface-raised, var(--surface));
+  color: var(--text);
+  box-sizing: border-box;
+  font-family: var(--font-family);
+}
+.searchBar input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--shadow);
+}
+
+.customersList {
+  overflow-y: auto;
+  flex: 1;
+  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 2px;
+}
+
+.customerItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised, var(--surface));
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.customerItem:hover {
+  box-shadow: 0 3px 10px var(--shadow);
+  transform: translateX(2px);
+}
+
+.customerItemActive {
+  border-left-color: var(--secondary, var(--primary-dark));
+  box-shadow: 0 0 0 2px var(--glow-primary, var(--shadow));
+}
+
+.customerAvatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: #fff;
+  font-weight: var(--font-weight-bold);
+  font-size: 0.8rem;
+}
+
+.customerItemBody {
+  min-width: 0;
+  flex: 1;
+}
+
+.customerName {
+  font-weight: bold;
+  color: var(--text);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.currentTag {
+  font-size: 0.65rem;
+  font-weight: var(--font-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--success, #2ea05b);
+  background: var(--success-bg, rgba(46, 160, 91, 0.12));
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.customerDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.78rem;
+  color: var(--text-light);
+}
+
+.useContactButton {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--primary);
+  font-weight: var(--font-weight-bold);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.useContactButton:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.modalLoading,
+.modalEmpty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-light);
+}
+.modalEmptyIcon {
+  font-size: 1.6rem;
+  color: var(--text-light);
+  opacity: 0.6;
+  margin-bottom: 8px;
+}
+.modalEmpty p {
+  margin: 4px 0;
+}
+.modalEmptyHint {
+  font-size: 0.78rem;
+  font-style: italic;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+}
+.modalActions button {
+  padding: 8px 16px;
+  border: 1px solid var(--border-strong, var(--border));
+  background: transparent;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+.modalActions button:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 480px) {
+  .headerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .headerActions {
+    justify-content: stretch;
+  }
+  .importButton,
+  .saveContactButton {
+    flex: 1;
+    justify-content: center;
+  }
 }

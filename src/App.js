@@ -21,6 +21,7 @@ import FinanceDashboard from './components/FinanceDashboard/FinanceDashboard';
 import FloorPlanDesigner from './components/SketchPad/FloorPlanDesigner';
 import CompanyExpenses from './components/CompanyExpenses/CompanyExpenses';
 import ProjectCalendar from './components/Calendar/ProjectCalendar';
+import CustomerDirectory from './components/CustomerDirectory/CustomerDirectory';
 
 export default function App() {
   const [user, setUser] = useState(getUser());
@@ -158,6 +159,7 @@ export default function App() {
                             <CustomersList />
                           </ErrorBoundaryWrapper>
                         } />
+                        <Route path="/home/customer-directory" element={<CustomerDirectory />} />
                         <Route path="/home/customer-projects" element={
                           <ErrorBoundaryWrapper boundaryName="CustomerProjects">
                             <CustomerProjects />

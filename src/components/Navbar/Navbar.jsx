@@ -35,9 +35,15 @@ export default function Navbar({ user, setUser, toggleDarkMode, isDarkMode }) {
           </Link>
         </li>
         <li>
-          <Link to="/home/new-customer-project" className={styles.navLink}>
+          <Link to="/home/new-customer-project" state={{ freshProject: true }} className={styles.navLink}>
             <FontAwesomeIcon icon={faPlusCircle} className={styles.navIcon} />
             <span>New Project</span> {/* Concise */}
+          </Link>
+        </li>
+        <li>
+          <Link to="/home/customer-directory" className={styles.navLink}>
+            <FontAwesomeIcon icon={faUsers} className={styles.navIcon} />
+            <span>Contacts</span>
           </Link>
         </li>
         <li>

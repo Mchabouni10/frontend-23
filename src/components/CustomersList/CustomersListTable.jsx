@@ -917,7 +917,7 @@ export default function CustomersListTable({
                         <FontAwesomeIcon icon={faEdit} aria-hidden="true" />
                       </button>
                       <button
-                        onClick={() => handleNewProject(customer.customerInfo)}
+                        onClick={() => handleNewProject(customer)}
                         className={`${styles.actionButton} ${styles.newProjectButton}`}
                         title="Add New Project"
                         aria-label={`Add new project for ${customer.customerInfo.firstName} ${customer.customerInfo.lastName}`}
@@ -955,7 +955,7 @@ export default function CustomersListTable({
         <p className={styles.noResults}>
           No customers found.{" "}
           <button
-            onClick={() => navigate("/home/customer")}
+            onClick={() => navigate("/home/customer", { state: { freshProject: true } })}
             className={styles.inlineButton}
             aria-label="Add a new customer"
           >

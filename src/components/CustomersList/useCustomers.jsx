@@ -12,6 +12,7 @@ import {
   isProjectFullyPaid,
 } from "../../constants/additionalRevenueCalculator";
 import { useWorkType } from "../../context/WorkTypeContext";
+import { buildProjectCustomerFields } from "../../utilities/contactPayload";
 
 // Constants
 const DUE_SOON_DAYS = 7;
@@ -156,6 +157,9 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
    */
   const determineStatus = useCallback(
     (projectsList) => {
+      if (projectsList.some((project) => project.workflowStatus === "draft")) {
+        return "Draft";
+      }
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -291,12 +295,19 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
       const customerMap = new Map();
 
       projectsList.forEach((project) => {
-        const key = `${project.customerInfo?.firstName || ""}|${
+        // A linked Contact is the authoritative identity. Name/phone is only
+        // a legacy fallback for projects created before customerId existed.
+        // Grouping linked projects by their snapshots can otherwise merge two
+        // different people or split one person after a project-local edit.
+        const legacyKey = `${project.customerInfo?.firstName || ""}|${
           project.customerInfo?.lastName || ""
         }|${project.customerInfo?.phone || ""}`;
+        const customerId = project.customerId ? String(project.customerId) : null;
+        const key = customerId ? `contact:${customerId}` : `legacy:${legacyKey}`;
 
         if (!customerMap.has(key)) {
           customerMap.set(key, {
+            customerId,
             customerInfo: { ...project.customerInfo },
             projects: [],
             totalGrandTotal: 0,
@@ -798,8 +809,15 @@ export const useCustomers = ({ viewMode = "table" } = {}) => {
   );
 
   const handleNewProject = useCallback(
-    (customerInfo) => {
-      navigate("/home/customer", { state: { customerInfo } });
+    (customer) => {
+      const customerId = customer.customerId || customer.projects?.find((project) => project.customerId)?.customerId || null;
+      navigate("/home/customer", {
+        state: {
+          customerInfo: buildProjectCustomerFields(customer.customerInfo),
+          customerId,
+          freshProject: true,
+        },
+      });
     },
     [navigate],
   );

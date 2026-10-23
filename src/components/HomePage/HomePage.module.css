@@ -70,6 +70,14 @@
   border-radius: var(--radius-sm);
 }
 
+
+
+
+
+@media (max-width: 700px) {
+
+}
+
 /* Content Layout */
 .content {
   display: flex;
@@ -267,6 +275,100 @@
 .costBreakdownSection:hover {
   box-shadow: 0 6px 18px var(--shadow-md);
   transform: translateY(-2px);
+}
+
+/* ── Project Validation & Warning Box ── */
+.validationWarningBox {
+  margin-top: var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  border-left: 5px solid #f59e0b;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.warningBoxHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.warningBoxTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #d97706;
+}
+
+:global(.dark) .warningBoxTitle {
+  color: #fbbf24;
+}
+
+.warningBoxIcon {
+  font-size: 1.15rem;
+}
+
+.warningBadgePill {
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-left: 6px;
+}
+
+.warningActionBtn {
+  background: #d97706;
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.warningActionBtn:hover {
+  background: #b45309;
+  transform: translateY(-1px);
+}
+
+.warningList {
+  margin: 0;
+  padding-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.warningItem {
+  color: var(--text);
+}
+
+.warningItemStrong {
+  font-weight: 600;
+  color: #ef4444;
+}
+
+:global(.dark) .warningItemStrong {
+  color: #f87171;
 }
 
 /* Button Group */

@@ -31,6 +31,11 @@ function stripLegacyFieldsFromProject(project) {
 function validateProjectData(projectData) {
   const errors = [];
 
+  // Drafts are allowed to be incomplete — the calculator is still being filled in.
+  if (projectData?.workflowStatus === 'draft') {
+    return errors;
+  }
+
   if (!projectData.categories || !Array.isArray(projectData.categories)) {
     errors.push('Categories must be an array.');
     return errors;
@@ -120,7 +125,10 @@ export function saveProject(projectData) {
   const errors = validateProjectData(projectData);
   if (errors.length > 0) {
     console.error('❌ Validation errors in saveProject:', errors);
-    return Promise.reject({ error: 'Validation failed', details: errors });
+    const err = new Error(`Validation failed: ${errors.join(' ')}`);
+    err.error = 'Validation failed';
+    err.details = errors;
+    return Promise.reject(err);
   }
 
   return sendRequest(BASE_URL, 'POST', projectData).catch((err) => {
@@ -153,7 +161,10 @@ export function updateProject(id, projectData) {
   const errors = validateProjectData(projectData);
   if (errors.length > 0) {
     console.error('❌ Validation errors in updateProject:', errors);
-    return Promise.reject({ error: 'Validation failed', details: errors });
+    const err = new Error(`Validation failed: ${errors.join(' ')}`);
+    err.error = 'Validation failed';
+    err.details = errors;
+    return Promise.reject(err);
   }
 
   return sendRequest(`${BASE_URL}${id}`, 'PUT', projectData).catch((err) => {
@@ -168,6 +179,14 @@ export function updateProject(id, projectData) {
 
 let projectsRequest = null;
 
+export function mergeProjects(serverProjects, localProjects) {
+  const server = Array.isArray(serverProjects) ? serverProjects : [];
+  const local = Array.isArray(localProjects) ? localProjects : [];
+  const localById = new Map(local.filter((p) => p?._id).map((p) => [String(p._id), p]));
+  const merged = server.filter((p) => !localById.has(String(p?._id)));
+  return [...merged, ...local.filter((p) => p?._syncStatus === 'pending' || p?._syncStatus === 'conflict')];
+}
+
 export async function getProjects() {
   // Multiple dashboard widgets mount together. Share one request instead of
   // making each widget hit the API and IndexedDB independently.
@@ -177,11 +196,13 @@ export async function getProjects() {
   try {
     const onlineProjects = await sendRequest(BASE_URL, 'GET');
     const localProjects = await getLocalProjects();
-    const pendingProjects = localProjects.filter(p => p._syncStatus === 'pending');
+    const pendingProjects = localProjects.filter(
+      (p) => p._syncStatus === 'pending' || p._syncStatus === 'conflict',
+    );
     
     // Combine online and offline projects
     // In a real scenario we'd merge duplicates, but for simplicity we append them
-    return [...onlineProjects, ...pendingProjects];
+    return mergeProjects(onlineProjects, pendingProjects);
   } catch (err) {
     if (err.status === 401) throw err;
     console.warn('Failed to fetch projects from server. Loading offline projects.', err);
@@ -224,4 +245,16 @@ export function getProject(id) {
 
 export function deleteProject(id) {
   return sendRequest(`${BASE_URL}${id}`, 'DELETE');
+}
+
+export function duplicateProject(id) {
+  return sendRequest(`${BASE_URL}${id}/duplicate`, 'POST');
+}
+
+export function getCalendarProjects() {
+  return sendRequest(`${BASE_URL}calendar`, 'GET');
+}
+
+export function getProjectSummary() {
+  return sendRequest(`${BASE_URL}summary`, 'GET');
 }

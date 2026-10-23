@@ -37,6 +37,7 @@ const STATUS_OPTIONS = [
   { value: "Due Soon", label: "Due Soon" },
   { value: "Overdue", label: "Overdue" },
   { value: "Completed", label: "Completed" },
+  { value: "Draft", label: "Draft" },
   { value: "Unknown", label: "Unknown" },
 ];
 
@@ -75,7 +76,7 @@ export default function CustomersList() {
           <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
             <h1 className={styles.title}>Customers</h1>
             <button
-              onClick={() => navigate("/home/new-customer-project")}
+              onClick={() => navigate("/home/new-customer-project", { state: { freshProject: true } })}
               className={styles.toggleButton}
               style={{
                 backgroundColor: "#2ecc71",

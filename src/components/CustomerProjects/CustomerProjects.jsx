@@ -28,8 +28,9 @@ import {
   faLayerGroup,
   faTable,
   faTh,
+  faClone,
 } from "@fortawesome/free-solid-svg-icons";
-import { deleteProject } from "../../services/projectService";
+import { deleteProject, duplicateProject } from "../../services/projectService";
 import { CalculatorEngine } from "../Calculator/engine/CalculatorEngine";
 import { useWorkType } from "../../context/WorkTypeContext";
 import { formatPhoneNumber } from "../Calculator/utils/customerhelper";
@@ -103,6 +104,15 @@ export default function CustomerProjects() {
       setProjects((prev) => prev.filter((p) => p._id !== id));
     } catch {
       alert("Failed to delete project.");
+    }
+  };
+
+  const handleDuplicate = async (id) => {
+    try {
+      const copy = await duplicateProject(id);
+      navigate(`/home/edit/${copy._id}`);
+    } catch (err) {
+      alert(err.message || "Could not duplicate project.");
     }
   };
 
@@ -575,6 +585,9 @@ Status: ${getStatus(project)}`.trim();
                             title="Export"
                           >
                             <FontAwesomeIcon icon={faDownload} />
+                          </button>
+                          <button onClick={() => handleDuplicate(project._id)} className={styles.actionBtn} title="Duplicate as Draft">
+                            <FontAwesomeIcon icon={faClone} />
                           </button>
                           <button
                             onClick={() => handleDelete(project._id)}
