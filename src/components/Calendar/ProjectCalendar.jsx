@@ -323,7 +323,6 @@ function buildEvents(projects) {
 
     // ── Cost breakdown (backend-computed totals, when present) ─────────────
     const totals = project.totals || {};
-    const paymentDetails = project.paymentDetails || {};
     const costBreakdown = {
       materialCost: parseFloat(totals.materialCost) || 0,
       laborCostBeforeDiscount: parseFloat(totals.laborCostBeforeDiscount) || 0,
