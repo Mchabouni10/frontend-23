@@ -8,6 +8,13 @@ const projectsStore = localforage.createInstance({
   storeName: 'projects'
 });
 
+let syncInFlight = null;
+const announceSync = (detail) => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('project-sync-status', { detail }));
+  }
+};
+
 /**
  * Saves a project locally and marks it as pending sync
  */
@@ -64,6 +71,7 @@ export async function removeLocalProject(id) {
 export async function syncOfflineProjects() {
   if (!navigator.onLine) {
     console.log('Cannot sync: device is still offline.');
+    announceSync({ status: 'offline', message: 'Waiting for an internet connection before syncing projects.' });
     return;
   }
 
@@ -71,12 +79,16 @@ export async function syncOfflineProjects() {
     return;
   }
 
+  if (syncInFlight) return syncInFlight;
+  syncInFlight = (async () => {
   console.log('Starting offline sync process...');
+  announceSync({ status: 'syncing', message: 'Connection restored. Saving pending projects…' });
   const localProjects = await getLocalProjects();
   const pendingProjects = localProjects.filter(p => p._syncStatus === 'pending');
 
   if (pendingProjects.length === 0) {
     console.log('No pending projects to sync.');
+    announceSync({ status: 'idle', message: '' });
     return;
   }
 
@@ -109,8 +121,12 @@ export async function syncOfflineProjects() {
       // Remove from local storage once synced
       await removeLocalProject(_id);
       console.log(`Successfully synced project ${_id}.`);
+      announceSync({ status: 'synced', message: 'Pending project saved successfully.' });
     } catch (error) {
       console.error(`Failed to sync project ${project._id}:`, error);
+      announceSync({ status: 'waiting', message: 'Project is safe on this device. Waiting for the database connection to return.' });
     }
   }
+  })();
+  try { return await syncInFlight; } finally { syncInFlight = null; }
 }

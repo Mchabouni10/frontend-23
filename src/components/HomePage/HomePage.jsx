@@ -28,6 +28,7 @@ import {
   saveProject,
   updateProject,
   getProject,
+  createClientRequestId,
 } from "../../services/projectService";
 import { findOrCreateCustomer } from "../../services/customerService";
 import {
@@ -61,7 +62,9 @@ function parseStoredDate(value) {
 }
 
 function formatSaveError(err) {
-  const details = Array.isArray(err?.details) ? ` ${err.details.join(" ")}` : "";
+  const details = Array.isArray(err?.details)
+    ? ` ${err.details.join(" ")}`
+    : "";
   return (err?.message || err?.error || "Unknown error") + details;
 }
 
@@ -162,10 +165,21 @@ function HomePageContent() {
   const [draftSaveError, setDraftSaveError] = useState("");
   const [draftFlushToken, setDraftFlushToken] = useState(0);
   const [isCustomerInfoVisible, setIsCustomerInfoVisible] = useState(true);
+
+  // When the connection comes back, retry the autosave right away.
+  useEffect(() => {
+    const onOnline = () => setDraftFlushToken((value) => value + 1);
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
   const draftTimerRef = useRef(null);
   const draftSaveInFlightRef = useRef(false);
   const draftSaveQueuedRef = useRef(false);
   const restoredLocalDraftRef = useRef(false);
+  // ONE key per "create this project" attempt. If the first POST reaches the
+  // database but the browser times out, pressing Save again re-sends the same
+  // key and the server returns the project it already created (no duplicate).
+  const createRequestIdRef = useRef(null);
   // Last payload the server is known to have (used to skip no-op autosaves).
   const lastAutosaveRef = useRef(null);
 
@@ -259,7 +273,8 @@ function HomePageContent() {
 
     requiredFields.forEach((field) => {
       if (field === "startDate") {
-        if (!toDateOnly(customer[field])) customerMissing.push(FIELD_LABELS[field]);
+        if (!toDateOnly(customer[field]))
+          customerMissing.push(FIELD_LABELS[field]);
       } else if (!String(customer[field] || "").trim()) {
         customerMissing.push(FIELD_LABELS[field]);
       }
@@ -292,13 +307,26 @@ function HomePageContent() {
       } else {
         categories.forEach((cat) => {
           if (!cat.workItems || cat.workItems.length === 0) {
-            categoryIssues.push(`Category "${cat.name || "Unnamed"}" has no work items`);
+            categoryIssues.push(
+              `Category "${cat.name || "Unnamed"}" has no work items`,
+            );
           } else {
             cat.workItems.forEach((item, idx) => {
               if (!item.type || !item.type.trim()) {
-                categoryIssues.push(`Item #${idx + 1} in "${cat.name || "Category"}" is missing a work type`);
-              } else if (item.type === "custom-work-type" && !item.customWorkTypeName?.trim()) {
-                categoryIssues.push(`Custom item in "${cat.name || "Category"}" is missing a custom name`);
+                categoryIssues.push(
+                  `Item #${idx + 1} in "${
+                    cat.name || "Category"
+                  }" is missing a work type`,
+                );
+              } else if (
+                item.type === "custom-work-type" &&
+                !item.customWorkTypeName?.trim()
+              ) {
+                categoryIssues.push(
+                  `Custom item in "${
+                    cat.name || "Category"
+                  }" is missing a custom name`,
+                );
               }
             });
           }
@@ -307,7 +335,9 @@ function HomePageContent() {
     }
 
     const hasCustomerIssues =
-      customerMissing.length > 0 || customerInvalid.length > 0 || dateIssues.length > 0;
+      customerMissing.length > 0 ||
+      customerInvalid.length > 0 ||
+      dateIssues.length > 0;
     const totalIssuesCount =
       customerMissing.length +
       customerInvalid.length +
@@ -491,7 +521,9 @@ function HomePageContent() {
           ...address,
           phone: normalizeUSPhone(customer.phone),
           zipCode: String(customer.zipCode || "").trim(),
-          startDate: toDateOnly(customer.startDate) || new Date().toISOString().split("T")[0],
+          startDate:
+            toDateOnly(customer.startDate) ||
+            new Date().toISOString().split("T")[0],
           projectName:
             customer.projectName ||
             (status === "draft" ? "Untitled Draft" : ""),
@@ -580,15 +612,14 @@ function HomePageContent() {
     try {
       const savedCustomer = await ensureContactForNewProject(customerId);
       applyCustomerLink(savedCustomer._id);
-      const draft = await saveProject(
-        buildProjectData("draft", savedCustomer._id),
-      );
-      if (String(draft._id).startsWith("offline_")) {
-        setDraftSaveError(
-          "Draft saved on this device. Reconnect to create the server draft.",
-        );
-        return;
+      if (!createRequestIdRef.current) {
+        createRequestIdRef.current = createClientRequestId();
       }
+      const draft = await saveProject({
+        ...buildProjectData("draft", savedCustomer._id),
+        clientRequestId: createRequestIdRef.current,
+      });
+      createRequestIdRef.current = null; // success: next project gets a new key
       setProjectId(draft._id);
       clearDraftLocally();
       navigate(`/home/edit/${draft._id}`);
@@ -641,8 +672,10 @@ function HomePageContent() {
         setDraftSaveError("");
       } catch (err) {
         setDraftSaveError(
-          err.message || "Draft saved locally; server sync is pending.",
+          err.message || "Could not save to the server. Please try again.",
         );
+        // Form-recovery copy only (survives a refresh). It is NOT queued for
+        // sync: the server is the only source of truth.
         saveDraftLocally({
           customer,
           categories,
@@ -716,6 +749,13 @@ function HomePageContent() {
     try {
       setLoading(true);
 
+      // Stop any pending autosave and wait for one already in flight, so an
+      // older autosave can never land AFTER (and overwrite) this final save.
+      clearTimeout(draftTimerRef.current);
+      for (let i = 0; i < 100 && draftSaveInFlightRef.current; i += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
       if ((isEditMode || projectId) && projectId) {
         const projectData = buildProjectData("active", customerId);
         await updateProject(projectId, projectData);
@@ -759,6 +799,7 @@ function HomePageContent() {
       setCategories([]);
       resetSettings();
       setProjectId(null);
+      createRequestIdRef.current = null;
       applyCustomerLink(null);
       clearDraftLocally();
       alert("All data reset.");
@@ -833,9 +874,7 @@ function HomePageContent() {
                   color: draftSaveError ? "#b91c1c" : "#64748b",
                 }}
               >
-                {draftSaveError
-                  ? "Draft saved locally; sync pending"
-                  : "Draft saved"}
+                {draftSaveError ? `Not saved: ${draftSaveError}` : "Saving…"}
               </span>
             )}
             {(isEditMode || isDetailsMode) && customer.status && (
@@ -1027,9 +1066,9 @@ function HomePageContent() {
                   !taxonomyReady
                     ? "Waiting for work types to load..."
                     : validationIssues.totalIssuesCount > 0
-                    ? `Cannot ${
-                        projectId ? "update" : "save"
-                      } project: ${validationIssues.totalIssuesCount} issue(s) need attention`
+                    ? `Cannot ${projectId ? "update" : "save"} project: ${
+                        validationIssues.totalIssuesCount
+                      } issue(s) need attention`
                     : projectId
                     ? "Update and save project changes"
                     : "Save customer and start project draft"

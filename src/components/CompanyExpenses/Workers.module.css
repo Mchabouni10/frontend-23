@@ -1,0 +1,442 @@
+/* ===================================================================
+   Workers.module.css
+   Built only from the global tokens in index.css (light + .dark), and
+   mirrors CompanyExpenses.module.css / ProjectProfit.module.css so all
+   three sections share one look: same card, 36px inputs, uppercase
+   labels, table and buttons.
+   =================================================================== */
+
+/* ─── Section card ───────────────────────────────── */
+.section {
+  background: var(--surface);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 2px 10px var(--shadow);
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+}
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ─── Text helpers ───────────────────────────────── */
+.muted    { color: var(--text-light); }
+.positive { color: var(--success); }
+.negative { color: var(--error); }
+.warning  { color: var(--warning); }
+.nowrap   { white-space: nowrap; }
+.num      { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.empty {
+  padding: var(--spacing-lg) !important;
+  text-align: center;
+  color: var(--text-light);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}
+.error {
+  margin: 0 0 var(--spacing-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--error-bg);
+  color: var(--error);
+  border-left: 4px solid var(--error);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+.note {
+  margin: var(--spacing-md) 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--text-light);
+  line-height: 1.5;
+}
+
+/* ─── Buttons ────────────────────────────────────── */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  height: 36px;
+  padding: 0 var(--spacing-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: #fff;
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.button:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+.button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.buttonGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 var(--spacing-md);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.buttonGhost:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.buttonGhost:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.iconButton:hover {
+  color: var(--primary);
+  border-color: var(--border-strong);
+  background: var(--muted-bg);
+}
+.dangerButton:hover {
+  color: var(--error);
+  border-color: var(--error-border);
+  background: var(--error-bg);
+}
+
+/* ─── KPI cards ──────────────────────────────────── */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-sm);
+  margin: 0 0 var(--spacing-lg);
+}
+.metric {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  gap: 3px;
+  padding: var(--spacing-md);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.metric::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary), var(--secondary));
+}
+.metric span,
+.metric small { color: var(--text-light); font-size: var(--font-size-xs); }
+.metric span { font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+.metric strong {
+  color: var(--text);
+  font-size: var(--font-size-lg);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Add / edit form ────────────────────────────── */
+.form {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--secondary);
+  border-radius: var(--radius-md);
+}
+.formTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin: 0 0 var(--spacing-md);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--spacing-md) var(--spacing-sm);
+}
+.spanName   { grid-column: span 4; }
+.spanPhone  { grid-column: span 3; }
+.spanStreet { grid-column: span 5; }
+.spanUnit   { grid-column: span 3; }
+.spanCity   { grid-column: span 5; }
+.spanState  { grid-column: span 2; }
+.spanZip    { grid-column: span 2; }
+
+.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.input {
+  width: 100%;
+  height: 36px;
+  min-width: 0;
+  padding: 0 var(--spacing-sm);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--info-border);
+}
+.formActions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border);
+}
+
+/* ─── Toolbar ────────────────────────────────────── */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-sm);
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+.searchBox {
+  position: relative;
+  flex: 1 1 260px;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+}
+.searchBox svg {
+  position: absolute;
+  left: 10px;
+  color: var(--text-light);
+  font-size: 0.75rem;
+  pointer-events: none;
+}
+.searchBox input,
+.control select {
+  height: 36px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-family);
+  font-size: var(--font-size-sm);
+  box-sizing: border-box;
+}
+.searchBox input { width: 100%; padding: 0 var(--spacing-sm) 0 30px; }
+.control select { padding: 0 var(--spacing-sm); cursor: pointer; }
+.searchBox input:focus,
+.control select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--info-border);
+}
+.control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* ─── Table (same look as Expense History) ───────── */
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+  padding: 9px 14px;
+  text-align: left;
+  background: var(--background);
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+.table th.num { text-align: right; }
+.table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: var(--font-size-sm);
+  vertical-align: middle;
+}
+.table tbody tr:last-child > td { border-bottom: none; }
+.table > tbody > tr:hover { background: var(--muted-bg); }
+.inactiveRow { opacity: 0.6; }
+.actionsCell { text-align: right; white-space: nowrap; }
+
+/* Worker cell: chevron + avatar + name */
+.workerCell { display: flex; align-items: center; gap: var(--spacing-sm); }
+.avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.workerName { display: grid; gap: 1px; min-width: 0; }
+.workerName strong { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: var(--text); }
+.workerName small { color: var(--text-light); font-size: var(--font-size-xs); }
+
+.tag {
+  padding: 1px 8px;
+  border: 1px solid var(--muted-border);
+  border-radius: var(--radius-full);
+  background: var(--muted-bg);
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
+
+/* Contact cell */
+.contact { display: grid; gap: 3px; }
+.contactLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+  text-decoration: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.contactLink:hover { color: var(--secondary); text-decoration: underline; }
+.contactLink svg,
+.address svg { color: var(--text-light); font-size: 0.7rem; }
+.address {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  max-width: 320px;
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+.address svg { margin-top: 3px; }
+
+.breakdown {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-light);
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+}
+
+/* Expanded per-project details */
+.table > tbody > tr.detailsRow:hover { background: transparent; }
+.detailsRow > td { background: var(--surface-raised); padding: var(--spacing-md); }
+.details .table { background: var(--surface); }
+.details .tableWrap,
+.details > .table { border: 1px solid var(--border); border-radius: var(--radius-sm); }
+
+/* ─── Responsive ─────────────────────────────────── */
+@media (max-width: 900px) {
+  .metrics { grid-template-columns: repeat(2, 1fr); }
+  .formGrid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .spanName, .spanStreet, .spanCity { grid-column: span 6; }
+  .spanPhone, .spanUnit  { grid-column: span 3; }
+  .spanState, .spanZip   { grid-column: span 3; }
+}
+@media (max-width: 560px) {
+  .metrics { grid-template-columns: 1fr; }
+  .formGrid { grid-template-columns: 1fr; }
+  .formGrid > * { grid-column: 1 / -1; }
+  .toolbar { align-items: stretch; }
+  .control { justify-content: space-between; }
+  .control select { flex: 1; margin-left: var(--spacing-sm); }
+}
+
+@media print {
+  .button, .buttonGhost, .iconButton, .form, .toolbar { display: none; }
+  .section { box-shadow: none; border: 1px solid #ccc; }
+}
